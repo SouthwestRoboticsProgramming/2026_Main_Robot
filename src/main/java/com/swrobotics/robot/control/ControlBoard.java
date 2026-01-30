@@ -19,6 +19,12 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 
+import com.swrobotics.robot.subsystems.Hood.HoodSubsystem;
+import com.swrobotics.robot.subsystems.indexer.IndexerSubsystem;
+import com.swrobotics.robot.subsystems.intake.expansions.ExpansionSubsystem;
+import com.swrobotics.robot.subsystems.intake.IntakeSubsystem;
+import com.swrobotics.robot.subsystems.shooter.ShooterSubsystem;
+
 public final class ControlBoard extends SubsystemBase {
     /*
      * Control mapping:
@@ -159,19 +165,37 @@ public final class ControlBoard extends SubsystemBase {
                                 && DriverStation.getMatchTime() <= Constants.kEndgameAlert2Time)
                 .onTrue(RumblePatternCommands.endgameAlertFinalCountdown(driver, 0.75));
         
-        //TODO: add Intake/Indexer/Shooter/Hood/Expansion controls
 
-        /* --- Intake --- */
+        /* --- driver controller --- */
 
-        /* --- Indexer --- */
-        
+        //TODO: add /Hood/Expansion controls
+
+        /* --- Intake/indexer --- */
+        robot.intake.setDefaultCommand(robot.intake.commandSetState(IntakeSubsystem.State.IDLE));
+        robot.indexer.setDefaultCommand(robot.indexer.commandSetState(IndexerSubsystem.State.IDLE));
+
+        driver.rightTrigger()
+                .whileTrue(robot.intake.commandSetState(IntakeSubsystem.State.INTAKE)
+                .alongWith(robot.indexer.commandSetState(IndexerSubsystem.State.INTAKE)));
+
         /* --- Shooter --- */
+        robot.shooter.setDefaultCommand(robot.shooter.commandSetState(ShooterSubsystem.State.IDLE));
+
+        driver.leftTrigger()
+                .whileTrue(robot.shooter.commandSetState(ShooterSubsystem.State.SHOOT));
 
         /* --- Hood --- */
+        robot.hood.setDefaultCommand(robot.hood.commandSetState(HoodSubsystem.State.AUTO_TRACKING));
 
-        /* --- Expansion --- */
+        driver.dpad.up()
+        .onTrue(robot.hood.commandManualLeft());
+
+        /* --- Expansion --- */ 
         
         //TODO: add Autoalign controls
+
+
+        /* operator controller */
 
         //TODO: add Climber controls
 

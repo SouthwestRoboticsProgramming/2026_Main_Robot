@@ -1,4 +1,4 @@
-package com.swrobotics.robot.subsystems.shooter;
+package com.swrobotics.robot.subsystems.Hood;
 
 import com.ctre.phoenix6.configs.MotionMagicConfigs;
 import com.ctre.phoenix6.configs.Slot0Configs;

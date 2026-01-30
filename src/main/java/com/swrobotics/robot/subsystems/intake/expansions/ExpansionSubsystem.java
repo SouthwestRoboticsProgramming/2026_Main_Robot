@@ -13,8 +13,6 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
-// ...
-
 public class ExpansionSubsystem extends SubsystemBase {
 
     public enum State {
@@ -39,24 +37,26 @@ public class ExpansionSubsystem extends SubsystemBase {
         config.Slot0.kD = 0.001;
 
         // Motion Magic profile using constants
-        MotionMagicConfigs jerry = new MotionMagicConfigs();
-        jerry.MotionMagicCruiseVelocity = Constants.kExpansionCruiseVelocity.get();
-        jerry.MotionMagicAcceleration   = Constants.kExpansionAcceleration.get();
-        config.MotionMagic = jerry;
+        MotionMagicConfigs mm = new MotionMagicConfigs();
+        mm.MotionMagicCruiseVelocity = Constants.kExpansionCruiseVelocity.get();
+        mm.MotionMagicAcceleration   = Constants.kExpansionAcceleration.get();
+        config.MotionMagic = mm;
 
         config.apply(motor);
 
-        motor.setPosition(0); // zero at startup
+        // Zero the position at startup so rotations are relative to home
+        motor.setPosition(0);
 
         targetState = State.RETRACTED;
     }
 
-        @Override
+    @Override
     public void periodic() {
         double targetRotations;
 
         switch (targetState) {
             case EXTENDED:
+                // Must be in ROTATIONS, not sensor counts
                 targetRotations = Constants.kExpansionExtendedRotations.get();
                 break;
             case RETRACTED:
@@ -65,6 +65,7 @@ public class ExpansionSubsystem extends SubsystemBase {
                 break;
         }
 
+        // MotionMagicVoltage expects rotations as the unit for Position
         motor.setControl(m_motionMagic.withPosition(targetRotations));
     }
 
@@ -72,8 +73,9 @@ public class ExpansionSubsystem extends SubsystemBase {
         this.targetState = targetState;
     }
 
-    public Command commandSetState(State targetState) {
-        return Commands.run(() -> setTargetState(targetState), this);
-    }
-}
 
+    public Command commandSetState(State targetState) {
+        return Commands.runOnce(() -> setTargetState(targetState), this);
+    }
+
+}

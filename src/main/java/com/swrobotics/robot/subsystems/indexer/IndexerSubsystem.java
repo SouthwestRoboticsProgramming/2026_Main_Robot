@@ -91,7 +91,7 @@ public class IndexerSubsystem extends SubsystemBase {
 
     // Command to set the state
 
-    public Command commandSetState(State targetState) {
-        return Commands.run(() -> setTargetState(targetState), this);
+    public Command commandSetState(State shoot) {
+        return Commands.run(() -> setTargetState(shoot), this);
     }
 }
