@@ -197,6 +197,7 @@ public final class Constants {
     /* --- Indexer --- */
     public static final NTEntry<Double> kIndexerRollRPS = new NTDouble("Indexer/Intake RPS", 40.0).setPersistent();
     public static final NTEntry<Double> kIndexerIdleRPS = new NTDouble("Indexer/Idle RPS", 0.0).setPersistent();
+    public static final NTEntry<Double> kIndexerHoldRPS = new NTDouble("Indexer/Hold RPS", 3.0).setPersistent();
     
     /* --- Intake  ---  */ 
     public static final NTEntry<Double> kIntakeRPS = new NTDouble("Intake/Intake RPS", 40.0).setPersistent();
@@ -210,13 +211,5 @@ public final class Constants {
     public static final NTEntry<Double> kShooterRPS = new NTDouble("Shooter/Intake RPS", 100.0).setPersistent();
     public static final NTEntry<Double> kShooterIdleRPS = new NTDouble("Shooter/Idle RPS", 0.0).setPersistent();
 
-    /* --- Turret --- */ //TODO: Adjust constant values
-    public static final NTEntry<Double> kTurretIdleRotations = new NTDouble("Turret/Idle Rotations", 0.0).setPersistent();
-    public static final NTEntry<Double> kTurretReadyRotations  = new NTDouble("Turret/Ready Rotations", 5.0).setPersistent();
-    public static final NTEntry<Double> kTurretCruiseVelocity = new NTDouble("Turret/Cruise Velocity", 30.0).setPersistent();
-    public static final NTEntry<Double> kTurretAcceleration  = new NTDouble("Turret/Acceleration", 90.0).setPersistent();
-    public static final NTEntry<Double> kTurretMaxAngle = new NTDouble("Turret/Max Angle (deg)", 180.0).setPersistent();
-    public static final NTEntry<Double> kTurretMinAngle = new NTDouble("Turret/Min Angle (deg)", -180.0).setPersistent();
-    public static final NTEntry<Double> kTurretTrackingDeadzone = new NTDouble("Turret/Tracking Deadzone (deg)", 2.0).setPersistent();
-    public static final NTEntry<Boolean> kTurretInverted = new NTBoolean("Turret/Inverted", false).setPersistent();
+   
 }

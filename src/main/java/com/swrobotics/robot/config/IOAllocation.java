@@ -3,6 +3,7 @@ package com.swrobotics.robot.config;
 import com.ctre.phoenix6.CANBus;
 import com.ctre.phoenix6.hardware.CANcoder;
 import com.ctre.phoenix6.hardware.TalonFX;
+import com.ctre.phoenix6.hardware.CANrange;
 import edu.wpi.first.wpilibj.RobotBase;
 
 /**
@@ -26,10 +27,13 @@ public final class IOAllocation {
         public static final CanId kShooterMotor = new CanId(14, kGerald);
         public static final CanId kIndexerMotor = new CanId(15, kGerald);
         public static final CanId kIndexerMotor2 = new CanId(16, kGerald);
-        public static final CanId kIntakeMotor = new CanId(17, kGerald);
-        public static final CanId kExpansionMotor = new CanId(18, kGerald);
-        public static final CanId kHoodMotor = new CanId(19, kGerald);
-        public static final CanId kTurretMotor = new CanId(20, kGerald);
+        public static final CanId kIndexerCANrange = new CanId(17, kGerald);
+        public static final CanId kIntakeMotor = new CanId(18, kGerald);
+        public static final CanId kExpansionMotor = new CanId(19, kGerald);
+        public static final CanId kExpansionEncoder = new CanId(23, kGerald);
+        public static final CanId kHoodMotor = new CanId(20, kGerald);
+        public static final CanId kClimberMotor = new CanId(21, kGerald);
+        public static final CanId kClimberEncoder = new CanId(22, kGerald);
     }
 
     public static final class RIO {
@@ -85,6 +89,9 @@ public final class IOAllocation {
 
         public CANcoder createCANcoder() {
             return new CANcoder(id(), new CANBus(bus()));
+        }
+        public CANrange createCANrange() {
+            return new CANrange(id(), new CANBus(bus()));
         }
     }
 }

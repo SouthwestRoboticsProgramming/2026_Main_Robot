@@ -17,6 +17,7 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
+import edu.wpi.first.wpilibj2.command.button.POVButton;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 
 import com.swrobotics.robot.subsystems.Hood.HoodSubsystem;
@@ -186,9 +187,11 @@ public final class ControlBoard extends SubsystemBase {
 
         /* --- Hood --- */
         robot.hood.setDefaultCommand(robot.hood.commandSetState(HoodSubsystem.State.AUTO_TRACKING));
+        driver.x()
+                .whileTrue(robot.hood.commandToggleAutoManual());
 
-        driver.dpad.up()
-        .onTrue(robot.hood.commandManualLeft());
+        
+        
 
         /* --- Expansion --- */ 
         
@@ -196,6 +199,10 @@ public final class ControlBoard extends SubsystemBase {
 
 
         /* operator controller */
+        operator.povDown()
+                .onTrue(robot.hood.commandManualUp());
+        operator.povUp()
+                .onTrue(robot.hood.commandManualDown());
 
         //TODO: add Climber controls
 

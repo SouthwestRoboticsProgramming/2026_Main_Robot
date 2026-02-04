@@ -161,7 +161,11 @@ public class HoodSubsystem extends SubsystemBase {
     }
 
     public Command commandHome() {
-        return Commands.runOnce(() -> setTargetState(State.GO_TO_START), this);
+       if(targetState == State.AUTO_TRACKING){
+            return Commands.none();
+        }else{
+            return Commands.runOnce(() -> setTargetState(State.GO_TO_START), this);
+        }
     }
 
     public Command commandToggleAutoManual() {
@@ -174,9 +178,13 @@ public class HoodSubsystem extends SubsystemBase {
         }, this);
     }
 
-    public Command commandManualLeft() {
+    public Command commandManualDown() {
+        if (targetState != State.MANUAL_MODE) {
+            return Commands.none();
+        }else if (getCurrentAngleDegrees() <= Constants.kHoodMinAngle.get()) {
+            return Commands.none();
+        } else {
         return Commands.runOnce(() -> {
-            setTargetState(State.MANUAL_MODE);
             double newAngle = getCurrentAngleDegrees() - 5.0;
             double newPos = Math.max(
                     Constants.kHoodMinAngle.get() / 360.0,
@@ -184,16 +192,22 @@ public class HoodSubsystem extends SubsystemBase {
             setManualPosition(newPos);
         }, this);
     }
+    }
 
-    public Command commandManualRight() {
+    public Command commandManualUp() {
+        if (targetState != State.MANUAL_MODE) {
+            return Commands.none();
+        }else if (getCurrentAngleDegrees() >= Constants.kHoodMaxAngle.get()) {
+            return Commands.none();
+        } else {
         return Commands.runOnce(() -> {
-            setTargetState(State.MANUAL_MODE);
             double newAngle = getCurrentAngleDegrees() + 5.0;
             double newPos = Math.min(
                     Constants.kHoodMaxAngle.get() / 360.0,
                     newAngle / 360.0);
             setManualPosition(newPos);
         }, this);
+    }
     }
 
     public Command commandManualJog(double degrees) {
