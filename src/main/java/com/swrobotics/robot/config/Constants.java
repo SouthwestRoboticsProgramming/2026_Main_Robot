@@ -11,12 +11,15 @@ import com.ctre.phoenix6.swerve.SwerveModuleConstants.SteerFeedbackType;
 import com.pathplanner.lib.config.ModuleConfig;
 import com.pathplanner.lib.config.RobotConfig;
 import com.swrobotics.lib.field.FieldInfo;
+import com.swrobotics.lib.net.NTBoolean;
 import com.swrobotics.lib.net.NTDouble;
 import com.swrobotics.lib.net.NTEntry;
 import com.swrobotics.robot.subsystems.swerve.SwerveModuleInfo;
 import com.swrobotics.robot.subsystems.vision.LimelightCamera;
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.VecBuilder;
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.system.plant.DCMotor;
@@ -32,6 +35,7 @@ public final class Constants {
     public static final double kPeriodicTime = 1.0 / kPeriodicFreq;
 
     public static final FieldInfo kField = FieldInfo.REBUILT_2026;
+    public static final Pose2d kHubPose = new Pose2d(8.267, 4.105, new Rotation2d(0));
     public static final int kEndgameAlertTime = 20;
     public static final int kEndgameAlert2Time = 5;
     public static final int kTransferAlertTime = 130;//TODO: Set transfer alert time later
@@ -47,6 +51,8 @@ public final class Constants {
     // Robot dimensions
     public static final double kFrameLength = Units.inchesToMeters(27); // m
     public static final double kFrameWidth = Units.inchesToMeters(27); // m
+    public static final double kHubHeightMeters = Units.inchesToMeters(49.5); // m
+    public static final double kShooterHeightMeters = Units.inchesToMeters(20); //TODO: Measure inches
 
     public static final double kRobotMass = Units.lbsToKilograms(135); // TODO: Measure
     // Approximation of robot as uniform cuboid
@@ -166,12 +172,18 @@ public final class Constants {
     );
 
    /* --- Hood --- */ //TODO: Adjust constant values
-    public static final NTEntry<Double> kHoodIdleRotations = new NTDouble("Hood/Target Rotations", 0.0).setPersistent();
-    public static final NTEntry<Double> kHoodMovingRotations = new NTDouble("Hood/Retracted Rotations", 2.0).setPersistent();
-    public static final NTEntry<Double> kHoodReadyRotations  = new NTDouble("Hood/Extended Rotations", 0.0).setPersistent();
-    public static final NTEntry<Double> kHoodCruiseVelocity = new NTDouble("Hood/Cruise Velocity", 20.0).setPersistent();   
-    public static final NTEntry<Double> kHoodAcceleration  = new NTDouble("Hood/Acceleration", 80.0).setPersistent();
+    public static final NTEntry<Boolean> kHoodInverted = new NTBoolean("Hood/Inverted", false).setPersistent();
+    public static final NTEntry<Double> kHoodMaxAngle = new NTDouble("Hood/Max Angle (Deg)", 55.0).setPersistent();
+    public static final NTEntry<Double> kHoodMinAngle = new NTDouble("Hood/Min Angle (Deg)", 15.0).setPersistent();
+    public static final NTEntry<Double> kHoodCruiseVelocity = new NTDouble("Hood/Cruise Velocity", 60.0).setPersistent();
+    public static final NTEntry<Double> kHoodAcceleration = new NTDouble("Hood/Acceleration", 120.0).setPersistent();
 
+    public static final NTEntry<Double> kA0 = new NTDouble("Hood/Regression/a0", 0.0).setPersistent();
+    public static final NTEntry<Double> kA1 = new NTDouble("Hood/Regression/a1", 0.0).setPersistent();
+    public static final NTEntry<Double> kA2 = new NTDouble("Hood/Regression/a2", 0.0).setPersistent();
+    public static final NTEntry<Double> kA_Rps = new NTDouble("Hood/Regression/aRps", 0.0).setPersistent();
+
+    
 
     /* --- Climber ---  */ //TODO: Add climber constants here later
 
@@ -185,6 +197,7 @@ public final class Constants {
     /* --- Indexer --- */
     public static final NTEntry<Double> kIndexerRollRPS = new NTDouble("Indexer/Intake RPS", 40.0).setPersistent();
     public static final NTEntry<Double> kIndexerIdleRPS = new NTDouble("Indexer/Idle RPS", 0.0).setPersistent();
+    public static final NTEntry<Double> kIndexerHoldRPS = new NTDouble("Indexer/Hold RPS", 3.0).setPersistent();
     
     /* --- Intake  ---  */ 
     public static final NTEntry<Double> kIntakeRPS = new NTDouble("Intake/Intake RPS", 40.0).setPersistent();
@@ -197,4 +210,6 @@ public final class Constants {
     /* --- Shooter --- */
     public static final NTEntry<Double> kShooterRPS = new NTDouble("Shooter/Intake RPS", 100.0).setPersistent();
     public static final NTEntry<Double> kShooterIdleRPS = new NTDouble("Shooter/Idle RPS", 0.0).setPersistent();
+
+   
 }
