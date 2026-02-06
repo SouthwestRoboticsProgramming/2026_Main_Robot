@@ -15,7 +15,7 @@ public class ShooterSubsystem extends SubsystemBase {
 
     public enum State {
         IDLE,
-        INTAKE
+        SHOOT
     }
 
     private final TalonFX motor;
@@ -48,7 +48,7 @@ public class ShooterSubsystem extends SubsystemBase {
 
         double targetRPS = 0;
         switch (targetState) {
-            case INTAKE -> targetRPS = Constants.kShooterRPS.get();
+            case SHOOT -> targetRPS = Constants.kShooterRPS.get();
             case IDLE -> targetRPS = Constants.kShooterIdleRPS.get();
         }
 
