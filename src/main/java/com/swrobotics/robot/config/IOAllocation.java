@@ -34,6 +34,7 @@ public final class IOAllocation {
         public static final CanId kHoodMotor = new CanId(20, kGerald);
         public static final CanId kClimberMotor = new CanId(21, kGerald);
         public static final CanId kClimberEncoder = new CanId(22, kGerald);
+        public static final CanId kHoodCANcoder = new CanId(24, kGerald);
     }
 
     public static final class RIO {
