@@ -1,16 +1,21 @@
 package com.swrobotics.robot.subsystems.Hood;
 
+import com.ctre.phoenix6.StatusSignal;
+import com.ctre.phoenix6.configs.CANcoderConfiguration;
 import com.ctre.phoenix6.configs.MotionMagicConfigs;
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.controls.MotionMagicVoltage;
+import com.ctre.phoenix6.hardware.CANcoder;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
+import com.ctre.phoenix6.signals.SensorDirectionValue;
 import com.swrobotics.lib.ctre.TalonFXConfigHelper;
 import com.swrobotics.robot.config.Constants;
 import com.swrobotics.robot.config.IOAllocation;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -23,6 +28,7 @@ public class HoodSubsystem extends SubsystemBase {
     }
 
     private final TalonFX motor;
+    private final CANcoder encoder;
     private final MotionMagicVoltage motionMagic = new MotionMagicVoltage(0).withSlot(0);
     private State targetState = State.GO_TO_START;
 
@@ -36,13 +42,22 @@ public class HoodSubsystem extends SubsystemBase {
 
     public HoodSubsystem() {
         motor = IOAllocation.CAN.kHoodMotor.createTalonFX();
-
+        encoder = IOAllocation.CAN.kHoodCANcoder.createCANcoder();
+        
         TalonFXConfigHelper config = new TalonFXConfigHelper();
+        CANcoderConfiguration encoderConfig = new CANcoderConfiguration();
         config.MotorOutput.Inverted =
                 Constants.kHoodInverted.get()
                         ? InvertedValue.CounterClockwise_Positive
                         : InvertedValue.Clockwise_Positive;
         config.MotorOutput.NeutralMode = NeutralModeValue.Brake;
+
+        //change these later when robot is more together 
+        encoderConfig.MagnetSensor.MagnetOffset = 0;
+        encoderConfig.MagnetSensor.SensorDirection = SensorDirectionValue.CounterClockwise_Positive;
+
+        //change this ratio later (ratio for hood motor spins once, how much does hood move)
+        config.Feedback.SensorToMechanismRatio = 1/1;
 
         // Hood-specific PID gains. we will need to tune these
         Slot0Configs gains = new Slot0Configs();
@@ -60,13 +75,20 @@ public class HoodSubsystem extends SubsystemBase {
         config.MotionMagic = mmConfig;
 
         config.apply(motor);
-        motor.setPosition(0); // Zero at origin but we should use cancoders to set an absolute position and not hope we are at 0 on boot
+        encoder.getConfigurator().apply(encoderConfig);
+        double Position = encoder.getAbsolutePosition().getValueAsDouble();
+
+
+        motor.setPosition(Position); // Zero at origin but we should use cancoders to set an absolute position and not hope we are at 0 on boot
+
+        
     }
 
     @Override
     public void periodic() {
+        
         // assuming 1 to 1 gear ratio. will need to be changed if not
-        currentHoodAngle = Math.toDegrees(motor.getPosition().getValueAsDouble());
+        currentHoodAngle = Units.rotationsToDegrees(motor.getPosition().getValueAsDouble());
 
         double maxAngle = Constants.kHoodMaxAngle.get();
         double minAngle = Constants.kHoodMinAngle.get();
