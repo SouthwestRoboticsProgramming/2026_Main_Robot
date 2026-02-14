@@ -14,6 +14,7 @@ import com.pathplanner.lib.commands.PathPlannerAuto;
 import com.swrobotics.robot.control.ControlBoard;
 import com.swrobotics.robot.logging.FieldView;
 import com.swrobotics.robot.subsystems.Hood.HoodSubsystem;
+import com.swrobotics.robot.subsystems.climber.ClimberSubsystem;
 import com.swrobotics.robot.subsystems.indexer.IndexerSubsystem;
 import com.swrobotics.robot.subsystems.lights.LightsSubsystem;
 import com.swrobotics.robot.subsystems.shooter.ShooterSubsystem;
@@ -44,6 +45,7 @@ public class RobotContainer {
     public final IntakeSubsystem intake;
     public final HoodSubsystem hood;
     public final ExpansionSubsystem expansion;
+    public final ClimberSubsystem climber;
 
     public final LightsSubsystem lights;
 
@@ -60,6 +62,7 @@ public class RobotContainer {
         intake = new IntakeSubsystem();
         hood = new HoodSubsystem();
         expansion = new ExpansionSubsystem();
+        climber = new ClimberSubsystem();
 
         lights = new LightsSubsystem();
 

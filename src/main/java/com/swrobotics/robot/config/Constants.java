@@ -186,8 +186,13 @@ public final class Constants {
     
 
     /* --- Climber ---  */ //TODO: Add climber constants here later
+    public static final NTEntry<Double> kClimberTall = new NTDouble("Climber/Height", 1).setPersistent();
+    //default needs measurement (rotations of motor)
+    public static final NTEntry<Double> kClimberCalibrationTime = new NTDouble("Climber/CalibrationTime",0.25).setPersistent();
+    public static final NTEntry<Double> kClimberCalibrationVelocity = new NTDouble("Climber/CalibrationVelocity",0.5).setPersistent(); //rots per sec
+    public static final NTEntry<Double> kClimberCalibrationPosition = new NTDouble("Climber/CalibrationPosition",-3).setPersistent(); //rots
+    public static final NTEntry<Double> kClimberCalibrationVoltage = new NTDouble("Climber/CalibrationVoltage",1).setPersistent();
 
-    
     /* --- Expansion ---  */ 
     public static final NTEntry<Double> kExpansionRetractedRotations = new NTDouble("Expansion/Retracted Rotations", 0.0).setPersistent();
     public static final NTEntry<Double> kExpansionExtendedRotations  = new NTDouble("Expansion/Extended Rotations", 20.0).setPersistent();

@@ -14,6 +14,7 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
@@ -21,6 +22,7 @@ import edu.wpi.first.wpilibj2.command.button.POVButton;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 
 import com.swrobotics.robot.subsystems.Hood.HoodSubsystem;
+import com.swrobotics.robot.subsystems.climber.ClimberSubsystem;
 import com.swrobotics.robot.subsystems.indexer.IndexerSubsystem;
 import com.swrobotics.robot.subsystems.intake.expansions.ExpansionSubsystem;
 import com.swrobotics.robot.subsystems.intake.IntakeSubsystem;
@@ -205,6 +207,9 @@ public final class ControlBoard extends SubsystemBase {
                 .onTrue(robot.hood.commandManualDown());
 
         //TODO: add Climber controls
+        robot.climber.setDefaultCommand(robot.climber.commandSetState(ClimberSubsystem.State.RETRACTED));
+        operator.leftBumper().toggleOnTrue(robot.climber.commandSetState(ClimberSubsystem.State.EXTENDED));
+
 
    
     }
