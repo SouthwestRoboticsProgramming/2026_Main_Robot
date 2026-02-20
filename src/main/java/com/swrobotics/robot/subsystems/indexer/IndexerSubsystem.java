@@ -16,6 +16,7 @@ import com.swrobotics.robot.config.IOAllocation;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import org.littletonrobotics.junction.Logger;
 
 public class IndexerSubsystem extends SubsystemBase {
 
@@ -105,6 +106,13 @@ public class IndexerSubsystem extends SubsystemBase {
         // Apply controls
         motor.setControl(velocityControl.withVelocity(motor1RPS));
         motor2.setControl(velocityControl.withVelocity(motor2RPS));
+
+        Logger.recordOutput("Indexer/State", targetState.name());
+        Logger.recordOutput("Indexer/Motor1TargetRPS", motor1RPS);
+        Logger.recordOutput("Indexer/Motor2TargetRPS", motor2RPS);
+        Logger.recordOutput("Indexer/Motor1VelocityRPS", motor.getVelocity().getValueAsDouble());
+        Logger.recordOutput("Indexer/Motor2VelocityRPS", motor2.getVelocity().getValueAsDouble());
+        Logger.recordOutput("Indexer/BallDetected", ballAtTop);
     }
 
     // State setter

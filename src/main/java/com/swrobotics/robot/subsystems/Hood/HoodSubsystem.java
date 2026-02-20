@@ -19,6 +19,7 @@ import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import org.littletonrobotics.junction.Logger;
 
 public class HoodSubsystem extends SubsystemBase {
     public enum State {
@@ -143,6 +144,13 @@ public class HoodSubsystem extends SubsystemBase {
         }
 
         motor.setControl(motionMagic.withPosition(manualTargetRotations));
+
+        Logger.recordOutput("Hood/State", targetState.name());
+        Logger.recordOutput("Hood/CurrentAngleDeg", currentHoodAngle);
+        Logger.recordOutput("Hood/TargetRotations", manualTargetRotations);
+        Logger.recordOutput("Hood/AppliedVolts", motor.getMotorVoltage().getValueAsDouble());
+        Logger.recordOutput("Hood/CurrentAmps", motor.getSupplyCurrent().getValueAsDouble());
+        Logger.recordOutput("Hood/AbsEncoderDeg", Units.rotationsToDegrees(encoder.getAbsolutePosition().getValueAsDouble()));
     }
 
     // ===== Public API =====

@@ -20,6 +20,7 @@ import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import org.littletonrobotics.junction.Logger;
 
 public final class ClimberSubsystem extends SubsystemBase {
     public enum State {
@@ -111,6 +112,12 @@ public final class ClimberSubsystem extends SubsystemBase {
                 motor.setControl(new VoltageOut(-Constants.kClimberCalibrationVoltage.get()));
             }
         }
+
+        Logger.recordOutput("Climber/State", targetState.name());
+        Logger.recordOutput("Climber/IsCalibrating", !hasCalibrated);
+        Logger.recordOutput("Climber/TargetPosition", targetPos);
+        Logger.recordOutput("Climber/PositionRotations", motorPosition.getValueAsDouble());
+        Logger.recordOutput("Climber/VelocityRPS", motorVelocity.getValueAsDouble());
     }
 
     public void recalibrate() {

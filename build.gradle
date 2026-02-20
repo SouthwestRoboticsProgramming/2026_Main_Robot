@@ -60,6 +60,11 @@ repositories {
     maven {
         url 'https://frcmaven.wpi.edu/artifactory/release'
     }
+
+    // AdvantageKit release repo
+    maven {
+        url 'https://frcmaven.wpi.edu/artifactory/littletonrobotics-mvn-release/'
+    }
 }
 
 def deployArtifact = deploy.targets.roborio.artifacts.frcJava

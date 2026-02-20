@@ -9,6 +9,7 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import org.littletonrobotics.junction.Logger;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -68,5 +69,10 @@ public final class VisionSubsystem extends SubsystemBase {
         for (LimelightCamera.Update update : updates) {
             drive.addVisionMeasurement(update.pose(), update.timestamp(), update.stdDevs());
         }
+
+        Logger.recordOutput("Vision/EstimatedPoses", poses);
+        Logger.recordOutput("Vision/UpdateCount", updates.size());
+        Logger.recordOutput("Vision/IgnoringUpdates", ignoreUpdates);
+        Logger.recordOutput("Vision/UsingMegaTag2", useMegaTag2);
     }
 }

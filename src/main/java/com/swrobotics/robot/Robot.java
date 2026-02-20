@@ -1,10 +1,15 @@
 package com.swrobotics.robot;
 
-import com.swrobotics.lib.net.NTEntry;
 import edu.wpi.first.wpilibj.*;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
+import org.littletonrobotics.junction.LogFileUtil;
+import org.littletonrobotics.junction.LoggedRobot;
+import org.littletonrobotics.junction.Logger;
+import org.littletonrobotics.junction.networktables.NT4Publisher;
+import org.littletonrobotics.junction.wpilog.WPILOGReader;
+import org.littletonrobotics.junction.wpilog.WPILOGWriter;
 
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -12,7 +17,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 /**
  * The main robot class.
  */
-public final class Robot extends TimedRobot {
+public final class Robot extends LoggedRobot {
     private static final Queue<Runnable> mainThreadOperations = new ConcurrentLinkedQueue<>();
 
     public static void runOnMainThread(Runnable runnable) {
@@ -21,6 +26,26 @@ public final class Robot extends TimedRobot {
 
     private Command autonomousCommand;
     private RobotContainer robotContainer;
+
+    public Robot() {
+        Logger.recordMetadata("ProjectName", "GlopBot2026");
+
+        if (isReal()) {
+            Logger.addDataReceiver(new WPILOGWriter());
+            Logger.addDataReceiver(new NT4Publisher());
+        } else {
+            setUseTiming(false);
+            String logPath = LogFileUtil.findReplayLog();
+            if (logPath == null) {
+                Logger.addDataReceiver(new NT4Publisher());
+            } else {
+                Logger.setReplaySource(new WPILOGReader(logPath));
+                Logger.addDataReceiver(new WPILOGWriter(LogFileUtil.addPathSuffix(logPath, "_sim")));
+            }
+        }
+
+        Logger.start();
+    }
 
     @Override
     public void robotInit() {
@@ -37,6 +62,11 @@ public final class Robot extends TimedRobot {
         while ((r = mainThreadOperations.poll()) != null) {
             r.run();
         }
+
+        Logger.recordOutput("Robot/BatteryVoltage", RobotController.getBatteryVoltage());
+        Logger.recordOutput("Robot/MatchTime", DriverStation.getMatchTime());
+        Logger.recordOutput("Robot/DSConnected", DriverStation.isDSAttached());
+        Logger.recordOutput("Robot/Enabled", DriverStation.isEnabled());
     }
 
     @Override

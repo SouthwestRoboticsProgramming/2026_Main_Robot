@@ -12,6 +12,7 @@ import com.swrobotics.robot.config.Constants;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import org.littletonrobotics.junction.Logger;
 
 public class ExpansionSubsystem extends SubsystemBase {
 
@@ -67,6 +68,12 @@ public class ExpansionSubsystem extends SubsystemBase {
 
         // MotionMagicVoltage expects rotations as the unit for Position
         motor.setControl(m_motionMagic.withPosition(targetRotations));
+
+        Logger.recordOutput("Expansion/State", targetState.name());
+        Logger.recordOutput("Expansion/TargetRotations", targetRotations);
+        Logger.recordOutput("Expansion/PositionRotations", motor.getPosition().getValueAsDouble());
+        Logger.recordOutput("Expansion/AppliedVolts", motor.getMotorVoltage().getValueAsDouble());
+        Logger.recordOutput("Expansion/CurrentAmps", motor.getSupplyCurrent().getValueAsDouble());
     }
 
     public void setTargetState(State targetState) {

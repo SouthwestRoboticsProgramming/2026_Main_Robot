@@ -30,6 +30,7 @@ import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import org.littletonrobotics.junction.Logger;
 
 public final class SwerveDriveSubsystem extends SubsystemBase {
     private static final NTBoolean CALIBRATE = new NTBoolean("Drive/Modules/Calibrate", false);
@@ -200,6 +201,12 @@ public final class SwerveDriveSubsystem extends SubsystemBase {
         rawGyroRotation = Rotation2d.fromDegrees(rawGyroAngleSignal.refresh().getValueAsDouble());
 
         FieldView.robotPose.setPose(currentState.Pose);
+
+        Logger.recordOutput("Drive/Pose", currentState.Pose);
+        Logger.recordOutput("Drive/ModuleStates", currentState.ModuleStates);
+        Logger.recordOutput("Drive/ModuleTargets", currentState.ModuleTargets);
+        Logger.recordOutput("Drive/ChassisSpeeds", currentState.Speeds);
+        Logger.recordOutput("Drive/GyroYawDeg", rawGyroRotation.getDegrees());
 
         if (CALIBRATE.get()) {
             CALIBRATE.set(false);

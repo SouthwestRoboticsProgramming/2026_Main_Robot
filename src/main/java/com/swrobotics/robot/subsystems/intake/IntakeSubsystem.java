@@ -10,6 +10,7 @@ import com.swrobotics.robot.config.IOAllocation;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import org.littletonrobotics.junction.Logger;
 
 public class IntakeSubsystem extends SubsystemBase {
 
@@ -54,6 +55,12 @@ public class IntakeSubsystem extends SubsystemBase {
 
         // Apply control
         motor.setControl(velocityControl.withVelocity(targetRPS));
+
+        Logger.recordOutput("Intake/State", targetState.name());
+        Logger.recordOutput("Intake/TargetRPS", targetRPS);
+        Logger.recordOutput("Intake/VelocityRPS", motor.getVelocity().getValueAsDouble());
+        Logger.recordOutput("Intake/AppliedVolts", motor.getMotorVoltage().getValueAsDouble());
+        Logger.recordOutput("Intake/CurrentAmps", motor.getSupplyCurrent().getValueAsDouble());
     }
 
     public void setTargetState(State targetState) {
