@@ -1,15 +1,10 @@
 package com.swrobotics.robot.subsystems.shooter;
 
-import com.ctre.phoenix6.controls.VelocityVoltage; // Switched to Velocity
-import com.ctre.phoenix6.hardware.TalonFX;
-import com.ctre.phoenix6.signals.InvertedValue;
-import com.ctre.phoenix6.signals.NeutralModeValue;
-import com.swrobotics.lib.ctre.TalonFXConfigHelper;
 import com.swrobotics.robot.config.Constants;
-import com.swrobotics.robot.config.IOAllocation;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import org.littletonrobotics.junction.Logger;
 
 public class ShooterSubsystem extends SubsystemBase {
 
@@ -18,33 +13,19 @@ public class ShooterSubsystem extends SubsystemBase {
         SHOOT
     }
 
-    private final TalonFX motor;
-    private final VelocityVoltage velocityControl = new VelocityVoltage(0);
+    private final ShooterIO io;
+    private final ShooterIOInputsAutoLogged inputs = new ShooterIOInputsAutoLogged();
     private State targetState;
 
-    public ShooterSubsystem() {
-        motor = IOAllocation.CAN.kIndexerMotor.createTalonFX();
-        
-        TalonFXConfigHelper config = new TalonFXConfigHelper();
-        config.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
-        config.MotorOutput.NeutralMode = NeutralModeValue.Brake;
-
-        // --- PID GAINS ---
-        //TODO: These values need tuning! Start with kP at 0.1 and kV at 0.12 DO NOT SET kI or kD YET, as they are not always necessary and can cause instability if set too high
-        config.Slot0.kP = 0.1;
-        config.Slot0.kI = 0.0;
-        config.Slot0.kD = 0.001;
-        config.Slot0.kV = 0.12; // kV is vital for velocity control
-
-        config.apply(motor);
-
+    public ShooterSubsystem(ShooterIO io) {
+        this.io = io;
         targetState = State.IDLE;
     }
 
     @Override
     public void periodic() {
-        // Refresh PID gains from NetworkTables if they changed
-        
+        io.updateInputs(inputs);
+        Logger.processInputs("Shooter", inputs);
 
         double targetRPS = 0;
         switch (targetState) {
@@ -52,8 +33,10 @@ public class ShooterSubsystem extends SubsystemBase {
             case IDLE -> targetRPS = Constants.kShooterIdleRPS.get();
         }
 
-        // Apply control
-        motor.setControl(velocityControl.withVelocity(targetRPS));
+        io.setVelocity(targetRPS);
+
+        Logger.recordOutput("Shooter/State", targetState.name());
+        Logger.recordOutput("Shooter/TargetRPS", targetRPS);
     }
 
     public void setTargetState(State targetState) {

@@ -7,6 +7,8 @@ import java.util.List;
 import com.swrobotics.robot.logging.RobotView;
 import com.swrobotics.robot.subsystems.swerve.SwerveDriveSubsystem;
 import com.swrobotics.robot.subsystems.vision.VisionSubsystem;
+import com.swrobotics.robot.subsystems.vision.VisionIO;
+import com.swrobotics.robot.subsystems.vision.VisionIOLimelight;
 
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.NamedCommands;
@@ -14,12 +16,24 @@ import com.pathplanner.lib.commands.PathPlannerAuto;
 import com.swrobotics.robot.control.ControlBoard;
 import com.swrobotics.robot.logging.FieldView;
 import com.swrobotics.robot.subsystems.Hood.HoodSubsystem;
+import com.swrobotics.robot.subsystems.Hood.HoodIO;
+import com.swrobotics.robot.subsystems.Hood.HoodIOTalonFX;
 import com.swrobotics.robot.subsystems.climber.ClimberSubsystem;
+import com.swrobotics.robot.subsystems.climber.ClimberIO;
+import com.swrobotics.robot.subsystems.climber.ClimberIOTalonFX;
 import com.swrobotics.robot.subsystems.indexer.IndexerSubsystem;
+import com.swrobotics.robot.subsystems.indexer.IndexerIO;
+import com.swrobotics.robot.subsystems.indexer.IndexerIOTalonFX;
 import com.swrobotics.robot.subsystems.lights.LightsSubsystem;
 import com.swrobotics.robot.subsystems.shooter.ShooterSubsystem;
+import com.swrobotics.robot.subsystems.shooter.ShooterIO;
+import com.swrobotics.robot.subsystems.shooter.ShooterIOTalonFX;
 import com.swrobotics.robot.subsystems.intake.IntakeSubsystem;
+import com.swrobotics.robot.subsystems.intake.IntakeIO;
+import com.swrobotics.robot.subsystems.intake.IntakeIOTalonFX;
 import com.swrobotics.robot.subsystems.intake.expansions.ExpansionSubsystem;
+import com.swrobotics.robot.subsystems.intake.expansions.ExpansionIO;
+import com.swrobotics.robot.subsystems.intake.expansions.ExpansionIOTalonFX;
 
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.RobotBase;
@@ -56,13 +70,28 @@ public class RobotContainer {
         DriverStation.silenceJoystickConnectionWarning(RobotBase.isSimulation());
 
         drive = new SwerveDriveSubsystem();
-        vision = new VisionSubsystem(drive);
-        indexer = new IndexerSubsystem();
-        shooter = new ShooterSubsystem();
-        intake = new IntakeSubsystem();
-        hood = new HoodSubsystem();
-        expansion = new ExpansionSubsystem();
-        climber = new ClimberSubsystem();
+
+        if (RobotBase.isReal()) {
+            // Real robot: use hardware IO implementations
+            vision = new VisionSubsystem(drive, new VisionIOLimelight(List.of(
+                    // Add limelight cameras here...
+            )));
+            indexer = new IndexerSubsystem(new IndexerIOTalonFX());
+            shooter = new ShooterSubsystem(new ShooterIOTalonFX());
+            intake = new IntakeSubsystem(new IntakeIOTalonFX());
+            hood = new HoodSubsystem(new HoodIOTalonFX());
+            expansion = new ExpansionSubsystem(new ExpansionIOTalonFX());
+            climber = new ClimberSubsystem(new ClimberIOTalonFX());
+        } else {
+            // Simulation / replay: use no-op IO (interface defaults)
+            vision = new VisionSubsystem(drive, new VisionIO() {});
+            indexer = new IndexerSubsystem(new IndexerIO() {});
+            shooter = new ShooterSubsystem(new ShooterIO() {});
+            intake = new IntakeSubsystem(new IntakeIO() {});
+            hood = new HoodSubsystem(new HoodIO() {});
+            expansion = new ExpansionSubsystem(new ExpansionIO() {});
+            climber = new ClimberSubsystem(new ClimberIO() {});
+        }
 
         lights = new LightsSubsystem();
 
@@ -96,7 +125,7 @@ public class RobotContainer {
     }
 
     private record AutoEntry(String name, Command cmd) {}
-    
+
     private static List<AutoEntry> buildPathPlannerAutos() {
         if (!AutoBuilder.isConfigured()) {
             throw new RuntimeException(

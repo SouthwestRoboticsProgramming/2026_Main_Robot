@@ -4,27 +4,25 @@ import com.swrobotics.robot.config.Constants;
 import com.swrobotics.robot.logging.FieldView;
 import com.swrobotics.robot.subsystems.swerve.SwerveDriveSubsystem;
 
+import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-
-import java.util.ArrayList;
-import java.util.List;
+import org.littletonrobotics.junction.Logger;
 
 public final class VisionSubsystem extends SubsystemBase {
     private final SwerveDriveSubsystem drive;
-    private final List<LimelightCamera> cameras;
+    private final VisionIO io;
+    private final VisionIOInputsAutoLogged inputs = new VisionIOInputsAutoLogged();
 
     private boolean ignoreUpdates;
 
-    public VisionSubsystem(SwerveDriveSubsystem drive) {
+    public VisionSubsystem(SwerveDriveSubsystem drive, VisionIO io) {
         this.drive = drive;
-
-        cameras = List.of(
-                // Add limelight cameras here...
-        );
+        this.io = io;
 
         ignoreUpdates = false;
         setDefaultCommand(Commands.run(() -> ignoreUpdates = false, this));
@@ -41,32 +39,35 @@ public final class VisionSubsystem extends SubsystemBase {
 
         double yaw = currentPose.getRotation().getDegrees();
         double yawRate = Math.toDegrees(currentSpeeds.omegaRadiansPerSecond);
-        for (LimelightCamera camera : cameras) {
-            camera.updateRobotState(yaw, yawRate);
-        }
 
-        // MegaTag 1 is unreliable while moving, so use MegaTag 2 then.
-        // However, still use MegaTag 1 when slow/stopped so the gyro can be
-        // corrected by vision measurements.
         boolean useMegaTag2 = Math.hypot(currentSpeeds.vxMetersPerSecond, currentSpeeds.vyMetersPerSecond)
                 > Constants.kVisionMT2SpeedThreshold;
 
-        List<LimelightCamera.Update> updates = new ArrayList<>();
-        for (LimelightCamera camera : cameras) {
-            camera.getNewUpdates(updates, useMegaTag2);
-        }
+        io.updateInputs(inputs, yaw, yawRate, useMegaTag2);
+        Logger.processInputs("Vision", inputs);
 
-        Pose2d[] poses = new Pose2d[updates.size()];
+        // Reconstruct poses for FieldView
+        Pose2d[] poses = new Pose2d[inputs.estimatedPoseXs.length];
         for (int i = 0; i < poses.length; i++) {
-            poses[i] = updates.get(i).pose();
+            poses[i] = new Pose2d(
+                    inputs.estimatedPoseXs[i],
+                    inputs.estimatedPoseYs[i],
+                    Rotation2d.fromDegrees(inputs.estimatedPoseThetas[i]));
         }
         FieldView.visionEstimates.setPoses(poses);
 
         if (ignoreUpdates)
             return;
 
-        for (LimelightCamera.Update update : updates) {
-            drive.addVisionMeasurement(update.pose(), update.timestamp(), update.stdDevs());
+        for (int i = 0; i < inputs.estimatedPoseXs.length; i++) {
+            Pose2d pose = new Pose2d(
+                    inputs.estimatedPoseXs[i],
+                    inputs.estimatedPoseYs[i],
+                    Rotation2d.fromDegrees(inputs.estimatedPoseThetas[i]));
+            drive.addVisionMeasurement(
+                    pose,
+                    inputs.timestamps[i],
+                    VecBuilder.fill(inputs.stdDevXs[i], inputs.stdDevYs[i], inputs.stdDevThetas[i]));
         }
     }
 }

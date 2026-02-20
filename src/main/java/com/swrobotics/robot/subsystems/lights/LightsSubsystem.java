@@ -9,6 +9,7 @@ import edu.wpi.first.wpilibj.*;
 import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj.util.Color8Bit;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import org.littletonrobotics.junction.Logger;
 
 // TODO: Look into new WPILib LED strip patterns API
 public final class LightsSubsystem extends SubsystemBase {
@@ -49,16 +50,24 @@ public final class LightsSubsystem extends SubsystemBase {
     @Override
     public void periodic() {
         boolean batteryLow = RobotController.getBatteryVoltage() < Constants.kLowBatteryThreshold;
+        boolean isBatteryLow = batteryLowDebounce.calculate(batteryLow);
 
-        if (batteryLowDebounce.calculate(batteryLow)) {
+        String currentPattern;
+        if (isBatteryLow) {
             showLowBattery();
+            currentPattern = "LowBattery";
         } else if (commandRequest != null) {
             applySolid(commandRequest);
+            currentPattern = "CommandRequest";
         } else if (DriverStation.isDisabled()) {
             prideSequencer.apply(this);
+            currentPattern = "Pride";
         } else {
             showIdle();
+            currentPattern = "Idle";
         }
+
+        Logger.recordOutput("Lights/Pattern", currentPattern);
 
         commandRequest = null;
         fullBright = false;

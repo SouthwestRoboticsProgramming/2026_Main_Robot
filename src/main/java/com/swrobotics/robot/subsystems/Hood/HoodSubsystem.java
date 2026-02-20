@@ -1,24 +1,12 @@
 package com.swrobotics.robot.subsystems.Hood;
 
-import com.ctre.phoenix6.StatusSignal;
-import com.ctre.phoenix6.configs.CANcoderConfiguration;
-import com.ctre.phoenix6.configs.MotionMagicConfigs;
-import com.ctre.phoenix6.configs.Slot0Configs;
-import com.ctre.phoenix6.controls.MotionMagicVoltage;
-import com.ctre.phoenix6.hardware.CANcoder;
-import com.ctre.phoenix6.hardware.TalonFX;
-import com.ctre.phoenix6.signals.InvertedValue;
-import com.ctre.phoenix6.signals.NeutralModeValue;
-import com.ctre.phoenix6.signals.SensorDirectionValue;
-import com.swrobotics.lib.ctre.TalonFXConfigHelper;
 import com.swrobotics.robot.config.Constants;
-import com.swrobotics.robot.config.IOAllocation;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import org.littletonrobotics.junction.Logger;
 
 public class HoodSubsystem extends SubsystemBase {
     public enum State {
@@ -27,68 +15,27 @@ public class HoodSubsystem extends SubsystemBase {
         MANUAL_MODE
     }
 
-    private final TalonFX motor;
-    private final CANcoder encoder;
-    private final MotionMagicVoltage motionMagic = new MotionMagicVoltage(0).withSlot(0);
-    private State targetState = State.GO_TO_START;
+    private final HoodIO io;
+    private final HoodIOInputsAutoLogged inputs = new HoodIOInputsAutoLogged();
 
-    private double manualTargetRotations = 0.0; // Motor rotations
-    private double currentHoodAngle = 0.0;      // Degrees (approx)
+    private State targetState = State.GO_TO_START;
+    private double manualTargetRotations = 0.0;
+    private double currentHoodAngle = 0.0;
     private Pose2d robotPose;
     private Rotation2d hubAngle;
-
-    // Shooter speed the hood model will use
     private double shooterTargetRPS = Constants.kShooterRPS.get();
+    private double computedAngleFromRegression = 0.0;
 
-    public HoodSubsystem() {
-        motor = IOAllocation.CAN.kHoodMotor.createTalonFX();
-        encoder = IOAllocation.CAN.kHoodCANcoder.createCANcoder();
-        
-        TalonFXConfigHelper config = new TalonFXConfigHelper();
-        CANcoderConfiguration encoderConfig = new CANcoderConfiguration();
-        config.MotorOutput.Inverted =
-                Constants.kHoodInverted.get()
-                        ? InvertedValue.CounterClockwise_Positive
-                        : InvertedValue.Clockwise_Positive;
-        config.MotorOutput.NeutralMode = NeutralModeValue.Brake;
-
-        //change these later when robot is more together 
-        encoderConfig.MagnetSensor.MagnetOffset = 0;
-        encoderConfig.MagnetSensor.SensorDirection = SensorDirectionValue.CounterClockwise_Positive;
-
-        //change this ratio later (ratio for hood motor spins once, how much does hood move)
-        config.Feedback.SensorToMechanismRatio = 1/1;
-
-        // Hood-specific PID gains. we will need to tune these
-        Slot0Configs gains = new Slot0Configs();
-        gains.withKP(6.0);
-        gains.withKI(0.0);
-        gains.withKD(0.8);
-        gains.withKV(0.1);
-        config.Slot0 = gains;
-
-        // Motion Magic configuration for smooth movement
-        MotionMagicConfigs mmConfig = new MotionMagicConfigs();
-        mmConfig.MotionMagicCruiseVelocity = Constants.kHoodCruiseVelocity.get();
-        mmConfig.MotionMagicAcceleration = Constants.kHoodAcceleration.get();
-        mmConfig.MotionMagicJerk = 2000.0;
-        config.MotionMagic = mmConfig;
-
-        config.apply(motor);
-        encoder.getConfigurator().apply(encoderConfig);
-        double Position = encoder.getAbsolutePosition().getValueAsDouble();
-
-
-        motor.setPosition(Position); // Zero at origin but we should use cancoders to set an absolute position and not hope we are at 0 on boot
-
-        
+    public HoodSubsystem(HoodIO io) {
+        this.io = io;
     }
 
     @Override
     public void periodic() {
-        
-        // assuming 1 to 1 gear ratio. will need to be changed if not
-        currentHoodAngle = Units.rotationsToDegrees(motor.getPosition().getValueAsDouble());
+        io.updateInputs(inputs);
+        Logger.processInputs("Hood", inputs);
+
+        currentHoodAngle = inputs.positionDeg;
 
         double maxAngle = Constants.kHoodMaxAngle.get();
         double minAngle = Constants.kHoodMinAngle.get();
@@ -97,18 +44,16 @@ public class HoodSubsystem extends SubsystemBase {
 
         switch (targetState) {
             case GO_TO_START:
-                manualTargetRotations = 0.0; // Home to center
+                manualTargetRotations = 0.0;
                 break;
 
-            case AUTO_TRACKING://TODO: cameron put your auto hood code logic here.
-                // Auto compute hood angle from field-relative pose + shooter RPS
+            case AUTO_TRACKING:
                 if (robotPose != null) {
                     Pose2d hubPose = Constants.kHubPose;
                     double dx = hubPose.getX() - robotPose.getX();
                     double dy = hubPose.getY() - robotPose.getY();
-                    double distance = Math.hypot(dx, dy); // meters
+                    double distance = Math.hypot(dx, dy);
 
-                    // Store angle to hub for other subsystems if needed
                     hubAngle = new Rotation2d(Math.atan2(dy, dx));
 
                     double a0 = Constants.kA0.get();
@@ -117,35 +62,29 @@ public class HoodSubsystem extends SubsystemBase {
                     double aRps = Constants.kA_Rps.get();
 
                     double desiredAngleDeg =
-                            a0
-                                    + a1 * distance
-                                    + a2 * distance * distance
-                                    + aRps * shooterTargetRPS;
+                            a0 + a1 * distance + a2 * distance * distance + aRps * shooterTargetRPS;
 
-                    // Clamp to mechanical limits
-                    desiredAngleDeg =
-                            Math.max(minAngle, Math.min(maxAngle, desiredAngleDeg));
+                    computedAngleFromRegression = desiredAngleDeg;
 
-                    // Convert to rotations for TalonFX
+                    desiredAngleDeg = Math.max(minAngle, Math.min(maxAngle, desiredAngleDeg));
+
                     double desiredRotations = desiredAngleDeg / 360.0;
-
-                    manualTargetRotations =
-                            Math.max(minRotations,
-                                    Math.min(maxRotations, desiredRotations));
+                    manualTargetRotations = Math.max(minRotations, Math.min(maxRotations, desiredRotations));
                 }
                 break;
 
             case MANUAL_MODE:
-                manualTargetRotations =
-                        Math.max(minRotations,
-                                Math.min(maxRotations, manualTargetRotations));
+                manualTargetRotations = Math.max(minRotations, Math.min(maxRotations, manualTargetRotations));
                 break;
         }
 
-        motor.setControl(motionMagic.withPosition(manualTargetRotations));
-    }
+        io.setPosition(manualTargetRotations);
 
-    // ===== Public API =====
+        Logger.recordOutput("Hood/State", targetState.name());
+        Logger.recordOutput("Hood/TargetAngleDeg", manualTargetRotations * 360.0);
+        Logger.recordOutput("Hood/ComputedAngleFromRegression", computedAngleFromRegression);
+        Logger.recordOutput("Hood/CurrentAngleDeg", currentHoodAngle);
+    }
 
     public void setTargetState(State state) {
         this.targetState = state;
@@ -167,7 +106,6 @@ public class HoodSubsystem extends SubsystemBase {
         this.robotPose = pose;
     }
 
-    // Call this from your shooter subsystem or container to synchronize with kShooterRPS
     public void setShooterTargetRPS(double rps) {
         this.shooterTargetRPS = rps;
     }
@@ -176,16 +114,14 @@ public class HoodSubsystem extends SubsystemBase {
         this.manualTargetRotations = rotations;
     }
 
-    // ===== Commands =====
-
     public Command commandSetState(State state) {
         return Commands.runOnce(() -> setTargetState(state), this);
     }
 
     public Command commandHome() {
-       if(targetState == State.AUTO_TRACKING){
+        if (targetState == State.AUTO_TRACKING) {
             return Commands.none();
-        }else{
+        } else {
             return Commands.runOnce(() -> setTargetState(State.GO_TO_START), this);
         }
     }
@@ -203,33 +139,33 @@ public class HoodSubsystem extends SubsystemBase {
     public Command commandManualDown() {
         if (targetState != State.MANUAL_MODE) {
             return Commands.none();
-        }else if (getCurrentAngleDegrees() <= Constants.kHoodMinAngle.get()) {
+        } else if (getCurrentAngleDegrees() <= Constants.kHoodMinAngle.get()) {
             return Commands.none();
         } else {
-        return Commands.runOnce(() -> {
-            double newAngle = getCurrentAngleDegrees() - 5.0;
-            double newPos = Math.max(
-                    Constants.kHoodMinAngle.get() / 360.0,
-                    newAngle / 360.0);
-            setManualPosition(newPos);
-        }, this);
-    }
+            return Commands.runOnce(() -> {
+                double newAngle = getCurrentAngleDegrees() - 5.0;
+                double newPos = Math.max(
+                        Constants.kHoodMinAngle.get() / 360.0,
+                        newAngle / 360.0);
+                setManualPosition(newPos);
+            }, this);
+        }
     }
 
     public Command commandManualUp() {
         if (targetState != State.MANUAL_MODE) {
             return Commands.none();
-        }else if (getCurrentAngleDegrees() >= Constants.kHoodMaxAngle.get()) {
+        } else if (getCurrentAngleDegrees() >= Constants.kHoodMaxAngle.get()) {
             return Commands.none();
         } else {
-        return Commands.runOnce(() -> {
-            double newAngle = getCurrentAngleDegrees() + 5.0;
-            double newPos = Math.min(
-                    Constants.kHoodMaxAngle.get() / 360.0,
-                    newAngle / 360.0);
-            setManualPosition(newPos);
-        }, this);
-    }
+            return Commands.runOnce(() -> {
+                double newAngle = getCurrentAngleDegrees() + 5.0;
+                double newPos = Math.min(
+                        Constants.kHoodMaxAngle.get() / 360.0,
+                        newAngle / 360.0);
+                setManualPosition(newPos);
+            }, this);
+        }
     }
 
     public Command commandManualJog(double degrees) {
