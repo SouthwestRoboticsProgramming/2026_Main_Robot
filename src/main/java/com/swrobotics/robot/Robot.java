@@ -1,5 +1,6 @@
 package com.swrobotics.robot;
 
+import com.swrobotics.robot.config.IOAllocation;
 import edu.wpi.first.wpilibj.*;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
@@ -26,6 +27,7 @@ public final class Robot extends LoggedRobot {
 
     private Command autonomousCommand;
     private RobotContainer robotContainer;
+    private PowerDistribution pdh;
 
     public Robot() {
         Logger.recordMetadata("ProjectName", "GlopBot2026");
@@ -51,6 +53,7 @@ public final class Robot extends LoggedRobot {
     public void robotInit() {
         // Create a RobotContainer to manage our subsystems and our buttons
         robotContainer = new RobotContainer();
+        pdh = new PowerDistribution(IOAllocation.CAN.kPDP.id(), PowerDistribution.ModuleType.kRev);
     }
 
     @Override
@@ -67,6 +70,16 @@ public final class Robot extends LoggedRobot {
         Logger.recordOutput("Robot/MatchTime", DriverStation.getMatchTime());
         Logger.recordOutput("Robot/DSConnected", DriverStation.isDSAttached());
         Logger.recordOutput("Robot/Enabled", DriverStation.isEnabled());
+
+        // Log PDH channel currents
+        double[] currents = new double[pdh.getNumChannels()];
+        for (int i = 0; i < currents.length; i++) {
+            currents[i] = pdh.getCurrent(i);
+        }
+        Logger.recordOutput("PDH/ChannelCurrents", currents);
+        Logger.recordOutput("PDH/TotalCurrent", pdh.getTotalCurrent());
+        Logger.recordOutput("PDH/Voltage", pdh.getVoltage());
+        Logger.recordOutput("PDH/Temperature", pdh.getTemperature());
     }
 
     @Override
