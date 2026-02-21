@@ -40,7 +40,9 @@ public final class ControlBoard extends SubsystemBase {
      * Back: Reset gyro
      * 
      * Operator:
-     * (none)
+     * Left trigger: Intake
+     * Right trigger: Launch
+     * A: Bucket shake
      */
 
     private static final NTEntry<Boolean> CHARACTERISE_WHEEL_RADIUS = new NTBoolean("Drive/Characterize Wheel Radius", false);
@@ -177,19 +179,19 @@ public final class ControlBoard extends SubsystemBase {
         robot.intake.setDefaultCommand(robot.intake.commandSetState(IntakeSubsystem.State.IDLE));
         robot.indexer.setDefaultCommand(robot.indexer.commandSetState(IndexerSubsystem.State.IDLE));
 
-        driver.rightTrigger()
+        operator.leftTrigger()
                 .whileTrue(robot.intake.commandSetState(IntakeSubsystem.State.INTAKE)
                 .alongWith(robot.indexer.commandSetState(IndexerSubsystem.State.INTAKE)));
 
         /* --- Shooter --- */
         robot.shooter.setDefaultCommand(robot.shooter.commandSetState(ShooterSubsystem.State.IDLE));
 
-        driver.leftTrigger()
+        operator.rightTrigger()
                 .whileTrue(robot.shooter.commandSetState(ShooterSubsystem.State.SHOOT));
 
         /* --- Hood --- */
         robot.hood.setDefaultCommand(robot.hood.commandSetState(HoodSubsystem.State.AUTO_TRACKING));
-        driver.x()
+        operator.x()
                 .whileTrue(robot.hood.commandToggleAutoManual());
 
         
@@ -206,7 +208,6 @@ public final class ControlBoard extends SubsystemBase {
         operator.povUp()
                 .onTrue(robot.hood.commandManualDown());
 
-        //TODO: add Climber controls
         robot.climber.setDefaultCommand(robot.climber.commandSetState(ClimberSubsystem.State.RETRACTED));
         operator.leftBumper().toggleOnTrue(robot.climber.commandSetState(ClimberSubsystem.State.EXTENDED));
 
