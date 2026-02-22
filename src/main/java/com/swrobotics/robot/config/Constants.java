@@ -170,6 +170,29 @@ public final class Constants {
             0.002,
             0.00117
     );
+    public static final LimelightCamera.MountingLocation kLimelightFrontLeftLocation = new LimelightCamera.MountingLocation(
+        kFrameLength / 2 - Units.inchesToMeters(4.5),
+        -kFrameWidth / 2 + Units.inchesToMeters(3.25),
+        Units.inchesToMeters(9.059),
+        // Degrees CCW
+        0, 20.6, -33
+);
+public static final LimelightCamera.MountingLocation kLimelightFrontRightLocation = new LimelightCamera.MountingLocation(
+        kFrameLength / 2 - Units.inchesToMeters(4.5),
+        kFrameWidth / 2 - Units.inchesToMeters(3.25),
+        Units.inchesToMeters(9.059),
+        // Degrees CCW
+        0, 20.6, 33
+);
+public static final LimelightCamera.MountingLocation kLimelightBackLocation = new LimelightCamera.MountingLocation(
+        // TODO: These are guesses, they should be measured in CAD
+        0, 0, 0.972,
+        0, 35, 180
+);
+    // limelight locations
+        // public static final Pose2d kLimelightFrontLeftLocation = new Pose2d(0.254, 0.254, new Rotation2d());
+        // public static final Pose2d kLimelightFrontRightLocation = new Pose2d(0.254, -0.254, new Rotation2d());
+        // public static final Pose2d kLimelightBackLocation = new Pose2d(-0.254, 0, new Rotation2d());
 
    /* --- Hood --- */ //TODO: Adjust constant values
     public static final NTEntry<Boolean> kHoodInverted = new NTBoolean("Hood/Inverted", false).setPersistent();
@@ -186,7 +209,7 @@ public final class Constants {
     
 
     /* --- Climber ---  */ //TODO: Add climber constants here later
-    public static final NTEntry<Double> kClimberTall = new NTDouble("Climber/Height", 1).setPersistent();
+    public static final NTEntry<Double> kClimberTall = new NTDouble("Climber/Height", 1).setPersistent();	
     //default needs measurement (rotations of motor)
     public static final NTEntry<Double> kClimberCalibrationTime = new NTDouble("Climber/CalibrationTime",0.25).setPersistent();
     public static final NTEntry<Double> kClimberCalibrationVelocity = new NTDouble("Climber/CalibrationVelocity",0.5).setPersistent(); //rots per sec
@@ -195,7 +218,7 @@ public final class Constants {
 
     /* --- Expansion ---  */ 
     public static final NTEntry<Double> kExpansionRetractedRotations = new NTDouble("Expansion/Retracted Rotations", 0.0).setPersistent();
-    public static final NTEntry<Double> kExpansionExtendedRotations  = new NTDouble("Expansion/Extended Rotations", 20.0).setPersistent();
+    public static final NTEntry<Double> kExpansionExtendedRotations  = new NTDouble("Expansion/Extended Rotations", -20.0).setPersistent();
     public static final NTEntry<Double> kExpansionCruiseVelocity = new NTDouble("Expansion/Cruise Velocity", 40.0).setPersistent();   
     public static final NTEntry<Double> kExpansionAcceleration  = new NTDouble("Expansion/Acceleration", 160.0).setPersistent();
     
@@ -208,13 +231,11 @@ public final class Constants {
     public static final NTEntry<Double> kIntakeRPS = new NTDouble("Intake/Intake RPS", 40.0).setPersistent();
     public static final NTEntry<Double> kIntakeIdleRPS = new NTDouble("Intake/Idle RPS", 0.0).setPersistent();
 
-    /* --- Lights --- */
-    public static final int kLedStripLength = 51;
-    public static final int kLowBatteryThreshold = 10; // Volts
 
     /* --- Shooter --- */
-    public static final NTEntry<Double> kShooterRPS = new NTDouble("Shooter/Intake RPS", 100.0).setPersistent();
+    public static final NTEntry<Double> kShooterRPS = new NTDouble("Shooter/Intake RPS", 12.0).setPersistent();
     public static final NTEntry<Double> kShooterIdleRPS = new NTDouble("Shooter/Idle RPS", 0.0).setPersistent();
+    public static final NTEntry<Double> kShooterWarmRPS = new NTDouble("Shooter/Warm RPS", 1.0).setPersistent();
 
    
 }

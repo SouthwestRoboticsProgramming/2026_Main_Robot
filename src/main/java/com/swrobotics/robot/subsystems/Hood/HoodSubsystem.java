@@ -1,4 +1,4 @@
-package com.swrobotics.robot.subsystems.Hood;
+package com.swrobotics.robot.subsystems.hood;
 
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.CANcoderConfiguration;

@@ -21,8 +21,8 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.POVButton;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 
-import com.swrobotics.robot.subsystems.Hood.HoodSubsystem;
 import com.swrobotics.robot.subsystems.climber.ClimberSubsystem;
+import com.swrobotics.robot.subsystems.hood.HoodSubsystem;
 import com.swrobotics.robot.subsystems.indexer.IndexerSubsystem;
 import com.swrobotics.robot.subsystems.intake.expansions.ExpansionSubsystem;
 import com.swrobotics.robot.subsystems.intake.IntakeSubsystem;
@@ -75,7 +75,7 @@ public final class ControlBoard extends SubsystemBase {
 
         new Trigger(CHARACTERISE_WHEEL_RADIUS::get).whileTrue(new CharacterizeWheelsCommand(robot.drive));
         
-        
+        // controller rumble
         new Trigger(
             () ->
                     DriverStation.isTeleopEnabled()
@@ -169,9 +169,9 @@ public final class ControlBoard extends SubsystemBase {
                 .onTrue(RumblePatternCommands.endgameAlertFinalCountdown(driver, 0.75));
         
 
-        /* --- driver controller --- */
+        //* --- Driver controller --- *//
 
-        //TODO: add /Hood/Expansion controls
+        
 
         /* --- Intake/indexer --- */
         robot.intake.setDefaultCommand(robot.intake.commandSetState(IntakeSubsystem.State.IDLE));
@@ -187,28 +187,36 @@ public final class ControlBoard extends SubsystemBase {
         driver.leftTrigger()
                 .whileTrue(robot.shooter.commandSetState(ShooterSubsystem.State.SHOOT));
 
+        //TODO: add /Hood/Expansion controls
+        
         /* --- Hood --- */
         robot.hood.setDefaultCommand(robot.hood.commandSetState(HoodSubsystem.State.AUTO_TRACKING));
         driver.x()
-                .whileTrue(robot.hood.commandToggleAutoManual());
-
+                .whileTrue(robot.hood.commandToggleAutoManual()); 
+        /* --- expansion --- */
         
-        
-
-        /* --- Expansion --- */ 
+        driver.start().onTrue(robot.expansion.commandSetState(ExpansionSubsystem.State.EXTENDED));
         
         //TODO: add Autoalign controls
 
+        //* --- Operator controller --- *//
 
-        /* operator controller */
+        /* Feed command */
+
+        /* Rindex Command */
+        operator.leftTrigger()
+                .whileTrue(robot.indexer.commandSetState(IndexerSubsystem.State.RINDEX));
+
+
         operator.povDown()
                 .onTrue(robot.hood.commandManualUp());
+
         operator.povUp()
                 .onTrue(robot.hood.commandManualDown());
 
         //TODO: add Climber controls
         robot.climber.setDefaultCommand(robot.climber.commandSetState(ClimberSubsystem.State.RETRACTED));
-        operator.leftBumper().toggleOnTrue(robot.climber.commandSetState(ClimberSubsystem.State.EXTENDED));
+        operator.y().toggleOnTrue(robot.climber.commandSetState(ClimberSubsystem.State.EXTENDED));
 
 
    

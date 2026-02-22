@@ -13,10 +13,9 @@ import com.pathplanner.lib.auto.NamedCommands;
 import com.pathplanner.lib.commands.PathPlannerAuto;
 import com.swrobotics.robot.control.ControlBoard;
 import com.swrobotics.robot.logging.FieldView;
-import com.swrobotics.robot.subsystems.Hood.HoodSubsystem;
 import com.swrobotics.robot.subsystems.climber.ClimberSubsystem;
+import com.swrobotics.robot.subsystems.hood.HoodSubsystem;
 import com.swrobotics.robot.subsystems.indexer.IndexerSubsystem;
-import com.swrobotics.robot.subsystems.lights.LightsSubsystem;
 import com.swrobotics.robot.subsystems.shooter.ShooterSubsystem;
 import com.swrobotics.robot.subsystems.intake.IntakeSubsystem;
 import com.swrobotics.robot.subsystems.intake.expansions.ExpansionSubsystem;
@@ -47,8 +46,6 @@ public class RobotContainer {
     public final ExpansionSubsystem expansion;
     public final ClimberSubsystem climber;
 
-    public final LightsSubsystem lights;
-
     public final ControlBoard controlboard;
 
     public RobotContainer() {
@@ -63,8 +60,6 @@ public class RobotContainer {
         hood = new HoodSubsystem();
         expansion = new ExpansionSubsystem();
         climber = new ClimberSubsystem();
-
-        lights = new LightsSubsystem();
 
         // ControlBoard must be initialized last
         controlboard = new ControlBoard(this);
@@ -121,7 +116,6 @@ public class RobotContainer {
     }
 
     public void disabledInit() {
-        lights.disabledInit();
     }
 
     public double getAutoDelay() {

@@ -1,10 +1,10 @@
 package com.swrobotics.robot.commands;
 
+import com.ctre.phoenix6.swerve.SwerveModule;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 import com.swrobotics.lib.utils.MathUtil;
 import com.swrobotics.lib.utils.PolynomialRegression;
 import com.swrobotics.robot.config.Constants;
-import com.swrobotics.robot.subsystems.lights.LightsSubsystem;
 import com.swrobotics.robot.subsystems.swerve.SwerveDriveSubsystem;
 
 import edu.wpi.first.math.controller.PIDController;
@@ -54,9 +54,9 @@ public final class DriveCommands {
         }, drive);
     }
 
-    public static Command driveFieldRelativeSnapToAngle(
+    public static Command driveFieldRelativeSnapToHub(
             SwerveDriveSubsystem drive,
-            LightsSubsystem lights,
+
             Supplier<Translation2d> translationSupplier,
             Supplier<Rotation2d> targetRotationSupplier) {
         PIDController turnPid = new PIDController(0, 0, 0);
@@ -82,11 +82,45 @@ public final class DriveCommands {
                     .withVelocityX(tx.getX())
                     .withVelocityY(tx.getY())
                     .withRotationalRate(rotOutput));
-        }, drive)
-                .raceWith(LightCommands.showSnappingToAngle(lights));
+        }, drive);
     }
+    public static Command driveSnapToTarget(
+        SwerveDriveSubsystem drive,
+        Supplier<Translation2d> translationSupplier,
+        Supplier<Rotation2d> targetRotationSupplier) {
 
-    public static Command snapToPose(SwerveDriveSubsystem drive, LightsSubsystem lights, Supplier<Pose2d> targetPoseSupplier) {
+    PIDController turnPid = new PIDController(0, 0, 0);
+    turnPid.enableContinuousInput(-Math.PI, Math.PI);
+
+    return Commands.run(() -> {
+        // Pull tunable values from your Constants (NTEntry)
+        turnPid.setPID(Constants.kSnapTurnKp.get(), 0, Constants.kSnapTurnKd.get());
+
+        // Get pose fused by your VisionSubsystem + Pigeon 2
+        Pose2d currentPose = drive.getEstimatedPose();
+        Rotation2d targetRot = targetRotationSupplier.get();
+
+        double rotOutput = turnPid.calculate(
+            currentPose.getRotation().getRadians(),
+            targetRot.getRadians()
+        );
+
+        // Clamp using your NTEntry
+        double maxSpeed = Units.rotationsToRadians(Constants.kSnapMaxTurnSpeed.get());
+        rotOutput = MathUtil.clamp(rotOutput, -maxSpeed, maxSpeed);
+
+        Translation2d tx = translationSupplier.get();
+
+        // Use your subsystem's setControl method
+        drive.setControl(new SwerveRequest.FieldCentric()
+            .withVelocityX(tx.getX())
+            .withVelocityY(tx.getY())
+            .withRotationalRate(rotOutput)
+            .withDriveRequestType(SwerveModule.DriveRequestType.Velocity));
+    }, drive);
+}
+
+    public static Command snapToPose(SwerveDriveSubsystem drive, Supplier<Pose2d> targetPoseSupplier) {
         PIDController driveXPid = new PIDController(0, 0, 0);
         PIDController driveYPid = new PIDController(0, 0, 0);
         PIDController turnPid = new PIDController(0, 0, 0);
@@ -136,16 +170,14 @@ public final class DriveCommands {
                     .withVelocityX(xOutput)
                     .withVelocityY(yOutput)
                     .withRotationalRate(rotOutput));
-        }, drive)
-                .raceWith(LightCommands.showSnappingToPose(lights));
+        }, drive);
     }
 
     public static Command snapToPoseUntilInTolerance(
             SwerveDriveSubsystem drive,
-            LightsSubsystem lights,
             Supplier<Pose2d> poseSupplier,
             Supplier<Double> toleranceSupplier) {
-        return snapToPose(drive, lights, poseSupplier)
+        return snapToPose(drive, poseSupplier)
                 .until(() -> drive.isCloseTo(
                         poseSupplier.get().getTranslation(),
                         toleranceSupplier.get()
@@ -154,7 +186,7 @@ public final class DriveCommands {
 
     // public static Command autoalignToHub(SwerveDriveSubsystem drive, LightsSubsystem lights, LimelightCamera frontLeftLimelight, LimelightCamera frontRightLimelight, LimelightCamera backLimelight, int hubTagId /*  AprilTag ID for 2026 Rebuilt hub*/){
         
-    // }TODO: Implement autoalign to hub command using distance constant
+
 
     public static Command feedforwardCharacterization(SwerveDriveSubsystem drive) {
         List<Double> velocitySamples = new ArrayList<>();
