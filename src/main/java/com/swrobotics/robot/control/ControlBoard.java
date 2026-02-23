@@ -180,6 +180,11 @@ public final class ControlBoard extends SubsystemBase {
         driver.rightTrigger()
                 .whileTrue(robot.intake.commandSetState(IntakeSubsystem.State.INTAKE)
                 .alongWith(robot.indexer.commandSetState(IndexerSubsystem.State.INTAKE)));
+        driver.rightBumper()
+                .whileTrue(robot.indexer.commandSetState(IndexerSubsystem.State.IGNORE));
+        driver.leftBumper()
+                .whileTrue(robot.indexer.commandSetState(IndexerSubsystem.State.RINDEX)
+                .alongWith(robot.shooter.commandSetState(ShooterSubsystem.State.RINDEX)));
 
         /* --- Shooter --- */
         robot.shooter.setDefaultCommand(robot.shooter.commandSetState(ShooterSubsystem.State.IDLE));
@@ -192,11 +197,19 @@ public final class ControlBoard extends SubsystemBase {
         /* --- Hood --- */
         robot.hood.setDefaultCommand(robot.hood.commandSetState(HoodSubsystem.State.AUTO_TRACKING));
         driver.x()
-                .whileTrue(robot.hood.commandToggleAutoManual()); 
+                .whileTrue(robot.hood.commandToggleAutoManual());
+        driver.povDown()
+                .onTrue(robot.hood.commandManualUp());
+        driver.povUp()
+                .onTrue(robot.hood.commandManualDown());
+ 
         /* --- expansion --- */
-        
         driver.start().onTrue(robot.expansion.commandSetState(ExpansionSubsystem.State.EXTENDED));
         
+        /* --- Climber --- */
+        robot.climber.setDefaultCommand(robot.climber.commandSetState(ClimberSubsystem.State.RETRACTED));
+        driver.y().toggleOnTrue(robot.climber.commandSetState(ClimberSubsystem.State.EXTENDED));
+
         //TODO: add Autoalign controls
         driver.a().whileTrue(DriveCommands.driveFieldRelativeSnapToHub(robot.drive, this::getDriveTranslation));
 
@@ -205,19 +218,19 @@ public final class ControlBoard extends SubsystemBase {
         /* Feed command */
 
         /* Rindex Command */
-        operator.leftTrigger()
-                .whileTrue(robot.indexer.commandSetState(IndexerSubsystem.State.RINDEX));
+        // operator.leftTrigger()
+        //         .whileTrue(robot.indexer.commandSetState(IndexerSubsystem.State.RINDEX));
 
 
-        operator.povDown()
-                .onTrue(robot.hood.commandManualUp());
+        // operator.povDown()
+        //         .onTrue(robot.hood.commandManualUp());
 
-        operator.povUp()
-                .onTrue(robot.hood.commandManualDown());
+        // operator.povUp()
+        //         .onTrue(robot.hood.commandManualDown());
 
         //TODO: add Climber controls
-        robot.climber.setDefaultCommand(robot.climber.commandSetState(ClimberSubsystem.State.RETRACTED));
-        operator.y().toggleOnTrue(robot.climber.commandSetState(ClimberSubsystem.State.EXTENDED));
+        // robot.climber.setDefaultCommand(robot.climber.commandSetState(ClimberSubsystem.State.RETRACTED));
+        // operator.y().toggleOnTrue(robot.climber.commandSetState(ClimberSubsystem.State.EXTENDED));
 
 
    
