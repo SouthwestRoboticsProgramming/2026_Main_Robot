@@ -2,9 +2,11 @@ package com.swrobotics.robot.commands;
 
 import com.ctre.phoenix6.swerve.SwerveModule;
 import com.ctre.phoenix6.swerve.SwerveRequest;
+
 import com.swrobotics.lib.utils.MathUtil;
 import com.swrobotics.lib.utils.PolynomialRegression;
 import com.swrobotics.robot.config.Constants;
+import com.swrobotics.robot.config.FieldPositions;
 import com.swrobotics.robot.subsystems.swerve.SwerveDriveSubsystem;
 
 import edu.wpi.first.math.controller.PIDController;
@@ -12,6 +14,8 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -20,7 +24,6 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Supplier;
-
 public final class DriveCommands {
     public static Command driveRobotRelative(
             SwerveDriveSubsystem drive,
@@ -57,9 +60,9 @@ public final class DriveCommands {
     public static Command driveFieldRelativeSnapToHub(
             SwerveDriveSubsystem drive,
 
-            Supplier<Translation2d> translationSupplier,
-            Supplier<Rotation2d> targetRotationSupplier) {
-        PIDController turnPid = new PIDController(0, 0, 0);
+            Supplier<Translation2d> translationSupplier
+) {
+        PIDController turnPid = new PIDController(0, 0, 0); // Values set to 0, changed a few lines later
         turnPid.enableContinuousInput(-Math.PI, Math.PI);
 
         return Commands.startRun(() -> {
@@ -69,7 +72,11 @@ public final class DriveCommands {
             Translation2d tx = translationSupplier.get();
 
             Rotation2d currentRot = drive.getEstimatedPose().getRotation();
-            Rotation2d targetRot = targetRotationSupplier.get();
+            Pose2d hubPose = FieldPositions.getAllianceHubPose(DriverStation.getAlliance().orElse(Alliance.Red));
+
+            Translation2d vectorToHub = hubPose.getTranslation().minus(drive.getEstimatedPose().getTranslation());
+            Rotation2d targetRot = vectorToHub.getAngle();
+            
             double rotOutput = turnPid.calculate(
                     MathUtil.wrap(currentRot.getRadians(), -Math.PI, Math.PI),
                     MathUtil.wrap(targetRot.getRadians(), -Math.PI, Math.PI)

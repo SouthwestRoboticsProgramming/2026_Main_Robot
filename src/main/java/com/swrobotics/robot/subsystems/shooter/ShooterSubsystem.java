@@ -78,8 +78,8 @@ public class ShooterSubsystem extends SubsystemBase {
         }
 
         // Apply control
-        motorL.setControl(velocityControl.withVelocity(targetRPS));
-        motorR.setControl(velocityControl.withVelocity(targetRPS));
+        motorL.setControl(velocityControl.withVelocity(targetRPS).withEnableFOC(true));
+        motorR.setControl(velocityControl.withVelocity(targetRPS).withEnableFOC(true));
     }
 
     // Method to change the target state of the shooter.
@@ -90,7 +90,7 @@ public class ShooterSubsystem extends SubsystemBase {
     // Method to update the speed multiplier based on trigger pull
     public void setSpeedMultiplier(double multiplier) {
         // Clamp the value between 0.0 and 1.0 to prevent unexpected behavior
-        this.speedMultiplier = Math.max(0.0, Math.min(1.0, multiplier));
+        this.speedMultiplier = Math.max(0.0, Math.min(2.0, multiplier));
     }
 
     // Command to set State of the Shooter.

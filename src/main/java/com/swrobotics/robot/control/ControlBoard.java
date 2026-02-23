@@ -198,6 +198,7 @@ public final class ControlBoard extends SubsystemBase {
         driver.start().onTrue(robot.expansion.commandSetState(ExpansionSubsystem.State.EXTENDED));
         
         //TODO: add Autoalign controls
+        driver.a().whileTrue(DriveCommands.driveFieldRelativeSnapToHub(robot.drive, this::getDriveTranslation));
 
         //* --- Operator controller --- *//
 

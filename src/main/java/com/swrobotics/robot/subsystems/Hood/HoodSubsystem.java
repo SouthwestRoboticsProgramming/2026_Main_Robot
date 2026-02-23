@@ -51,7 +51,9 @@ public class HoodSubsystem extends SubsystemBase {
                         ? InvertedValue.CounterClockwise_Positive
                         : InvertedValue.Clockwise_Positive;
         config.MotorOutput.NeutralMode = NeutralModeValue.Brake;
-
+        config.CurrentLimits.StatorCurrentLimit = 20.0;
+        config.CurrentLimits.StatorCurrentLimitEnable = true;
+                
         //change these later when robot is more together 
         encoderConfig.MagnetSensor.MagnetOffset = 0;
         encoderConfig.MagnetSensor.SensorDirection = SensorDirectionValue.CounterClockwise_Positive;
