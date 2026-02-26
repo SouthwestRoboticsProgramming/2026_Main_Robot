@@ -24,15 +24,15 @@ public final class VisionSubsystem extends SubsystemBase {
 
         cameras = List.of(
                 new LimelightCamera(
-                        "limelight-ftleft",
-                        Constants.kLimelightFrontLeftLocation,
+                        "limelight-ft",
+                        Constants.kLimelightFrontLocation,
                         Constants.kLimelightConfig),
                 new LimelightCamera(
-                        "limelight-ftright",
-                        Constants.kLimelightFrontRightLocation,
+                        "limelight-fr",
+                        Constants.kLimelightRightLocation,
                         Constants.kLimelightConfig),
                 new LimelightCamera(
-                        "limelight-back",
+                        "limelight-bt",
                         Constants.kLimelightBackLocation,
                         Constants.kLimelightConfig)
         );

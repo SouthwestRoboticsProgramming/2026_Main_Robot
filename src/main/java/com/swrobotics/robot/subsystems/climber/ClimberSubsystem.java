@@ -7,6 +7,7 @@ import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
+import com.swrobotics.lib.ctre.TalonFXConfigHelper;
 import com.swrobotics.lib.net.NTBoolean;
 import com.swrobotics.lib.net.NTEntry;
 import com.swrobotics.robot.config.Constants;
@@ -42,16 +43,13 @@ public final class ClimberSubsystem extends SubsystemBase {
     private NTEntry<Boolean> calibrating = new NTBoolean("Climber/Calibrating?",true);
 
     public ClimberSubsystem() {
-        TalonFXConfiguration config = new TalonFXConfiguration();
+        TalonFXConfigHelper config = new TalonFXConfigHelper();
         config.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
         config.MotorOutput.NeutralMode = NeutralModeValue.Brake;
-        config.Slot0.kP = 0;
-        config.Slot0.kI = 0;
-        config.Slot0.kD = 0;
-
+        config.addTunable(Constants.kClimberPID);
 
         motor = IOAllocation.CAN.kClimberMotor.createTalonFX();
-        motor.getConfigurator().apply(config);
+        config.apply(motor);
         motorVelocity = motor.getVelocity();
 
         hasCalibrated = RobotBase.isSimulation();
@@ -62,6 +60,8 @@ public final class ClimberSubsystem extends SubsystemBase {
 
         targetPos = 0;
         manualAdjust = 0;
+
+        setDefaultCommand(commandSetState(State.RETRACTED));
     }
 
     public void setState(State state) {
@@ -108,7 +108,7 @@ public final class ClimberSubsystem extends SubsystemBase {
             } else {
                 calibrating.set(true);
 
-                motor.setControl(new VoltageOut(-Constants.kClimberCalibrationVoltage.get()));
+                motor.setControl(new VoltageOut(-Constants.kClimberCalibrationVoltage.get()).withEnableFOC(true));
             }
         }
     }

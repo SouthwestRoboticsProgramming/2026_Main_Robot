@@ -13,6 +13,7 @@ import com.swrobotics.robot.config.Constants;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.util.Units;
+
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -35,12 +36,16 @@ public final class ControlBoard extends SubsystemBase {
      * Driver:
      * Left stick: drive translation
      * Right stick X: drive rotation
+     * Right trigger: shoot
+     * Left trigger: intake
+     * Right bumber: feed
+     * left bumber: rindex
      * 
      * Start: Reset gyro
      * Back: Reset gyro
      * 
      * Operator:
-     * (none)
+     * 
      */
 
     private static final NTEntry<Boolean> CHARACTERISE_WHEEL_RADIUS = new NTBoolean("Drive/Characterize Wheel Radius", false);
@@ -60,6 +65,7 @@ public final class ControlBoard extends SubsystemBase {
         driveControlFilter = new DriveAccelFilter(Constants.kDriveControlMaxAccel);
 
         configureControls();
+        configureRumbles();
     }
 
     private void configureControls() {
@@ -69,13 +75,86 @@ public final class ControlBoard extends SubsystemBase {
 
         robot.drive.setDefaultCommand(DriveCommands.driveFieldRelative(
                 robot.drive,
-                this::getDriveTranslation,
+                () -> this.getDriveTranslation(),
                 this::getDriveRotation
         ));
 
         new Trigger(CHARACTERISE_WHEEL_RADIUS::get).whileTrue(new CharacterizeWheelsCommand(robot.drive));
         
-        // controller rumble
+        /* --- Intake/indexer --- */
+
+        driver.leftTrigger()
+                .whileTrue(robot.indexer.commandSetState(IndexerSubsystem.State.INTAKE)
+                .alongWith(robot.intake.commandSetState(IntakeSubsystem.State.INTAKE)));
+        driver.rightBumper()
+                .whileTrue(robot.indexer.ConditionalIntake()
+                .alongWith(robot.intake.commandSetState(IntakeSubsystem.State.INTAKE)));
+        driver.leftBumper()
+                .whileTrue(robot.indexer.commandSetState(IndexerSubsystem.State.RINDEX)
+                .alongWith(robot.shooter.commandSetState(ShooterSubsystem.State.RINDEX)));
+
+        /* --- Shooter --- */
+        driver.rightTrigger()
+        .whileTrue(robot.shooter.commandSetState(ShooterSubsystem.State.SHOOT));
+
+        /* --- Hood --- */
+        // operator.povDown().onTrue(robot.hood.commandManualUp());
+        // operator.povUp().onTrue(robot.hood.commandManualDown());
+
+        /* --- expansion --- */
+        operator.x().whileTrue(robot.expansion.commandSetState(ExpansionSubsystem.State.EXTENDED));
+
+        /* --- Climber --- */
+        operator.y().toggleOnTrue(robot.climber.commandSetState(ClimberSubsystem.State.EXTENDED));
+
+        driver.a().whileTrue(DriveCommands.driveFieldRelativeSnapToHub(robot.drive, () -> this.getDriveTranslation()));
+        driver.povDown().whileTrue(DriveCommands.driveFieldRelativeOverBump(robot.drive, () -> this.getDriveTranslation()));
+        driver.povUp().whileTrue(DriveCommands.driveFieldRelativeUnderTrench(robot.drive, () -> this.getDriveTranslation()));
+        driver.povLeft().whileTrue(DriveCommands.driveFieldRelativeSnapToLob(robot.drive, () -> this.getDriveTranslation()));
+
+    }
+
+    /**
+     * @return translation input for the drive base, in meters/sec
+     */
+    private Translation2d getDriveTranslation() {
+        double maxSpeed = Constants.kDriveMaxAchievableSpeed;
+
+        Translation2d leftStick = MathUtil.deadband2d(
+            new Translation2d(driver.getLeftX(), driver.getLeftY()),
+            Constants.kDeadband
+        );
+
+        // Apply an exponential curve to the driver's input. This allows the
+        // driver to have slower, more precise movement in the center of the
+        // stick, while still having high speed movement towards the edges.
+        double rawMag = leftStick.getNorm();
+        double powerMag = MathUtil.powerWithSign(rawMag, Constants.kDriveControlDrivePower);
+
+        // Prevent division by zero, which would result in a target velocity of
+        // (NaN, NaN), which motor controllers do not like
+        if (rawMag == 0 || powerMag == 0)
+            return new Translation2d(0, 0);
+
+        double targetSpeed = powerMag * maxSpeed;
+        double filteredSpeed = driveControlFilter.calculate(targetSpeed);
+        return new Translation2d(-leftStick.getY(), -leftStick.getX())
+            .div(rawMag) // Normalize translation
+            .times(filteredSpeed) // Apply new speed
+            .rotateBy(FieldInfo.getAllianceForwardAngle()); // Account for driver's perspective
+    }
+
+    /**
+     * @return radians per second input for the drive base
+     */
+    private double getDriveRotation() {
+        double rightStickX = MathUtil.deadband(driver.getRightX(), Constants.kDeadband);
+        double input = MathUtil.powerWithSign(-rightStickX, Constants.kDriveControlTurnPower);
+        return Units.rotationsToRadians(input * Constants.kDriveControlMaxTurnSpeed);
+    }
+
+    private void configureRumbles() {
+        // Transfer rumble
         new Trigger(
             () ->
                     DriverStation.isTeleopEnabled()
@@ -150,8 +229,6 @@ public final class ControlBoard extends SubsystemBase {
                     .alongWith(RumblePatternCommands.inactive_Active_TransferAlert(operator, 0.75)));
                     
                     
-        
-
         // Endgame Notice (controller rumble)
         new Trigger(
                 () ->
@@ -167,116 +244,10 @@ public final class ControlBoard extends SubsystemBase {
                                 && DriverStation.getMatchTime() > 0
                                 && DriverStation.getMatchTime() <= Constants.kEndgameAlert2Time)
                 .onTrue(RumblePatternCommands.endgameAlertFinalCountdown(driver, 0.75));
-        
-
-        //* --- Driver controller --- *//
-
-        
-
-        /* --- Intake/indexer --- */
-        robot.intake.setDefaultCommand(robot.intake.commandSetState(IntakeSubsystem.State.IDLE));
-        robot.indexer.setDefaultCommand(robot.indexer.commandSetState(IndexerSubsystem.State.IDLE));
-
-        driver.rightTrigger()
-                .whileTrue(robot.intake.commandSetState(IntakeSubsystem.State.INTAKE)
-                .alongWith(robot.indexer.commandSetState(IndexerSubsystem.State.INTAKE)));
-        driver.rightBumper()
-                .whileTrue(robot.indexer.commandSetState(IndexerSubsystem.State.IGNORE));
-        driver.leftBumper()
-                .whileTrue(robot.indexer.commandSetState(IndexerSubsystem.State.RINDEX)
-                .alongWith(robot.shooter.commandSetState(ShooterSubsystem.State.RINDEX)));
-
-        /* --- Shooter --- */
-        robot.shooter.setDefaultCommand(robot.shooter.commandSetState(ShooterSubsystem.State.IDLE));
-
-        driver.leftTrigger()
-                .whileTrue(robot.shooter.commandSetState(ShooterSubsystem.State.SHOOT));
-
-        //TODO: add /Hood/Expansion controls
-        
-        /* --- Hood --- */
-        robot.hood.setDefaultCommand(robot.hood.commandSetState(HoodSubsystem.State.AUTO_TRACKING));
-        driver.x()
-                .whileTrue(robot.hood.commandToggleAutoManual());
-        driver.povDown()
-                .onTrue(robot.hood.commandManualUp());
-        driver.povUp()
-                .onTrue(robot.hood.commandManualDown());
- 
-        /* --- expansion --- */
-        driver.start().onTrue(robot.expansion.commandSetState(ExpansionSubsystem.State.EXTENDED));
-        
-        /* --- Climber --- */
-        robot.climber.setDefaultCommand(robot.climber.commandSetState(ClimberSubsystem.State.RETRACTED));
-        driver.y().toggleOnTrue(robot.climber.commandSetState(ClimberSubsystem.State.EXTENDED));
-
-        //TODO: add Autoalign controls
-        driver.a().whileTrue(DriveCommands.driveFieldRelativeSnapToHub(robot.drive, this::getDriveTranslation));
-
-        //* --- Operator controller --- *//
-
-        /* Feed command */
-
-        /* Rindex Command */
-        // operator.leftTrigger()
-        //         .whileTrue(robot.indexer.commandSetState(IndexerSubsystem.State.RINDEX));
-
-
-        // operator.povDown()
-        //         .onTrue(robot.hood.commandManualUp());
-
-        // operator.povUp()
-        //         .onTrue(robot.hood.commandManualDown());
-
-        //TODO: add Climber controls
-        // robot.climber.setDefaultCommand(robot.climber.commandSetState(ClimberSubsystem.State.RETRACTED));
-        // operator.y().toggleOnTrue(robot.climber.commandSetState(ClimberSubsystem.State.EXTENDED));
-
-
-   
-    }
-
-    /**
-     * @return translation input for the drive base, in meters/sec
-     */
-    private Translation2d getDriveTranslation() {
-        double maxSpeed = Constants.kDriveMaxAchievableSpeed;
-
-        Translation2d leftStick = MathUtil.deadband2d(
-            new Translation2d(driver.getLeftX(), driver.getLeftY()),
-            Constants.kDeadband
-        );
-
-        // Apply an exponential curve to the driver's input. This allows the
-        // driver to have slower, more precise movement in the center of the
-        // stick, while still having high speed movement towards the edges.
-        double rawMag = leftStick.getNorm();
-        double powerMag = MathUtil.powerWithSign(rawMag, Constants.kDriveControlDrivePower);
-
-        // Prevent division by zero, which would result in a target velocity of
-        // (NaN, NaN), which motor controllers do not like
-        if (rawMag == 0 || powerMag == 0)
-            return new Translation2d(0, 0);
-
-        double targetSpeed = powerMag * maxSpeed;
-        double filteredSpeed = driveControlFilter.calculate(targetSpeed);
-        return new Translation2d(-leftStick.getY(), -leftStick.getX())
-            .div(rawMag) // Normalize translation
-            .times(filteredSpeed) // Apply new speed
-            .rotateBy(FieldInfo.getAllianceForwardAngle()); // Account for driver's perspective
-    }
-
-    /**
-     * @return radians per second input for the drive base
-     */
-    private double getDriveRotation() {
-        double rightStickX = MathUtil.deadband(driver.getRightX(), Constants.kDeadband);
-        double input = MathUtil.powerWithSign(-rightStickX, Constants.kDriveControlTurnPower);
-        return Units.rotationsToRadians(input * Constants.kDriveControlMaxTurnSpeed);
     }
 
     @Override
     public void periodic() {
-        
+        AimCalc.getInstance().setSpeedMultiplier(driver.getRightTriggerAxis());
     }
 }

@@ -2,7 +2,6 @@ package com.swrobotics.robot.subsystems.indexer;
 
 // CTRE Phoenix 6 imports
 import com.ctre.phoenix6.controls.VoltageOut;
-import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.hardware.CANrange;
 import com.ctre.phoenix6.signals.InvertedValue;
@@ -25,7 +24,7 @@ public class IndexerSubsystem extends SubsystemBase {
         IDLE,
         INTAKE,
         HOLDING_BALL, // ball at top, upper stage stopped
-        IGNORE,
+        FEED,
         RINDEX // optional: run in reverse to clear jams, etc.
     }
 
@@ -33,7 +32,8 @@ public class IndexerSubsystem extends SubsystemBase {
     private final TalonFX FloorMotor;   // lower stage (keeps creeping)
     private final TalonFX ShooterFeederMotor;  // upper stage (stops when ball present)
     private final TalonFX BeltMotor;
-    private final VelocityVoltage velocityControl = new VelocityVoltage(0);
+    //private final VelocityVoltage velocityControl = new VelocityVoltage(0);
+    private final VoltageOut voltageControl = new VoltageOut(0).withEnableFOC(true);
 
     // CANrange sensor at top of tube
     private final CANrange canrange;
@@ -56,24 +56,15 @@ public class IndexerSubsystem extends SubsystemBase {
 
         TalonFXConfigHelper config2 = new TalonFXConfigHelper();
 
-        config.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
+        config.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
         config.MotorOutput.NeutralMode = NeutralModeValue.Coast;
+        config.CurrentLimits.StatorCurrentLimit = 40.0;
+        config.CurrentLimits.StatorCurrentLimitEnable = true; 
 
         config2.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
         config2.MotorOutput.NeutralMode = NeutralModeValue.Coast;
-
-        // PID/FF gains (tune these)
-        config.Slot0.kP = 0.1; // Start with a moderate kP for responsive control, but not too high to avoid oscillations.
-        config.Slot0.kI = 0.0; // This is Usually never used so leave at 0.
-        config.Slot0.kD = 0.001; // kD can help with overshoot and settling time, but for this leaving it low is fine.
-        config.Slot0.kV = 0.12; // kV is crucial for velocity control, Adjust as needed based on performance.
-        config.Slot0.kA = 0.0; // kA can be used to add feedforward based on acceleration, but for a simple velocity control, it can be left at 0.
-
-        config2.Slot0.kP = 0.1; 
-        config2.Slot0.kI = 0.0;
-        config2.Slot0.kD = 0.001;
-        config2.Slot0.kV = 0.12;
-        config2.Slot0.kA = 0.0;
+        config2.CurrentLimits.StatorCurrentLimit = 40.0;
+        config2.CurrentLimits.StatorCurrentLimitEnable = true; 
 
         // Apply configuration to both motors
         config.apply(FloorMotor, BeltMotor);
@@ -81,9 +72,9 @@ public class IndexerSubsystem extends SubsystemBase {
 
         // Create CANrange (adjust to your actual IO allocation)
         canrange = IOAllocation.CAN.kIndexerCANrange.createCANrange();
-
-        // Initial state
+        
         targetState = State.IDLE;
+        setDefaultCommand(commandSetState(IndexerSubsystem.State.IDLE));
     }
 
     @Override
@@ -97,43 +88,48 @@ public class IndexerSubsystem extends SubsystemBase {
             targetState = State.HOLDING_BALL;
         }
 
-        // Decide RPS for each motor independently
-        double FloorMotorsRPS = 0.0; // Floor And belt motor (lower-stage, keeps creeping)
-        double FeederRPS = 0.0; // upper-stage 
+        // Decide Voltage for each motor independently
+        double FloorMotorsVoltage = 0.0; // Floor And belt motor (lower-stage, keeps creeping)
+        double FeederVoltage = 0.0; // upper-stage 
 
         switch (targetState) {
-            case INTAKE -> {
+            case INTAKE : {
                 // Normal intake speed for both motors
-                FloorMotorsRPS = Constants.kIndexerRollRPS.get();
-                FeederRPS = Constants.kIndexerRollRPS.get();
+                FloorMotorsVoltage = Constants.kIndexerRollVoltage.get();
+                FeederVoltage = Constants.kIndexerRollVoltage.get();
+                break;
             }
-            case HOLDING_BALL -> {
+            case HOLDING_BALL : {
                 // Lower motor creeps slowly to keep feeding / manage queue
-                FloorMotorsRPS = Constants.kIndexerHoldRPS.get(); // slower, new constant
-                FeederRPS = Constants.kIndexerIdleRPS.get(); // usually 0
-
+                FloorMotorsVoltage = Constants.kIndexerHoldVoltage.get(); // slower, new constant
+                FeederVoltage = Constants.kIndexerIdleVoltage.get(); // usually 0
+                break;
             }
-            case IDLE -> {
+            case IDLE : {
                 // Both motors stopped/idle
-                FloorMotorsRPS = Constants.kIndexerIdleRPS.get();
-                FeederRPS = Constants.kIndexerIdleRPS.get();
+                FloorMotorsVoltage = Constants.kIndexerIdleVoltage.get();
+                FeederVoltage = Constants.kIndexerIdleVoltage.get();
+                break;
             }
-            case IGNORE -> {
+            case FEED : {
                 // Both motors run at intake speed, ignoring ball presence
-                FloorMotorsRPS = Constants.kIndexerIdleRPS.get();
-                FeederRPS = Constants.kIndexerRollRPS.get();
+                FloorMotorsVoltage = Constants.kIndexerRollVoltage.get();
+                FeederVoltage = Constants.kIndexerRollVoltage.get();
+                break;
             }
-            case RINDEX -> {
+            case RINDEX : {
                 // Both motors run in reverse to clear jams
-                FloorMotorsRPS = -Constants.kIndexerRollRPS.get();
-                FeederRPS = -Constants.kIndexerRollRPS.get();
+                FloorMotorsVoltage = -Constants.kIndexerRollVoltage.get();
+                FeederVoltage = -Constants.kIndexerRollVoltage.get();
+                break;
+                
             }
         }
 
         // Apply controls
-        FloorMotor.setControl(velocityControl.withVelocity(FloorMotorsRPS));
-        ShooterFeederMotor.setControl(velocityControl.withVelocity(FeederRPS));
-        BeltMotor.setControl(velocityControl.withVelocity(FloorMotorsRPS)); 
+        FloorMotor.setControl(voltageControl.withOutput(FloorMotorsVoltage));
+        ShooterFeederMotor.setControl(voltageControl.withOutput(FeederVoltage));
+        BeltMotor.setControl(voltageControl.withOutput(FeederVoltage)); 
     }
 
     // State setter
@@ -143,7 +139,7 @@ public class IndexerSubsystem extends SubsystemBase {
 
     // Command to set a state once
     public Command commandSetState(State state) {
-        return Commands.runOnce(() -> setTargetState(state), this);
+        return Commands.run(() -> setTargetState(state), this);
     }
 
     // For shooter or higher-level logic to query
@@ -151,12 +147,22 @@ public class IndexerSubsystem extends SubsystemBase {
         return ballAtTop;
     }
 
+    public Command intakeUntilBall() {
+        return Commands.run(() -> {
+        if (ballAtTop) {
+          setTargetState(State.HOLDING_BALL);
+        } else {
+          setTargetState(State.INTAKE);
+        }
+        }, this).until(() -> ballAtTop);
+    }
+
     // Command that conditionally intakes based on ball presence
-    public Command ConditionalIntake(){
+    public Command ConditionalIntake() {
         return Commands.run(
             () -> {
                 if (ballAtTop) {
-                    setTargetState(State.IGNORE);
+                    setTargetState(State.FEED);
                 } else {
                     setTargetState(State.INTAKE);
                 }

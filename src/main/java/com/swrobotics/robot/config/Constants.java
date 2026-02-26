@@ -10,6 +10,7 @@ import com.ctre.phoenix6.swerve.SwerveModuleConstants.ClosedLoopOutputType;
 import com.ctre.phoenix6.swerve.SwerveModuleConstants.SteerFeedbackType;
 import com.pathplanner.lib.config.ModuleConfig;
 import com.pathplanner.lib.config.RobotConfig;
+import com.swrobotics.lib.ctre.NTSlot0Configs;
 import com.swrobotics.lib.field.FieldInfo;
 import com.swrobotics.lib.net.NTBoolean;
 import com.swrobotics.lib.net.NTDouble;
@@ -170,29 +171,24 @@ public final class Constants {
             0.002,
             0.00117
     );
-    public static final LimelightCamera.MountingLocation kLimelightFrontLeftLocation = new LimelightCamera.MountingLocation(
-        kFrameLength / 2 - Units.inchesToMeters(4.5),
-        -kFrameWidth / 2 + Units.inchesToMeters(3.25),
-        Units.inchesToMeters(9.059),
+
+    public static final LimelightCamera.MountingLocation kLimelightBackLocation = new LimelightCamera.MountingLocation(
+        Units.inchesToMeters(-13), Units.inchesToMeters(10.673), Units.inchesToMeters(17.558), //z x y? jonah lowkey weird
         // Degrees CCW
-        0, 20.6, -33
-);
-public static final LimelightCamera.MountingLocation kLimelightFrontRightLocation = new LimelightCamera.MountingLocation(
-        kFrameLength / 2 - Units.inchesToMeters(4.5),
-        kFrameWidth / 2 - Units.inchesToMeters(3.25),
-        Units.inchesToMeters(9.059),
+        0, 0, 180
+    );
+
+    public static final LimelightCamera.MountingLocation kLimelightRightLocation = new LimelightCamera.MountingLocation(
+        Units.inchesToMeters(-.25),Units.inchesToMeters(-12.449), Units.inchesToMeters(9.502),
         // Degrees CCW
-        0, 20.6, 33
-);
-public static final LimelightCamera.MountingLocation kLimelightBackLocation = new LimelightCamera.MountingLocation(
+        0, 0, 90
+    );
+
+    public static final LimelightCamera.MountingLocation kLimelightFrontLocation = new LimelightCamera.MountingLocation(
         // TODO: These are guesses, they should be measured in CAD
-        0, 0, 0.972,
-        0, 35, 180
-);
-    // limelight locations
-        // public static final Pose2d kLimelightFrontLeftLocation = new Pose2d(0.254, 0.254, new Rotation2d());
-        // public static final Pose2d kLimelightFrontRightLocation = new Pose2d(0.254, -0.254, new Rotation2d());
-        // public static final Pose2d kLimelightBackLocation = new Pose2d(-0.254, 0, new Rotation2d());
+        Units.inchesToMeters(-4.84), Units.inchesToMeters(10.213), Units.inchesToMeters(18.132),
+        0, 15, 0
+    );
 
    /* --- Hood --- */ //TODO: Adjust constant values
     public static final NTEntry<Boolean> kHoodInverted = new NTBoolean("Hood/Inverted", false).setPersistent();
@@ -201,10 +197,7 @@ public static final LimelightCamera.MountingLocation kLimelightBackLocation = ne
     public static final NTEntry<Double> kHoodCruiseVelocity = new NTDouble("Hood/Cruise Velocity", 60.0).setPersistent();
     public static final NTEntry<Double> kHoodAcceleration = new NTDouble("Hood/Acceleration", 120.0).setPersistent();
 
-    public static final NTEntry<Double> kA0 = new NTDouble("Hood/Regression/a0", 0.0).setPersistent();
-    public static final NTEntry<Double> kA1 = new NTDouble("Hood/Regression/a1", 0.0).setPersistent();
-    public static final NTEntry<Double> kA2 = new NTDouble("Hood/Regression/a2", 0.0).setPersistent();
-    public static final NTEntry<Double> kA_Rps = new NTDouble("Hood/Regression/aRps", 0.0).setPersistent();
+    public static final NTSlot0Configs kHoodPID = new NTSlot0Configs("Hood/PID", 6.0, 0.8, 0.0, 0.0, 0.1, 0.0);
 
     
 
@@ -215,27 +208,31 @@ public static final LimelightCamera.MountingLocation kLimelightBackLocation = ne
     public static final NTEntry<Double> kClimberCalibrationVelocity = new NTDouble("Climber/CalibrationVelocity",0.5).setPersistent(); //rots per sec
     public static final NTEntry<Double> kClimberCalibrationPosition = new NTDouble("Climber/CalibrationPosition",-3).setPersistent(); //rots
     public static final NTEntry<Double> kClimberCalibrationVoltage = new NTDouble("Climber/CalibrationVoltage",1).setPersistent();
+    public static final NTSlot0Configs kClimberPID = new NTSlot0Configs("Climber/PID", 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
 
     /* --- Expansion ---  */ 
     public static final NTEntry<Double> kExpansionRetractedRotations = new NTDouble("Expansion/Retracted Rotations", 0.0).setPersistent();
     public static final NTEntry<Double> kExpansionExtendedRotations  = new NTDouble("Expansion/Extended Rotations", -20.0).setPersistent();
     public static final NTEntry<Double> kExpansionCruiseVelocity = new NTDouble("Expansion/Cruise Velocity", 40.0).setPersistent();   
     public static final NTEntry<Double> kExpansionAcceleration  = new NTDouble("Expansion/Acceleration", 160.0).setPersistent();
+    public static final NTSlot0Configs kExpansionPID = new NTSlot0Configs("Expansion/PID", 0.1, 0.001, 0.0, 0.0, 0.0, 0.0);
     
     /* --- Indexer --- */
-    public static final NTEntry<Double> kIndexerRollRPS = new NTDouble("Indexer/Intake RPS", 40.0).setPersistent();
-    public static final NTEntry<Double> kIndexerIdleRPS = new NTDouble("Indexer/Idle RPS", 0.0).setPersistent();
-    public static final NTEntry<Double> kIndexerHoldRPS = new NTDouble("Indexer/Hold RPS", 3.0).setPersistent();
+    public static final NTEntry<Double> kIndexerRollVoltage = new NTDouble("Indexer/Intake Voltage", 5.0).setPersistent();
+    public static final NTEntry<Double> kIndexerIdleVoltage = new NTDouble("Indexer/Idle Voltage", 0.0).setPersistent();
+    public static final NTEntry<Double> kIndexerHoldVoltage = new NTDouble("Indexer/Hold Voltage", 4.0).setPersistent();
     
     /* --- Intake  ---  */ 
-    public static final NTEntry<Double> kIntakeRPS = new NTDouble("Intake/Intake RPS", 40.0).setPersistent();
-    public static final NTEntry<Double> kIntakeIdleRPS = new NTDouble("Intake/Idle RPS", 0.0).setPersistent();
+    public static final NTEntry<Double> kIntakeVoltage= new NTDouble("Intake/Intake Voltage", 6.0).setPersistent();
+    public static final NTEntry<Double> kIntakeIdleVoltage = new NTDouble("Intake/Idle Voltage", 0.0).setPersistent();
 
 
     /* --- Shooter --- */
     public static final NTEntry<Double> kShooterRPS = new NTDouble("Shooter/Intake RPS", 12.0).setPersistent();
     public static final NTEntry<Double> kShooterIdleRPS = new NTDouble("Shooter/Idle RPS", 0.0).setPersistent();
     public static final NTEntry<Double> kShooterWarmRPS = new NTDouble("Shooter/Warm RPS", 1.0).setPersistent();
-
+    public static final NTEntry<Double> kShooterRindexRPS = new NTDouble("Shooter/Rindex RPS", -6.0).setPersistent();
+    public static final NTSlot0Configs kShooterPID = new NTSlot0Configs("Shooter/PID", 0.32, 0.001, 0.0, 0.0, 0.13, 0.53);
+    
    
 }

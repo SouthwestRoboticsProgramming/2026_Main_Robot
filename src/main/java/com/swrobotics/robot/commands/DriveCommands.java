@@ -7,6 +7,7 @@ import com.swrobotics.lib.utils.MathUtil;
 import com.swrobotics.lib.utils.PolynomialRegression;
 import com.swrobotics.robot.config.Constants;
 import com.swrobotics.robot.config.FieldPositions;
+import com.swrobotics.robot.control.AimCalc;
 import com.swrobotics.robot.subsystems.swerve.SwerveDriveSubsystem;
 
 import edu.wpi.first.math.controller.PIDController;
@@ -72,10 +73,100 @@ public final class DriveCommands {
             Translation2d tx = translationSupplier.get();
 
             Rotation2d currentRot = drive.getEstimatedPose().getRotation();
-            Pose2d hubPose = FieldPositions.getAllianceHubPose(DriverStation.getAlliance().orElse(Alliance.Red));
+            Rotation2d targetRot = AimCalc.getInstance().getDrivebaseAimAngle();
+            
+            double rotOutput = turnPid.calculate(
+                    MathUtil.wrap(currentRot.getRadians(), -Math.PI, Math.PI),
+                    MathUtil.wrap(targetRot.getRadians(), -Math.PI, Math.PI)
+            );
 
-            Translation2d vectorToHub = hubPose.getTranslation().minus(drive.getEstimatedPose().getTranslation());
-            Rotation2d targetRot = vectorToHub.getAngle();
+            double maxTurnSpeed = Units.rotationsToRadians(Constants.kSnapMaxTurnSpeed.get());
+            rotOutput = MathUtil.clamp(rotOutput, -maxTurnSpeed, maxTurnSpeed);
+
+            drive.setControl(new SwerveRequest.FieldCentric()
+                    .withVelocityX(tx.getX())
+                    .withVelocityY(tx.getY())
+                    .withRotationalRate(rotOutput));
+        }, drive);
+    }
+        public static Command driveFieldRelativeSnapToLob(
+            SwerveDriveSubsystem drive,
+
+            Supplier<Translation2d> translationSupplier
+) {
+        PIDController turnPid = new PIDController(0, 0, 0); // Values set to 0, changed a few lines later
+        turnPid.enableContinuousInput(-Math.PI, Math.PI);
+
+        return Commands.startRun(() -> {
+            turnPid.setPID(Constants.kSnapTurnKp.get(), 0, Constants.kSnapTurnKd.get());
+            turnPid.reset();
+        }, () -> {
+            Translation2d tx = translationSupplier.get();
+
+            Rotation2d currentRot = drive.getEstimatedPose().getRotation();
+            Rotation2d targetRot = AimCalc.getInstance2().getDrivebaseLobAngle();
+            
+            double rotOutput = turnPid.calculate(
+                    MathUtil.wrap(currentRot.getRadians(), -Math.PI, Math.PI),
+                    MathUtil.wrap(targetRot.getRadians(), -Math.PI, Math.PI)
+            );
+
+            double maxTurnSpeed = Units.rotationsToRadians(Constants.kSnapMaxTurnSpeed.get());
+            rotOutput = MathUtil.clamp(rotOutput, -maxTurnSpeed, maxTurnSpeed);
+
+            drive.setControl(new SwerveRequest.FieldCentric()
+                    .withVelocityX(tx.getX())
+                    .withVelocityY(tx.getY())
+                    .withRotationalRate(rotOutput));
+        }, drive);
+    }
+    public static Command driveFieldRelativeUnderTrench(
+            SwerveDriveSubsystem drive,
+
+            Supplier<Translation2d> translationSupplier
+) {
+        PIDController turnPid = new PIDController(0, 0, 0); // Values set to 0, changed a few lines later
+        turnPid.enableContinuousInput(-Math.PI, Math.PI);
+
+        return Commands.startRun(() -> {
+            turnPid.setPID(Constants.kSnapTurnKp.get(), 0, Constants.kSnapTurnKd.get());
+            turnPid.reset();
+        }, () -> {
+            Translation2d tx = translationSupplier.get();
+
+            Rotation2d currentRot = drive.getEstimatedPose().getRotation();
+            Rotation2d targetRot = Rotation2d.fromDegrees(0); // Facing "down" the field, towards the trench
+            
+            double rotOutput = turnPid.calculate(
+                    MathUtil.wrap(currentRot.getRadians(), -Math.PI, Math.PI),
+                    MathUtil.wrap(targetRot.getRadians(), -Math.PI, Math.PI)
+            );
+
+            double maxTurnSpeed = Units.rotationsToRadians(Constants.kSnapMaxTurnSpeed.get());
+            rotOutput = MathUtil.clamp(rotOutput, -maxTurnSpeed, maxTurnSpeed);
+
+            drive.setControl(new SwerveRequest.FieldCentric()
+                    .withVelocityX(tx.getX())
+                    .withVelocityY(tx.getY())
+                    .withRotationalRate(rotOutput));
+        }, drive);
+    }
+    public static Command driveFieldRelativeOverBump(
+            SwerveDriveSubsystem drive,
+
+            Supplier<Translation2d> translationSupplier
+) {
+        PIDController turnPid = new PIDController(0, 0, 0); // Values set to 0, changed a few lines later
+        turnPid.enableContinuousInput(-Math.PI, Math.PI);
+
+        return Commands.startRun(() -> {
+            turnPid.setPID(Constants.kSnapTurnKp.get(), 0, Constants.kSnapTurnKd.get());
+            turnPid.reset();
+        }, () -> {
+            Translation2d tx = translationSupplier.get();
+
+            Rotation2d currentRot = drive.getEstimatedPose().getRotation();
+            Rotation2d targetRot = Rotation2d.fromDegrees(45); // Facing "down" the field, towards the trench
             
             double rotOutput = turnPid.calculate(
                     MathUtil.wrap(currentRot.getRadians(), -Math.PI, Math.PI),

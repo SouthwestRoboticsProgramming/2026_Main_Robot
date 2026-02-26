@@ -15,6 +15,7 @@ import com.swrobotics.lib.field.FieldInfo;
 import com.swrobotics.lib.net.NTBoolean;
 import com.swrobotics.lib.net.NTEntry;
 import com.swrobotics.robot.config.Constants;
+import com.swrobotics.robot.control.AimCalc;
 import com.swrobotics.robot.logging.FieldView;
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.VecBuilder;
@@ -205,5 +206,7 @@ public final class SwerveDriveSubsystem extends SubsystemBase {
             CALIBRATE.set(false);
             calibrateModuleOffsets();
         }
+
+        AimCalc.getInstance().update(getEstimatedPose());
     }
 }
