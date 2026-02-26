@@ -110,7 +110,6 @@ public final class ControlBoard extends SubsystemBase {
         driver.a().whileTrue(DriveCommands.driveFieldRelativeSnapToHub(robot.drive, () -> this.getDriveTranslation()));
         driver.povDown().whileTrue(DriveCommands.driveFieldRelativeOverBump(robot.drive, () -> this.getDriveTranslation()));
         driver.povUp().whileTrue(DriveCommands.driveFieldRelativeUnderTrench(robot.drive, () -> this.getDriveTranslation()));
-        driver.povLeft().whileTrue(DriveCommands.driveFieldRelativeSnapToLob(robot.drive, () -> this.getDriveTranslation()));
 
     }
 

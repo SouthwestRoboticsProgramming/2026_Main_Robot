@@ -228,7 +228,7 @@ public final class Constants {
 
 
     /* --- Shooter --- */
-    public static final NTEntry<Double> kShooterRPS = new NTDouble("Shooter/Intake RPS", 12.0).setPersistent();
+    public static final NTEntry<Double> kShooterRPS = new NTDouble("Shooter/Intake RPS", 8.666667).setPersistent();
     public static final NTEntry<Double> kShooterIdleRPS = new NTDouble("Shooter/Idle RPS", 0.0).setPersistent();
     public static final NTEntry<Double> kShooterWarmRPS = new NTDouble("Shooter/Warm RPS", 1.0).setPersistent();
     public static final NTEntry<Double> kShooterRindexRPS = new NTDouble("Shooter/Rindex RPS", -6.0).setPersistent();

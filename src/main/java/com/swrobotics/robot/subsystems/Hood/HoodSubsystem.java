@@ -1,30 +1,28 @@
 package com.swrobotics.robot.subsystems.hood;
 
-import com.ctre.phoenix6.StatusSignal;
-import com.ctre.phoenix6.configs.Slot0Configs;
-import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
-import com.ctre.phoenix6.signals.SensorDirectionValue;
-
 import com.swrobotics.lib.ctre.TalonFXConfigHelper;
 import com.swrobotics.robot.config.Constants;
 import com.swrobotics.robot.config.IOAllocation;
 import com.swrobotics.robot.control.AimCalc;
 
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.util.Units;
-
-import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class HoodSubsystem extends SubsystemBase {
     private final TalonFX motor;
     private final PositionVoltage positionControl = new PositionVoltage(0.0);
+
+    // State machine for control mode
+    public enum HoodMode {
+        AUTO_TRACK,
+        MANUAL
+    }
+
+    private HoodMode mode = HoodMode.AUTO_TRACK;
+    private double manualTargetRotations = 0.0;
 
     public HoodSubsystem() {
         motor = IOAllocation.CAN.kHoodMotor.createTalonFX();
@@ -40,20 +38,43 @@ public class HoodSubsystem extends SubsystemBase {
         config.addTunable(Constants.kHoodPID);
 
         config.apply(motor);
-        motor.setPosition(0);
     }
 
     @Override
     public void periodic() {
+        switch (mode) {
+            case AUTO_TRACK -> runAutoTracking();
+            case MANUAL -> runManualControl();
+        }
+    }
 
+    private void runAutoTracking() {
         double maxAngle = Constants.kHoodMaxAngle.get();
         double minAngle = Constants.kHoodMinAngle.get();
         double maxRotations = maxAngle / 360.0;
         double minRotations = minAngle / 360.0;
 
+        // Use AimCalc to get target angle, clamp to allowed range
         double targetRotations = AimCalc.getInstance().getHoodAngle().getRotations();
         targetRotations = Math.max(minRotations, Math.min(maxRotations, targetRotations));
 
         motor.setControl(positionControl.withPosition(targetRotations));
+    }
+
+    private void runManualControl() {
+        motor.setControl(positionControl.withPosition(manualTargetRotations));
+    }
+
+    // External controls
+    public void setManualPosition(double rotations) {
+        manualTargetRotations = rotations;
+    }
+
+    public void setMode(HoodMode newMode) {
+        mode = newMode;
+    }
+
+    public HoodMode getMode() {
+        return mode;
     }
 }
