@@ -69,7 +69,7 @@ public class AimCalc {
     }
 
     public double getShooterRPS() {
-        return BASE_SHOOTER_RPS * speedMultiplier;
+        return Constants.kShooterRPS.get() * speedMultiplier;
     }
 
     public Rotation2d getDrivebaseAimAngle() {

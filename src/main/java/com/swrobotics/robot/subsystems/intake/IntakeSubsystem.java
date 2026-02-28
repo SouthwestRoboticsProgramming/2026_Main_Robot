@@ -53,8 +53,10 @@ public class IntakeSubsystem extends SubsystemBase {
     public void periodic() {
         double targetVoltage = 0;
         switch (targetState) {
-            case INTAKE: targetVoltage = Constants.kIntakeVoltage.get(); // Intake voltage is positive to pull balls in, but this may need to be reversed based on the actual motor orientation on the robot. If the intake runs backwards, simply change this to negative or set to counterclockwise
-            case IDLE: targetVoltage = Constants.kIntakeIdleVoltage.get(); //idle voltage is 0.
+            case INTAKE: targetVoltage = Constants.kIntakeVoltage.get();
+            break;
+            case IDLE: targetVoltage = Constants.kIntakeIdleVoltage.get();
+            break;
         }
 
         // Apply control

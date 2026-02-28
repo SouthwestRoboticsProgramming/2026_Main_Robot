@@ -24,6 +24,7 @@ import edu.wpi.first.wpilibj2.command.Commands;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Supplier;
 public final class DriveCommands {
     public static Command driveRobotRelative(
@@ -89,6 +90,93 @@ public final class DriveCommands {
                     .withRotationalRate(rotOutput));
         }, drive);
     }
+
+
+    private static Pose2d getClosestPose(Pose2d currentPose, List<Pose2d> candidates) {
+    Pose2d closest = candidates.get(0);
+    double minDistance = currentPose.getTranslation().getDistance(closest.getTranslation());
+
+    for (Pose2d pose : candidates) {
+        double dist = currentPose.getTranslation().getDistance(pose.getTranslation());
+        if (dist < minDistance) {
+            minDistance = dist;
+            closest = pose;
+        }
+    }
+    return closest;
+    }
+    public static Pose2d getCorrespondingPose(Pose2d currentTarget, Alliance alliance) {
+    // Trench Mapping
+    if (currentTarget.equals(FieldPositions.getAllianceLDSTrenchPose(alliance))) return FieldPositions.getAllianceLCTrenchPose(alliance);
+    if (currentTarget.equals(FieldPositions.getAllianceLCTrenchPose(alliance))) return FieldPositions.getAllianceLDSTrenchPose(alliance);
+    if (currentTarget.equals(FieldPositions.getAllianceRCTrenchPose(alliance))) return FieldPositions.getAllianceRDSTrenchPose(alliance);
+    if (currentTarget.equals(FieldPositions.getAllianceRDSTrenchPose(alliance))) return FieldPositions.getAllianceRCTrenchPose(alliance);
+
+    // Bump Mapping
+    if (currentTarget.equals(FieldPositions.getAllianceLDSBumpPose(alliance))) return FieldPositions.getAllianceLCBumpPose(alliance);
+    if (currentTarget.equals(FieldPositions.getAllianceLCBumpPose(alliance))) return FieldPositions.getAllianceLDSBumpPose(alliance);
+    if (currentTarget.equals(FieldPositions.getAllianceRCBumpPose(alliance))) return FieldPositions.getAllianceRDSBumpPose(alliance);
+    if (currentTarget.equals(FieldPositions.getAllianceRDSBumpPose(alliance))) return FieldPositions.getAllianceRCBumpPose(alliance);
+
+    return currentTarget;
+    }
+
+
+    public static Command driveThroughTrench(SwerveDriveSubsystem drive) {
+    return Commands.defer(() -> {
+        Alliance alliance = DriverStation.getAlliance().orElse(Alliance.Red);
+        Pose2d currentPose = drive.getEstimatedPose();
+
+        // Gather candidates using your required alliance syntax
+        List<Pose2d> trenchPoses = List.of(
+            FieldPositions.getAllianceLDSTrenchPose(alliance),
+            FieldPositions.getAllianceLCTrenchPose(alliance),
+            FieldPositions.getAllianceRCTrenchPose(alliance),
+            FieldPositions.getAllianceRDSTrenchPose(alliance)
+
+        );
+
+        Pose2d entryPose = getClosestPose(currentPose, trenchPoses);
+        Pose2d exitPose = getCorrespondingPose(entryPose, alliance);
+        
+        // Use 180 for Red, 0 for Blue
+        Rotation2d trenchRot = (alliance == Alliance.Red) ? Rotation2d.fromDegrees(180) : Rotation2d.fromDegrees(0);
+
+        return Commands.sequence(
+            // Phase 1: Drive to the entrance point
+            snapToPoseUntilInTolerance(drive, () -> new Pose2d(entryPose.getTranslation(), trenchRot), () -> 0.1),
+            // Phase 2: Drive through to the exit point
+            snapToPose(drive, () -> new Pose2d(exitPose.getTranslation(), trenchRot))
+        );
+    }, Set.of(drive));
+}
+
+public static Command driveThroughBump(SwerveDriveSubsystem drive) {
+    return Commands.defer(() -> {
+        Alliance alliance = DriverStation.getAlliance().orElse(Alliance.Red);
+        Pose2d currentPose = drive.getEstimatedPose();
+
+        List<Pose2d> bumpPoses = List.of(
+            FieldPositions.getAllianceLDSBumpPose(alliance),
+            FieldPositions.getAllianceLCBumpPose(alliance),
+            FieldPositions.getAllianceRCBumpPose(alliance),
+            FieldPositions.getAllianceRDSBumpPose(alliance)
+        );
+
+        Pose2d entryPose = getClosestPose(currentPose, bumpPoses);
+        Pose2d exitPose = getCorrespondingPose(entryPose, alliance);
+        
+        // Use 135 for Red, 45 for Blue
+        Rotation2d bumpRot = (alliance == Alliance.Red) ? Rotation2d.fromDegrees(135) : Rotation2d.fromDegrees(45);
+
+        return Commands.sequence(
+            // Phase 1: Snap to the bump approach
+            snapToPoseUntilInTolerance(drive, () -> new Pose2d(entryPose.getTranslation(), bumpRot), () -> 0.1),
+            // Phase 2: Drive over the bump to the exit
+            snapToPose(drive, () -> new Pose2d(exitPose.getTranslation(), bumpRot))
+        );
+    }, Set.of(drive));
+}
 
     public static Command driveFieldRelativeUnderTrench(
             SwerveDriveSubsystem drive,

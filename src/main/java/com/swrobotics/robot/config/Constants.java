@@ -222,9 +222,9 @@ public final class Constants {
     public static final NTSlot0Configs kExpansionPID = new NTSlot0Configs("Expansion/PID", 0.1, 0.001, 0.0, 0.0, 0.0, 0.0);
     
     /* --- Indexer --- */
-    public static final NTEntry<Double> kIndexerRollVoltage = new NTDouble("Indexer/Intake Voltage", 5.0).setPersistent();
+    public static final NTEntry<Double> kIndexerRollVoltage = new NTDouble("Indexer/Intake Voltage", 6.0).setPersistent();
     public static final NTEntry<Double> kIndexerIdleVoltage = new NTDouble("Indexer/Idle Voltage", 0.0).setPersistent();
-    public static final NTEntry<Double> kIndexerHoldVoltage = new NTDouble("Indexer/Hold Voltage", 4.0).setPersistent();
+    public static final NTEntry<Double> kIndexerHoldVoltage = new NTDouble("Indexer/Hold Voltage", 2.0).setPersistent();
     
     /* --- Intake  ---  */ 
     public static final NTEntry<Double> kIntakeVoltage= new NTDouble("Intake/Intake Voltage", 6.0).setPersistent();
@@ -232,7 +232,7 @@ public final class Constants {
 
 
     /* --- Shooter --- */
-    public static final NTEntry<Double> kShooterRPS = new NTDouble("Shooter/Intake RPS", 8.666667).setPersistent();
+    public static final NTEntry<Double> kShooterRPS = new NTDouble("Shooter/Intake RPS", 13.22).setPersistent();
     public static final NTEntry<Double> kShooterIdleRPS = new NTDouble("Shooter/Idle RPS", 0.0).setPersistent();
     public static final NTEntry<Double> kShooterWarmRPS = new NTDouble("Shooter/Warm RPS", 1.0).setPersistent();
     public static final NTEntry<Double> kShooterRindexRPS = new NTDouble("Shooter/Rindex RPS", -6.0).setPersistent();
