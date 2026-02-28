@@ -23,11 +23,11 @@ import edu.wpi.first.wpilibj2.command.button.POVButton;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 
 import com.swrobotics.robot.subsystems.climber.ClimberSubsystem;
-import com.swrobotics.robot.subsystems.hood.HoodSubsystem;
-import com.swrobotics.robot.subsystems.indexer.IndexerSubsystem;
 import com.swrobotics.robot.subsystems.intake.expansions.ExpansionSubsystem;
+import com.swrobotics.robot.subsystems.intake.indexer.IndexerSubsystem;
 import com.swrobotics.robot.subsystems.intake.IntakeSubsystem;
 import com.swrobotics.robot.subsystems.shooter.ShooterSubsystem;
+import com.swrobotics.robot.subsystems.shooter.hood.HoodSubsystem;
 
 public final class ControlBoard extends SubsystemBase {
     /*
@@ -107,7 +107,10 @@ public final class ControlBoard extends SubsystemBase {
         /* --- Climber --- */
         operator.y().toggleOnTrue(robot.climber.commandSetState(ClimberSubsystem.State.EXTENDED));
 
-        driver.a().whileTrue(DriveCommands.driveFieldRelativeSnapToHub(robot.drive, () -> this.getDriveTranslation()));
+        driver.a()
+                .toggleOnTrue(DriveCommands.driveFieldRelativeSnapToHub(robot.drive, () -> this.getDriveTranslation())
+                .alongWith(robot.hood.setMode(HoodSubsystem.HoodMode.AUTO_TRACK)));
+
         driver.povDown().whileTrue(DriveCommands.driveFieldRelativeOverBump(robot.drive, () -> this.getDriveTranslation()));
         driver.povUp().whileTrue(DriveCommands.driveFieldRelativeUnderTrench(robot.drive, () -> this.getDriveTranslation()));
 

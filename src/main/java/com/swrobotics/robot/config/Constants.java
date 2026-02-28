@@ -25,9 +25,12 @@ import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.RobotBase;
 
 import static edu.wpi.first.units.Units.*;
+
+import java.util.Optional;
 
 // Use NTEntry when you want tunable
 // Use double when value has been tuned in so it can't accidentally change
@@ -86,6 +89,7 @@ public final class Constants {
     public static final NTEntry<Double> kSnapTurnKd = new NTDouble("Drive/Snap/Turn kD", 0).setPersistent();
     public static final NTEntry<Double> kSnapXYDeadzone = new NTDouble("Drive/Snap/XY Deadzone (m)", 0.005).setPersistent();
     public static final NTEntry<Double> kSnapThetaDeadzone = new NTDouble("Drive/Snap/Theta Deadzone (deg)", 0.2).setPersistent();
+
 
     // Drive
     public static final double kDriveMaxAchievableSpeed = Units.feetToMeters(18.9); // m/s  TODO: Measure
@@ -192,8 +196,8 @@ public final class Constants {
 
    /* --- Hood --- */ //TODO: Adjust constant values
     public static final NTEntry<Boolean> kHoodInverted = new NTBoolean("Hood/Inverted", false).setPersistent();
-    public static final NTEntry<Double> kHoodMaxAngle = new NTDouble("Hood/Max Angle (Deg)", 55.0).setPersistent();
-    public static final NTEntry<Double> kHoodMinAngle = new NTDouble("Hood/Min Angle (Deg)", 15.0).setPersistent();
+    public static final NTEntry<Double> kHoodMaxAngle = new NTDouble("Hood/Max Angle (Deg)", 25.0).setPersistent();
+    public static final NTEntry<Double> kHoodMinAngle = new NTDouble("Hood/Min Angle (Deg)", 10.0).setPersistent();
     public static final NTEntry<Double> kHoodCruiseVelocity = new NTDouble("Hood/Cruise Velocity", 60.0).setPersistent();
     public static final NTEntry<Double> kHoodAcceleration = new NTDouble("Hood/Acceleration", 120.0).setPersistent();
 

@@ -1,4 +1,4 @@
-package com.swrobotics.robot.subsystems.hood;
+package com.swrobotics.robot.subsystems.shooter.hood;
 
 import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
@@ -9,6 +9,8 @@ import com.swrobotics.robot.config.Constants;
 import com.swrobotics.robot.config.IOAllocation;
 import com.swrobotics.robot.control.AimCalc;
 
+import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class HoodSubsystem extends SubsystemBase {
@@ -21,7 +23,7 @@ public class HoodSubsystem extends SubsystemBase {
         MANUAL
     }
 
-    private HoodMode mode = HoodMode.AUTO_TRACK;
+    private HoodMode mode = HoodMode.MANUAL;
     private double manualTargetRotations = 0.0;
 
     public HoodSubsystem() {
@@ -66,12 +68,16 @@ public class HoodSubsystem extends SubsystemBase {
     }
 
     // External controls
-    public void setManualPosition(double rotations) {
-        manualTargetRotations = rotations;
+    public Command setManualPosition(double rotations) {
+        return Commands.runOnce(() -> {
+            manualTargetRotations = rotations;
+        });
     }
 
-    public void setMode(HoodMode newMode) {
-        mode = newMode;
+    public Command setMode(HoodMode newMode) {
+        return Commands.runOnce(() -> {
+            mode = newMode;
+        });
     }
 
     public HoodMode getMode() {

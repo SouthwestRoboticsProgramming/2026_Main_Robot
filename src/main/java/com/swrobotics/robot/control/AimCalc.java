@@ -1,5 +1,7 @@
 package com.swrobotics.robot.control;
 
+import java.lang.annotation.Target;
+
 import com.swrobotics.robot.config.Constants;
 import com.swrobotics.robot.config.FieldPositions;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -21,6 +23,7 @@ public class AimCalc {
 
     private double speedMultiplier = 1.0;
 
+
     // Updated polynomial fit for hood tracking
     // (Assuming tuned from testing or simulation)
     private double a = 1.95;   // curvature term
@@ -28,7 +31,7 @@ public class AimCalc {
     private double c = 33.2;   // offset term
 
     // Shooter speed constant (RPS)
-    private static final double BASE_SHOOTER_RPS = Constants.kShooterRPS.get(); //rps is 26/((2 * π * wheel_radius)/3) because 3 is the gear ratio
+    private static final double BASE_SHOOTER_RPS = Constants.kShooterRPS.get(); //rps is (26/(2 * π * wheel_radius))/3 because 3 is the gear ratio
 
     private AimCalc() {}
 
@@ -37,16 +40,16 @@ public class AimCalc {
     }
 
     public void update(Pose2d estimatedPose) {
-        Pose2d hubPose = FieldPositions.getAllianceHubPose(
-                DriverStation.getAlliance().orElse(Alliance.Red));
+        Pose2d hubPose = FieldPositions.getAllianceHubPose(DriverStation.getAlliance().orElse(Alliance.Red));
         Translation2d vectorToHub = hubPose.getTranslation().minus(estimatedPose.getTranslation());
         angleToHub = vectorToHub.getAngle();
         distanceToHub = vectorToHub.getNorm();
 
-        double d = Math.max(1.5, Math.min(6.0, distanceToHub));
+        double d = Math.max(0.25, Math.min(6.0, distanceToHub));
         double targetAngleDeg = a * d * d + b * d + c;
         autoTargetAngle = Rotation2d.fromDegrees(targetAngleDeg);
     }
+
 
     public Rotation2d getHoodAngle() {
         return useManual ? manualAngle : autoTargetAngle;

@@ -103,9 +103,15 @@ public final class DriveCommands {
             turnPid.reset();
         }, () -> {
             Translation2d tx = translationSupplier.get();
+            Pose2d pose = drive.getEstimatedPose();
 
             Rotation2d currentRot = drive.getEstimatedPose().getRotation();
-            Rotation2d targetRot = Rotation2d.fromDegrees(0); // Facing "down" the field, towards the trench
+            Rotation2d targetRot;
+            if (DriverStation.getAlliance().isPresent() && DriverStation.getAlliance().get() == Alliance.Red) {
+                targetRot = Rotation2d.fromDegrees(180); // Facing "down" the field, towards the trench
+            } else {
+                targetRot = Rotation2d.fromDegrees(0); // Facing "down" the field, towards the trench
+            }
             
             double rotOutput = turnPid.calculate(
                     MathUtil.wrap(currentRot.getRadians(), -Math.PI, Math.PI),
@@ -121,6 +127,7 @@ public final class DriveCommands {
                     .withRotationalRate(rotOutput));
         }, drive);
     }
+    
     public static Command driveFieldRelativeOverBump(
             SwerveDriveSubsystem drive,
 
@@ -136,7 +143,12 @@ public final class DriveCommands {
             Translation2d tx = translationSupplier.get();
 
             Rotation2d currentRot = drive.getEstimatedPose().getRotation();
-            Rotation2d targetRot = Rotation2d.fromDegrees(45); // Facing "down" the field, towards the trench
+            Rotation2d targetRot;
+            if (DriverStation.getAlliance().isPresent() && DriverStation.getAlliance().get() == Alliance.Red) {
+                targetRot = Rotation2d.fromDegrees(135); // Facing "down" the field, towards the bump
+            } else {
+                targetRot = Rotation2d.fromDegrees(45); // Facing "down" the field, towards the bump
+            }
             
             double rotOutput = turnPid.calculate(
                     MathUtil.wrap(currentRot.getRadians(), -Math.PI, Math.PI),

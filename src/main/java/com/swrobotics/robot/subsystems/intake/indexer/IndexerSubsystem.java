@@ -1,4 +1,4 @@
-package com.swrobotics.robot.subsystems.indexer;
+package com.swrobotics.robot.subsystems.intake.indexer;
 
 // CTRE Phoenix 6 imports
 import com.ctre.phoenix6.controls.VoltageOut;
