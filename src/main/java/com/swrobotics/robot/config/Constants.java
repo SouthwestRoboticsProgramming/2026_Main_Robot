@@ -81,8 +81,8 @@ public final class Constants {
     public static final NTEntry<Double> kAutoTurnKp = new NTDouble("Drive/Auto/Turn PID/kP", 5).setPersistent();
     public static final NTEntry<Double> kAutoTurnKd = new NTDouble("Drive/Auto/Turn PID/kD", 0).setPersistent();
 
-    public static final NTEntry<Double> kSnapMaxSpeed = new NTDouble("Drive/Snap/Max Speed (meters per sec)", 1.5).setPersistent();
-    public static final NTEntry<Double> kSnapMaxTurnSpeed = new NTDouble("Drive/Snap/Max Turn Speed (rot per sec)", 1.2).setPersistent();
+    public static final NTEntry<Double> kSnapMaxSpeed = new NTDouble("Drive/Snap/Max Speed (meters per sec)", 10).setPersistent();
+    public static final NTEntry<Double> kSnapMaxTurnSpeed = new NTDouble("Drive/Snap/Max Turn Speed (rot per sec)", 1.5).setPersistent();
     public static final NTEntry<Double> kSnapDriveKp = new NTDouble("Drive/Snap/Drive kP", 5).setPersistent();
     public static final NTEntry<Double> kSnapDriveKd = new NTDouble("Drive/Snap/Drive kD", 0).setPersistent();
     public static final NTEntry<Double> kSnapTurnKp = new NTDouble("Drive/Snap/Turn kP", 8).setPersistent();
@@ -206,13 +206,14 @@ public final class Constants {
     
 
     /* --- Climber ---  */ //TODO: Add climber constants here later
-    public static final NTEntry<Double> kClimberTall = new NTDouble("Climber/Height", 1).setPersistent();	
-    //default needs measurement (rotations of motor)
-    public static final NTEntry<Double> kClimberCalibrationTime = new NTDouble("Climber/CalibrationTime",0.25).setPersistent();
-    public static final NTEntry<Double> kClimberCalibrationVelocity = new NTDouble("Climber/CalibrationVelocity",0.5).setPersistent(); //rots per sec
-    public static final NTEntry<Double> kClimberCalibrationPosition = new NTDouble("Climber/CalibrationPosition",-3).setPersistent(); //rots
-    public static final NTEntry<Double> kClimberCalibrationVoltage = new NTDouble("Climber/CalibrationVoltage",1).setPersistent();
-    public static final NTSlot0Configs kClimberPID = new NTSlot0Configs("Climber/PID", 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
+        // Logic for 16.875:1 Gear Ratio
+        public static final NTEntry<Double> kClimberTall = new NTDouble("Climber/Height", 45.0).setPersistent(); 
+        public static final NTEntry<Double> kClimberCalibrationTime = new NTDouble("Climber/CalibrationTime", 0.2).setPersistent();
+        public static final NTEntry<Double> kClimberCalibrationVelocity = new NTDouble("Climber/CalibrationVelocity", 0.05).setPersistent(); 
+        public static final NTEntry<Double> kClimberCalibrationVoltage = new NTDouble("Climber/CalibrationVoltage", 2.5).setPersistent();
+        // With a 16.875 ratio, 1 rotation of the output is 16.875 rotations of the motor.
+        // We want a strong P-gain to hold 130lbs. 
+        public static final NTSlot0Configs kClimberPID = new NTSlot0Configs("Climber/PID", 15.0, 0.0, 0.2, 0.0, 0.0, 0.0);
 
     /* --- Expansion ---  */ 
     public static final NTEntry<Double> kExpansionRetractedRotations = new NTDouble("Expansion/Retracted Rotations", 0.0).setPersistent();

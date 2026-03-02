@@ -69,6 +69,7 @@ public final class DriveCommands {
 
         return Commands.startRun(() -> {
             turnPid.setPID(Constants.kSnapTurnKp.get(), 0, Constants.kSnapTurnKd.get());
+            turnPid.setTolerance(Math.toRadians(Constants.kSnapThetaDeadzone.get()));
             turnPid.reset();
         }, () -> {
             Translation2d tx = translationSupplier.get();
@@ -80,9 +81,12 @@ public final class DriveCommands {
                     MathUtil.wrap(currentRot.getRadians(), -Math.PI, Math.PI),
                     MathUtil.wrap(targetRot.getRadians(), -Math.PI, Math.PI)
             );
-
+            if (turnPid.atSetpoint()) {
+                rotOutput = 0;
+            }else {
             double maxTurnSpeed = Units.rotationsToRadians(Constants.kSnapMaxTurnSpeed.get());
             rotOutput = MathUtil.clamp(rotOutput, -maxTurnSpeed, maxTurnSpeed);
+            }
 
             drive.setControl(new SwerveRequest.FieldCentric()
                     .withVelocityX(tx.getX())
@@ -107,20 +111,29 @@ public final class DriveCommands {
     }
     public static Pose2d getCorrespondingPose(Pose2d currentTarget, Alliance alliance) {
     // Trench Mapping
-    if (currentTarget.equals(FieldPositions.getAllianceLDSTrenchPose(alliance))) return FieldPositions.getAllianceLCTrenchPose(alliance);
-    if (currentTarget.equals(FieldPositions.getAllianceLCTrenchPose(alliance))) return FieldPositions.getAllianceLDSTrenchPose(alliance);
-    if (currentTarget.equals(FieldPositions.getAllianceRCTrenchPose(alliance))) return FieldPositions.getAllianceRDSTrenchPose(alliance);
-    if (currentTarget.equals(FieldPositions.getAllianceRDSTrenchPose(alliance))) return FieldPositions.getAllianceRCTrenchPose(alliance);
+    if (currentTarget.equals(FieldPositions.kLDSBlueTrenchPose)) return FieldPositions.kLCBlueTrenchPose;
+    if (currentTarget.equals(FieldPositions.kLCBlueTrenchPose)) return FieldPositions.kLDSBlueTrenchPose;
+    if (currentTarget.equals(FieldPositions.kRCBlueTrenchPose)) return FieldPositions.kRDSBlueTrenchPose;
+    if (currentTarget.equals(FieldPositions.kRDSBlueTrenchPose)) return FieldPositions.kRCBlueTrenchPose;
+    if (currentTarget.equals(FieldPositions.kLDSRedTrenchPose)) return FieldPositions.kLCRedTrenchPose;
+    if (currentTarget.equals(FieldPositions.kLCRedTrenchPose)) return FieldPositions.kLDSRedTrenchPose;
+    if (currentTarget.equals(FieldPositions.kRCRedTrenchPose)) return FieldPositions.kRDSRedTrenchPose;
+    if (currentTarget.equals(FieldPositions.kRDSRedTrenchPose)) return FieldPositions.kRCRedTrenchPose;
 
     // Bump Mapping
-    if (currentTarget.equals(FieldPositions.getAllianceLDSBumpPose(alliance))) return FieldPositions.getAllianceLCBumpPose(alliance);
-    if (currentTarget.equals(FieldPositions.getAllianceLCBumpPose(alliance))) return FieldPositions.getAllianceLDSBumpPose(alliance);
-    if (currentTarget.equals(FieldPositions.getAllianceRCBumpPose(alliance))) return FieldPositions.getAllianceRDSBumpPose(alliance);
-    if (currentTarget.equals(FieldPositions.getAllianceRDSBumpPose(alliance))) return FieldPositions.getAllianceRCBumpPose(alliance);
+    if (currentTarget.equals(FieldPositions.kLDSBlueBumpPose)) return FieldPositions.kLCBlueBumpPose;
+    if (currentTarget.equals(FieldPositions.kLCBlueBumpPose)) return FieldPositions.kLDSBlueBumpPose;
+    if (currentTarget.equals(FieldPositions.kRCBlueBumpPose)) return FieldPositions.kRDSBlueBumpPose;
+    if (currentTarget.equals(FieldPositions.kRDSBlueBumpPose)) return FieldPositions.kRCBlueBumpPose;
+    if (currentTarget.equals(FieldPositions.kLDSRedBumpPose)) return FieldPositions.kLCRedBumpPose;
+    if (currentTarget.equals(FieldPositions.kLCRedBumpPose)) return FieldPositions.kLDSRedBumpPose;
+    if (currentTarget.equals(FieldPositions.kRCRedBumpPose)) return FieldPositions.kRDSRedBumpPose;
+    if (currentTarget.equals(FieldPositions.kRDSRedBumpPose)) return FieldPositions.kRCRedBumpPose;
 
     return currentTarget;
     }
 
+    
 
     public static Command driveThroughTrench(SwerveDriveSubsystem drive) {
     return Commands.defer(() -> {
@@ -129,11 +142,14 @@ public final class DriveCommands {
 
         // Gather candidates using your required alliance syntax
         List<Pose2d> trenchPoses = List.of(
-            FieldPositions.getAllianceLDSTrenchPose(alliance),
-            FieldPositions.getAllianceLCTrenchPose(alliance),
-            FieldPositions.getAllianceRCTrenchPose(alliance),
-            FieldPositions.getAllianceRDSTrenchPose(alliance)
-
+            FieldPositions.kLDSBlueTrenchPose, 
+            FieldPositions.kLCBlueTrenchPose, 
+            FieldPositions.kRCBlueTrenchPose, 
+            FieldPositions.kRDSBlueTrenchPose,
+            FieldPositions.kLDSRedTrenchPose, 
+            FieldPositions.kLCRedTrenchPose, 
+            FieldPositions.kRCRedTrenchPose, 
+            FieldPositions.kRDSRedTrenchPose
         );
 
         Pose2d entryPose = getClosestPose(currentPose, trenchPoses);
@@ -157,10 +173,14 @@ public static Command driveThroughBump(SwerveDriveSubsystem drive) {
         Pose2d currentPose = drive.getEstimatedPose();
 
         List<Pose2d> bumpPoses = List.of(
-            FieldPositions.getAllianceLDSBumpPose(alliance),
-            FieldPositions.getAllianceLCBumpPose(alliance),
-            FieldPositions.getAllianceRCBumpPose(alliance),
-            FieldPositions.getAllianceRDSBumpPose(alliance)
+            FieldPositions.kLDSBlueBumpPose, 
+            FieldPositions.kLCBlueBumpPose,
+            FieldPositions.kRCBlueBumpPose,
+            FieldPositions.kRDSBlueBumpPose,
+            FieldPositions.kLDSRedBumpPose,
+            FieldPositions.kLCRedBumpPose,
+            FieldPositions.kRCRedBumpPose,
+            FieldPositions.kRDSRedBumpPose
         );
 
         Pose2d entryPose = getClosestPose(currentPose, bumpPoses);
@@ -177,81 +197,8 @@ public static Command driveThroughBump(SwerveDriveSubsystem drive) {
         );
     }, Set.of(drive));
 }
-
-    public static Command driveFieldRelativeUnderTrench(
-            SwerveDriveSubsystem drive,
-
-            Supplier<Translation2d> translationSupplier
-) {
-        PIDController turnPid = new PIDController(0, 0, 0); // Values set to 0, changed a few lines later
-        turnPid.enableContinuousInput(-Math.PI, Math.PI);
-
-        return Commands.startRun(() -> {
-            turnPid.setPID(Constants.kSnapTurnKp.get(), 0, Constants.kSnapTurnKd.get());
-            turnPid.reset();
-        }, () -> {
-            Translation2d tx = translationSupplier.get();
-            Pose2d pose = drive.getEstimatedPose();
-
-            Rotation2d currentRot = drive.getEstimatedPose().getRotation();
-            Rotation2d targetRot;
-            if (DriverStation.getAlliance().isPresent() && DriverStation.getAlliance().get() == Alliance.Red) {
-                targetRot = Rotation2d.fromDegrees(180); // Facing "down" the field, towards the trench
-            } else {
-                targetRot = Rotation2d.fromDegrees(0); // Facing "down" the field, towards the trench
-            }
-            
-            double rotOutput = turnPid.calculate(
-                    MathUtil.wrap(currentRot.getRadians(), -Math.PI, Math.PI),
-                    MathUtil.wrap(targetRot.getRadians(), -Math.PI, Math.PI)
-            );
-
-            double maxTurnSpeed = Units.rotationsToRadians(Constants.kSnapMaxTurnSpeed.get());
-            rotOutput = MathUtil.clamp(rotOutput, -maxTurnSpeed, maxTurnSpeed);
-
-            drive.setControl(new SwerveRequest.FieldCentric()
-                    .withVelocityX(tx.getX())
-                    .withVelocityY(tx.getY())
-                    .withRotationalRate(rotOutput));
-        }, drive);
-    }
     
-    public static Command driveFieldRelativeOverBump(
-            SwerveDriveSubsystem drive,
 
-            Supplier<Translation2d> translationSupplier
-) {
-        PIDController turnPid = new PIDController(0, 0, 0); // Values set to 0, changed a few lines later
-        turnPid.enableContinuousInput(-Math.PI, Math.PI);
-
-        return Commands.startRun(() -> {
-            turnPid.setPID(Constants.kSnapTurnKp.get(), 0, Constants.kSnapTurnKd.get());
-            turnPid.reset();
-        }, () -> {
-            Translation2d tx = translationSupplier.get();
-
-            Rotation2d currentRot = drive.getEstimatedPose().getRotation();
-            Rotation2d targetRot;
-            if (DriverStation.getAlliance().isPresent() && DriverStation.getAlliance().get() == Alliance.Red) {
-                targetRot = Rotation2d.fromDegrees(135); // Facing "down" the field, towards the bump
-            } else {
-                targetRot = Rotation2d.fromDegrees(45); // Facing "down" the field, towards the bump
-            }
-            
-            double rotOutput = turnPid.calculate(
-                    MathUtil.wrap(currentRot.getRadians(), -Math.PI, Math.PI),
-                    MathUtil.wrap(targetRot.getRadians(), -Math.PI, Math.PI)
-            );
-
-            double maxTurnSpeed = Units.rotationsToRadians(Constants.kSnapMaxTurnSpeed.get());
-            rotOutput = MathUtil.clamp(rotOutput, -maxTurnSpeed, maxTurnSpeed);
-
-            drive.setControl(new SwerveRequest.FieldCentric()
-                    .withVelocityX(tx.getX())
-                    .withVelocityY(tx.getY())
-                    .withRotationalRate(rotOutput));
-        }, drive);
-    }
     public static Command driveSnapToTarget(
         SwerveDriveSubsystem drive,
         Supplier<Translation2d> translationSupplier,

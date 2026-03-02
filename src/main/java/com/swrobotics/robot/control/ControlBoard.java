@@ -84,18 +84,17 @@ public final class ControlBoard extends SubsystemBase {
         /* --- Intake/indexer --- */
 
         driver.leftTrigger()
-                .whileTrue(robot.indexer.commandSetState(IndexerSubsystem.State.INTAKE)
-                .alongWith(robot.intake.commandSetState(IntakeSubsystem.State.INTAKE)));
-        driver.rightBumper()
-                .whileTrue(robot.indexer.ConditionalIntake()
-                .alongWith(robot.intake.commandSetState(IntakeSubsystem.State.INTAKE)));
+                .whileTrue(robot.intake.commandSetState(IntakeSubsystem.State.INTAKE)
+                .alongWith(robot.indexer.commandSetState(IndexerSubsystem.State.INTAKE)));
         driver.leftBumper()
                 .whileTrue(robot.indexer.commandSetState(IndexerSubsystem.State.RINDEX)
                 .alongWith(robot.shooter.commandSetState(ShooterSubsystem.State.RINDEX)));
 
         /* --- Shooter --- */
         driver.rightTrigger()
-        .whileTrue(robot.shooter.commandSetState(ShooterSubsystem.State.SHOOT));
+        .whileTrue(robot.shooter.commandSetState(ShooterSubsystem.State.SHOOT)
+        .withTimeout(0.75)
+        .alongWith(robot.indexer.commandSetState(IndexerSubsystem.State.FEED)));
 
         /* --- Hood --- */
         // operator.povDown().onTrue(robot.hood.commandManualUp());
@@ -108,12 +107,11 @@ public final class ControlBoard extends SubsystemBase {
         operator.y().toggleOnTrue(robot.climber.commandSetState(ClimberSubsystem.State.EXTENDED));
 
         driver.a()
-                .toggleOnTrue(DriveCommands.driveFieldRelativeSnapToHub(robot.drive, () -> this.getDriveTranslation())
-                .alongWith(robot.hood.setMode(HoodSubsystem.HoodMode.AUTO_TRACK)))
-                .onFalse(robot.hood.setMode(HoodSubsystem.HoodMode.MANUAL));
+                .whileTrue(DriveCommands.driveFieldRelativeSnapToHub(robot.drive, () -> this.getDriveTranslation())
+                .alongWith(robot.hood.setMode(HoodSubsystem.HoodMode.AUTO_TRACK)));
 
-        driver.povDown().whileTrue(DriveCommands.driveThroughBump(robot.drive));
-        driver.povUp().whileTrue(DriveCommands.driveThroughTrench(robot.drive));
+        driver.y().whileTrue(DriveCommands.driveThroughBump(robot.drive));
+        driver.b().whileTrue(DriveCommands.driveThroughTrench(robot.drive));
 
     }
 

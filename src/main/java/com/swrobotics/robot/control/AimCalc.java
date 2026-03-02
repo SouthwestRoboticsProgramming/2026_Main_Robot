@@ -15,6 +15,8 @@ public class AimCalc {
 
     private Rotation2d angleToHub = new Rotation2d();
     private double distanceToHub = 0.0;
+    private Rotation2d lobAngle = new Rotation2d();
+    
 
     // Hood angle management
     private Rotation2d autoTargetAngle = new Rotation2d();
