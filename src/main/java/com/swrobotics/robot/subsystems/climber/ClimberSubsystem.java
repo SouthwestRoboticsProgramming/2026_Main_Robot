@@ -46,7 +46,8 @@ public final class ClimberSubsystem extends SubsystemBase {
         motor = IOAllocation.CAN.kClimberMotor.createTalonFX();
         
         // --- HARDWARE CONFIGURATION ---
-        TalonFXConfiguration config = new TalonFXConfiguration();
+        TalonFXConfigHelper config = new TalonFXConfigHelper();
+
 
         
         // 1. Current Limiting: Crucial for 130lb lift
@@ -61,7 +62,7 @@ public final class ClimberSubsystem extends SubsystemBase {
         // 2. Brake Mode: Ensures we don't drop after the match ends
         config.MotorOutput.NeutralMode = NeutralModeValue.Brake;
         config.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
-        ((TalonFXConfigHelper) config).addTunable(Constants.kClimberPID);
+        config.addTunable(Constants.kClimberPID);
 
 
         motor.getConfigurator().apply(config);
@@ -132,11 +133,11 @@ private void runCalibration() {
     boolean reachedHardStop = Math.abs(velocity) < Constants.kClimberCalibrationVelocity.get();
     
     // Condition 2: 5 seconds have passed since enable
-    boolean timedOut = (currentTime - calibrationStartTime) > 5.0;
+    boolean timedOut = (currentTime - calibrationStartTime) > 4.0;
 
     if (calibrationDebounce.calculate(reachedHardStop) || timedOut) {
         // Use the "CalibrationPosition" (usually -0.5 or 0) to set the zero point
-        motor.setPosition(Constants.kClimberCalibrationPosition.get());
+        motor.setPosition(0.0);
         hasCalibrated = true;
         calibrating.set(false);
         

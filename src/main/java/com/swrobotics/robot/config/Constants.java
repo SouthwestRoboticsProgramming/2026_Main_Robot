@@ -82,11 +82,11 @@ public final class Constants {
     public static final NTEntry<Double> kAutoTurnKd = new NTDouble("Drive/Auto/Turn PID/kD", 0).setPersistent();
 
     public static final NTEntry<Double> kSnapMaxSpeed = new NTDouble("Drive/Snap/Max Speed (meters per sec)", 10).setPersistent();
-    public static final NTEntry<Double> kSnapMaxTurnSpeed = new NTDouble("Drive/Snap/Max Turn Speed (rot per sec)", 1.5).setPersistent();
+    public static final NTEntry<Double> kSnapMaxTurnSpeed = new NTDouble("Drive/Snap/Max Turn Speed (rot per sec)", 3).setPersistent();
     public static final NTEntry<Double> kSnapDriveKp = new NTDouble("Drive/Snap/Drive kP", 5).setPersistent();
     public static final NTEntry<Double> kSnapDriveKd = new NTDouble("Drive/Snap/Drive kD", 0).setPersistent();
-    public static final NTEntry<Double> kSnapTurnKp = new NTDouble("Drive/Snap/Turn kP", 8).setPersistent();
-    public static final NTEntry<Double> kSnapTurnKd = new NTDouble("Drive/Snap/Turn kD", 0).setPersistent();
+    public static final NTEntry<Double> kSnapTurnKp = new NTDouble("Drive/Snap/Turn kP", 1.5).setPersistent();
+    public static final NTEntry<Double> kSnapTurnKd = new NTDouble("Drive/Snap/Turn kD", 0.03).setPersistent();
     public static final NTEntry<Double> kSnapXYDeadzone = new NTDouble("Drive/Snap/XY Deadzone (m)", 0.005).setPersistent();
     public static final NTEntry<Double> kSnapThetaDeadzone = new NTDouble("Drive/Snap/Theta Deadzone (deg)", 0.2).setPersistent();
 
@@ -176,23 +176,25 @@ public final class Constants {
             0.00117
     );
 
-    public static final LimelightCamera.MountingLocation kLimelightBackLocation = new LimelightCamera.MountingLocation(
-        Units.inchesToMeters(-13), Units.inchesToMeters(10.673), Units.inchesToMeters(17.558), //z x y? jonah lowkey weird
-        // Degrees CCW
-        0, 0, 180
-    );
-
-    public static final LimelightCamera.MountingLocation kLimelightRightLocation = new LimelightCamera.MountingLocation(
-        Units.inchesToMeters(-.25),Units.inchesToMeters(-12.449), Units.inchesToMeters(9.502),
-        // Degrees CCW
-        0, 0, 90
-    );
-
     public static final LimelightCamera.MountingLocation kLimelightFrontLocation = new LimelightCamera.MountingLocation(
         // TODO: These are guesses, they should be measured in CAD
         Units.inchesToMeters(-4.84), Units.inchesToMeters(10.213), Units.inchesToMeters(18.132),
         0, 15, 0
     );
+
+    public static final LimelightCamera.MountingLocation kLimelightBackLocation = new LimelightCamera.MountingLocation(
+        Units.inchesToMeters(13), Units.inchesToMeters(-10.673), Units.inchesToMeters(17.558), //z x y? jonah lowkey weird
+        // Degrees CCW
+        0, 0, 180
+    );
+
+    public static final LimelightCamera.MountingLocation kLimelightRightLocation = new LimelightCamera.MountingLocation(
+        Units.inchesToMeters(10.05),Units.inchesToMeters(-12.3503), Units.inchesToMeters(9.502),
+        // Degrees CCW
+        0, 0, 270
+    );
+
+
 
    /* --- Hood --- */ //TODO: Adjust constant values
     public static final NTEntry<Boolean> kHoodInverted = new NTBoolean("Hood/Inverted", false).setPersistent();
@@ -220,7 +222,7 @@ public final class Constants {
     public static final NTEntry<Double> kExpansionExtendedRotations  = new NTDouble("Expansion/Extended Rotations", -20.0).setPersistent();
     public static final NTEntry<Double> kExpansionCruiseVelocity = new NTDouble("Expansion/Cruise Velocity", 40.0).setPersistent();   
     public static final NTEntry<Double> kExpansionAcceleration  = new NTDouble("Expansion/Acceleration", 160.0).setPersistent();
-    public static final NTSlot0Configs kExpansionPID = new NTSlot0Configs("Expansion/PID", 0.1, 0.001, 0.0, 0.0, 0.0, 0.0);
+    public static final NTSlot0Configs kExpansionPID = new NTSlot0Configs("Expansion/PID", 3.0, 0.000, 0.01, 0.0, 0.0, 0.0);
     
     /* --- Indexer --- */
     public static final NTEntry<Double> kIndexerRollVoltage = new NTDouble("Indexer/Intake Voltage", 6.0).setPersistent();
