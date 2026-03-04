@@ -41,6 +41,7 @@ public class IntakeSubsystem extends SubsystemBase {
         config.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
         config.MotorOutput.NeutralMode = NeutralModeValue.Coast;
         voltageControl.withEnableFOC(true);
+        config.addTunable(Constants.kIntakePID);
 
         // apply the configuration to the motor
         config.apply(motor);

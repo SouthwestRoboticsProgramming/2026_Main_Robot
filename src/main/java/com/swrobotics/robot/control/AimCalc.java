@@ -7,6 +7,7 @@ import com.swrobotics.robot.config.FieldPositions;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 
@@ -15,7 +16,6 @@ public class AimCalc {
 
     private Rotation2d angleToHub = new Rotation2d();
     private double distanceToHub = 0.0;
-    private Rotation2d lobAngle = new Rotation2d();
     
 
     // Hood angle management

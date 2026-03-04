@@ -58,8 +58,7 @@ public final class DriveCommands {
                     .withRotationalRate(rot));
         }, drive);
     }
-
-    public static Command driveFieldRelativeSnapToHub(
+        public static Command driveFieldRelativeSnapTo180(
             SwerveDriveSubsystem drive,
 
             Supplier<Translation2d> translationSupplier
@@ -77,6 +76,46 @@ public final class DriveCommands {
             Rotation2d currentRot = drive.getEstimatedPose().getRotation();
             Rotation2d targetRot = AimCalc.getInstance().getDrivebaseAimAngle();
             
+            double rotOutput = turnPid.calculate(
+                    MathUtil.wrap(currentRot.getRadians(), -Math.PI, Math.PI),
+                    MathUtil.wrap(targetRot.getRadians(), -Math.PI, Math.PI)
+            );
+            if (turnPid.atSetpoint()) {
+                rotOutput = 0;
+            }else {
+            double maxTurnSpeed = Units.rotationsToRadians(Constants.kSnapMaxTurnSpeed.get());
+            rotOutput = MathUtil.clamp(rotOutput, -maxTurnSpeed, maxTurnSpeed);
+            }
+
+            drive.setControl(new SwerveRequest.FieldCentric()
+                    .withVelocityX(tx.getX())
+                    .withVelocityY(tx.getY())
+                    .withRotationalRate(rotOutput));
+        }, drive);
+    }
+
+    public static Command driveFieldRelativeSnapToHub(
+            SwerveDriveSubsystem drive,
+
+            Supplier<Translation2d> translationSupplier
+) {
+        PIDController turnPid = new PIDController(0, 0, 0); // Values set to 0, changed a few lines later
+        turnPid.enableContinuousInput(-Math.PI, Math.PI);
+
+        return Commands.startRun(() -> {
+            turnPid.setPID(Constants.kSnapTurnKp.get(), 0, Constants.kSnapTurnKd.get());
+            turnPid.setTolerance(Math.toRadians(Constants.kSnapThetaDeadzone.get()));
+            turnPid.reset();
+        }, () -> {
+            Translation2d tx = translationSupplier.get();
+            
+            Rotation2d currentRot = drive.getEstimatedPose().getRotation();
+            Rotation2d targetRot = AimCalc.getInstance().getDrivebaseAimAngle();
+            // TEMP
+            Constants.currentAngle.set(Math.abs(currentRot.getDegrees()));
+            Constants.targetAngle.set(Math.abs(targetRot.getDegrees()));
+            
+
             double rotOutput = turnPid.calculate(
                     MathUtil.wrap(currentRot.getRadians(), -Math.PI, Math.PI),
                     MathUtil.wrap(targetRot.getRadians(), -Math.PI, Math.PI)

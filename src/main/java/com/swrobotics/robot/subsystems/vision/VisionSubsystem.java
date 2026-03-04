@@ -60,7 +60,7 @@ public final class VisionSubsystem extends SubsystemBase {
         // However, still use MegaTag 1 when slow/stopped so the gyro can be
         // corrected by vision measurements.
         boolean useMegaTag2 = Math.hypot(currentSpeeds.vxMetersPerSecond, currentSpeeds.vyMetersPerSecond)
-                > Constants.kVisionMT2SpeedThreshold;
+                 > Constants.kVisionMT2SpeedThreshold;
 
         List<LimelightCamera.Update> updates = new ArrayList<>();
         for (LimelightCamera camera : cameras) {

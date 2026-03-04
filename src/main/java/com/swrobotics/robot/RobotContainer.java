@@ -16,7 +16,7 @@ import com.swrobotics.robot.control.ControlBoard;
 import com.swrobotics.robot.logging.FieldView;
 import com.swrobotics.robot.subsystems.climber.ClimberSubsystem;
 import com.swrobotics.robot.subsystems.shooter.ShooterSubsystem;
-import com.swrobotics.robot.subsystems.shooter.hood.HoodSubsystem;
+//import com.swrobotics.robot.subsystems.shooter.hood.HoodSubsystem;
 import com.swrobotics.robot.subsystems.intake.IntakeSubsystem;
 import com.swrobotics.robot.subsystems.intake.expansions.ExpansionSubsystem;
 import com.swrobotics.robot.subsystems.intake.indexer.IndexerSubsystem;
@@ -43,7 +43,7 @@ public class RobotContainer {
     public final IndexerSubsystem indexer;
     public final ShooterSubsystem shooter;
     public final IntakeSubsystem intake;
-    public final HoodSubsystem hood;
+    //public final HoodSubsystem hood;
     public final ExpansionSubsystem expansion;
     public final ClimberSubsystem climber;
 
@@ -58,7 +58,7 @@ public class RobotContainer {
         indexer = new IndexerSubsystem();
         shooter = new ShooterSubsystem();
         intake = new IntakeSubsystem();
-        hood = new HoodSubsystem();
+       // hood = new HoodSubsystem();
         expansion = new ExpansionSubsystem();
         climber = new ClimberSubsystem();
 

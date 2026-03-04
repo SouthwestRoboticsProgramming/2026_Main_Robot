@@ -48,7 +48,6 @@ public final class ClimberSubsystem extends SubsystemBase {
         // --- HARDWARE CONFIGURATION ---
         TalonFXConfigHelper config = new TalonFXConfigHelper();
 
-
         
         // 1. Current Limiting: Crucial for 130lb lift
         // Limits supply to 40A continuous, 60A peak to prevent brownouts
@@ -133,11 +132,11 @@ private void runCalibration() {
     boolean reachedHardStop = Math.abs(velocity) < Constants.kClimberCalibrationVelocity.get();
     
     // Condition 2: 5 seconds have passed since enable
-    boolean timedOut = (currentTime - calibrationStartTime) > 4.0;
+    boolean timedOut = (currentTime - calibrationStartTime) > 8.5;
 
     if (calibrationDebounce.calculate(reachedHardStop) || timedOut) {
         // Use the "CalibrationPosition" (usually -0.5 or 0) to set the zero point
-        motor.setPosition(0.0);
+        motor.setPosition(Constants.kClimberCalibrationPosition.get());
         hasCalibrated = true;
         calibrating.set(false);
         

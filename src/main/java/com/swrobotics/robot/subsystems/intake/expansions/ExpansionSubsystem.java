@@ -28,8 +28,10 @@ public class ExpansionSubsystem extends SubsystemBase {
 
         motor = IOAllocation.CAN.kExpansionMotor.createTalonFX();
         TalonFXConfigHelper config = new TalonFXConfigHelper();
-        config.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
+        config.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
         config.MotorOutput.NeutralMode = NeutralModeValue.Brake;
+        config.CurrentLimits.SupplyCurrentLimit = 40;
+        config.CurrentLimits.SupplyCurrentLimitEnable = true;
         config.addTunable(Constants.kExpansionPID);
 
         config.apply(motor);
@@ -45,9 +47,11 @@ public class ExpansionSubsystem extends SubsystemBase {
         double targetRotations;
 
         switch (targetState) {
-            case EXTENDED -> targetRotations = Constants.kExpansionExtendedRotations.get();
-            case RETRACTED -> targetRotations = Constants.kExpansionRetractedRotations.get();
-            default -> targetRotations = Constants.kExpansionRetractedRotations.get();
+            case EXTENDED: targetRotations = 0; //Constants.kExpansionExtendedRotations.get();
+            break;
+            case RETRACTED: targetRotations = 0;
+            break;
+            default: targetRotations = 0;
         }
 
         motor.setControl(positionControl.withPosition(targetRotations));

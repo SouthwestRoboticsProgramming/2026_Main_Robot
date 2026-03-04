@@ -32,9 +32,6 @@ import static edu.wpi.first.units.Units.*;
 
 import java.util.Optional;
 
-
-//test
-
 // Use NTEntry when you want tunable
 // Use double when value has been tuned in so it can't accidentally change
 public final class Constants {
@@ -66,9 +63,14 @@ public final class Constants {
     // See https://sleipnirgroup.github.io/Choreo/usage/estimating-moi/
     public static final double kRobotMOI = 1.0/12.0 * kRobotMass * (kFrameLength*kFrameLength + kFrameWidth*kFrameWidth);
 
+    // TEMP
+    public static NTEntry<Double> currentAngle = new NTDouble("Drive/Auto/Test/current", 0);
+    public static NTEntry<Double> targetAngle = new NTDouble("Drive/Auto/Test/target", 0);
+
     // Controls
     public static final int kDriverControllerPort = 0;
     public static final int kOperatorControllerPort = 1;
+    public static final int kSuperControllerPort = 2;
 
     public static final double kDeadband = 0.15;
     public static final double kTriggerThreshold = 0.3;
@@ -85,11 +87,11 @@ public final class Constants {
     public static final NTEntry<Double> kAutoTurnKd = new NTDouble("Drive/Auto/Turn PID/kD", 0).setPersistent();
 
     public static final NTEntry<Double> kSnapMaxSpeed = new NTDouble("Drive/Snap/Max Speed (meters per sec)", 10).setPersistent();
-    public static final NTEntry<Double> kSnapMaxTurnSpeed = new NTDouble("Drive/Snap/Max Turn Speed (rot per sec)", 3).setPersistent();
-    public static final NTEntry<Double> kSnapDriveKp = new NTDouble("Drive/Snap/Drive kP", 5).setPersistent();
-    public static final NTEntry<Double> kSnapDriveKd = new NTDouble("Drive/Snap/Drive kD", 0).setPersistent();
-    public static final NTEntry<Double> kSnapTurnKp = new NTDouble("Drive/Snap/Turn kP", 1.5).setPersistent();
-    public static final NTEntry<Double> kSnapTurnKd = new NTDouble("Drive/Snap/Turn kD", 0.03).setPersistent();
+    public static final NTEntry<Double> kSnapMaxTurnSpeed = new NTDouble("Drive/Snap/Max Turn Speed (rot per sec)", 3.5).setPersistent();
+    public static final NTEntry<Double> kSnapDriveKp = new NTDouble("Drive/Snap/Drive kP", 2).setPersistent();
+    public static final NTEntry<Double> kSnapDriveKd = new NTDouble("Drive/Snap/Drive kD", 0.2).setPersistent();
+    public static final NTEntry<Double> kSnapTurnKp = new NTDouble("Drive/Snap/Turn kP", 4).setPersistent();
+    public static final NTEntry<Double> kSnapTurnKd = new NTDouble("Drive/Snap/Turn kD", 0).setPersistent();
     public static final NTEntry<Double> kSnapXYDeadzone = new NTDouble("Drive/Snap/XY Deadzone (m)", 0.005).setPersistent();
     public static final NTEntry<Double> kSnapThetaDeadzone = new NTDouble("Drive/Snap/Theta Deadzone (deg)", 0.2).setPersistent();
 
@@ -179,12 +181,6 @@ public final class Constants {
             0.00117
     );
 
-    public static final LimelightCamera.MountingLocation kLimelightFrontLocation = new LimelightCamera.MountingLocation(
-        // TODO: These are guesses, they should be measured in CAD
-        Units.inchesToMeters(-4.84), Units.inchesToMeters(10.213), Units.inchesToMeters(18.132),
-        0, 15, 0
-    );
-
     public static final LimelightCamera.MountingLocation kLimelightBackLocation = new LimelightCamera.MountingLocation(
         Units.inchesToMeters(13), Units.inchesToMeters(-10.673), Units.inchesToMeters(17.558), //z x y? jonah lowkey weird
         // Degrees CCW
@@ -197,16 +193,20 @@ public final class Constants {
         0, 0, 270
     );
 
-
+    public static final LimelightCamera.MountingLocation kLimelightFrontLocation = new LimelightCamera.MountingLocation(
+        // TODO: These are guesses, they should be measured in CAD
+        Units.inchesToMeters(-4.84), Units.inchesToMeters(-10.213), Units.inchesToMeters(18.132),
+        0, 15, 0
+    );
 
    /* --- Hood --- */ //TODO: Adjust constant values
-    public static final NTEntry<Boolean> kHoodInverted = new NTBoolean("Hood/Inverted", false).setPersistent();
-    public static final NTEntry<Double> kHoodMaxAngle = new NTDouble("Hood/Max Angle (Deg)", 25.0).setPersistent();
-    public static final NTEntry<Double> kHoodMinAngle = new NTDouble("Hood/Min Angle (Deg)", 10.0).setPersistent();
-    public static final NTEntry<Double> kHoodCruiseVelocity = new NTDouble("Hood/Cruise Velocity", 60.0).setPersistent();
-    public static final NTEntry<Double> kHoodAcceleration = new NTDouble("Hood/Acceleration", 120.0).setPersistent();
+    public static final NTEntry<Boolean> kHoodInverted = new NTBoolean("Shooter/Hood/Inverted", false).setPersistent();
+    public static final NTEntry<Double> kHoodMaxAngle = new NTDouble("Shooter/Hood/Max Angle (Deg)", 25.0).setPersistent();
+    public static final NTEntry<Double> kHoodMinAngle = new NTDouble("Shooter/Hood/Min Angle (Deg)", 10.0).setPersistent();
+    public static final NTEntry<Double> kHoodCruiseVelocity = new NTDouble("Shooter/Hood/Cruise Velocity", 60.0).setPersistent();
+    public static final NTEntry<Double> kHoodAcceleration = new NTDouble("Shooter/Hood/Acceleration", 120.0).setPersistent();
 
-    public static final NTSlot0Configs kHoodPID = new NTSlot0Configs("Hood/PID", 6.0, 0.8, 0.0, 0.0, 0.1, 0.0);
+    public static final NTSlot0Configs kHoodPID = new NTSlot0Configs("Shooter/Hood/PID", 6.0, 0.8, 0.0, 0.0, 0.1, 0.0);
 
     
 
@@ -216,33 +216,35 @@ public final class Constants {
         public static final NTEntry<Double> kClimberCalibrationTime = new NTDouble("Climber/CalibrationTime", 0.2).setPersistent();
         public static final NTEntry<Double> kClimberCalibrationVelocity = new NTDouble("Climber/CalibrationVelocity", 0.05).setPersistent(); 
         public static final NTEntry<Double> kClimberCalibrationVoltage = new NTDouble("Climber/CalibrationVoltage", 2.5).setPersistent();
+        public static final NTEntry<Double> kClimberCalibrationPosition = new NTDouble("Climber/Calibration Position", 0.0).setPersistent();
         // With a 16.875 ratio, 1 rotation of the output is 16.875 rotations of the motor.
         // We want a strong P-gain to hold 130lbs. 
         public static final NTSlot0Configs kClimberPID = new NTSlot0Configs("Climber/PID", 15.0, 0.0, 0.2, 0.0, 0.0, 0.0);
 
     /* --- Expansion ---  */ 
-    public static final NTEntry<Double> kExpansionRetractedRotations = new NTDouble("Expansion/Retracted Rotations", 0.0).setPersistent();
-    public static final NTEntry<Double> kExpansionExtendedRotations  = new NTDouble("Expansion/Extended Rotations", -20.0).setPersistent();
-    public static final NTEntry<Double> kExpansionCruiseVelocity = new NTDouble("Expansion/Cruise Velocity", 40.0).setPersistent();   
-    public static final NTEntry<Double> kExpansionAcceleration  = new NTDouble("Expansion/Acceleration", 160.0).setPersistent();
-    public static final NTSlot0Configs kExpansionPID = new NTSlot0Configs("Expansion/PID", 3.0, 0.000, 0.01, 0.0, 0.0, 0.0);
+    public static final NTEntry<Double> kExpansionRetractedRotations = new NTDouble("Intake/Expansion/Retracted Rotations", -10).setPersistent();
+    public static final NTEntry<Double> kExpansionExtendedRotations  = new NTDouble("Intake/Expansion/Extended Rotations", 10.0).setPersistent();
+    public static final NTEntry<Double> kExpansionCruiseVelocity = new NTDouble("Intake/Expansion/Cruise Velocity", 40.0).setPersistent();   
+    public static final NTEntry<Double> kExpansionAcceleration  = new NTDouble("Intake/Expansion/Acceleration", 160.0).setPersistent();
+    public static final NTSlot0Configs kExpansionPID = new NTSlot0Configs("Intake/Expansion/PID", 3.0, 0.001, 0.01, 0.0, 0.0, 0.0);
     
     /* --- Indexer --- */
-    public static final NTEntry<Double> kIndexerRollVoltage = new NTDouble("Indexer/Intake Voltage", 6.0).setPersistent();
-    public static final NTEntry<Double> kIndexerIdleVoltage = new NTDouble("Indexer/Idle Voltage", 0.0).setPersistent();
-    public static final NTEntry<Double> kIndexerHoldVoltage = new NTDouble("Indexer/Hold Voltage", 2.0).setPersistent();
+    public static final NTEntry<Double> kIndexerRollVoltage = new NTDouble("Intake/Indexer/Intake Voltage", 10.0).setPersistent();
+    public static final NTEntry<Double> kIndexerIdleVoltage = new NTDouble("Intake/Indexer/Idle Voltage", 0.0).setPersistent();
+    public static final NTEntry<Double> kIndexerHoldVoltage = new NTDouble("intake/Indexer/Hold Voltage", 8.0).setPersistent();
     
     /* --- Intake  ---  */ 
     public static final NTEntry<Double> kIntakeVoltage= new NTDouble("Intake/Intake Voltage", 6.0).setPersistent();
     public static final NTEntry<Double> kIntakeIdleVoltage = new NTDouble("Intake/Idle Voltage", 0.0).setPersistent();
+    public static final NTSlot0Configs kIntakePID = new NTSlot0Configs("Intake/PID", 1.0, 0, 0, 0, 0, 0 );
 
 
     /* --- Shooter --- */
-    public static final NTEntry<Double> kShooterRPS = new NTDouble("Shooter/Intake RPS", 13.22).setPersistent();
+    public static final NTEntry<Double> kShooterRPS = new NTDouble("Shooter/Intake RPS", 100).setPersistent();
     public static final NTEntry<Double> kShooterIdleRPS = new NTDouble("Shooter/Idle RPS", 0.0).setPersistent();
     public static final NTEntry<Double> kShooterWarmRPS = new NTDouble("Shooter/Warm RPS", 1.0).setPersistent();
     public static final NTEntry<Double> kShooterRindexRPS = new NTDouble("Shooter/Rindex RPS", -6.0).setPersistent();
-    public static final NTSlot0Configs kShooterPID = new NTSlot0Configs("Shooter/PID", 0.32, 0.001, 0.0, 0.0, 0.13, 0.53);
+    public static final NTSlot0Configs kShooterPID = new NTSlot0Configs("Shooter/PID", 3.0, 0.000, 0.0, 0.0, 0.13, 0.53);
     
    
 }
