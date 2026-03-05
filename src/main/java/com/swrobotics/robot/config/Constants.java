@@ -224,8 +224,6 @@ public final class Constants {
     /* --- Expansion ---  */ 
     public static final NTEntry<Double> kExpansionRetractedRotations = new NTDouble("Intake/Expansion/Retracted Rotations", 0).setPersistent();
     public static final NTEntry<Double> kExpansionExtendedRotations  = new NTDouble("Intake/Expansion/Extended Rotations", 10.0).setPersistent();
-    public static final NTEntry<Double> kExpansionCruiseVelocity = new NTDouble("Intake/Expansion/Cruise Velocity", 40.0).setPersistent();   
-    public static final NTEntry<Double> kExpansionAcceleration  = new NTDouble("Intake/Expansion/Acceleration", 160.0).setPersistent();
     public static final NTSlot0Configs kExpansionPID = new NTSlot0Configs("Intake/Expansion/PID", 3.0, 0.001, 0.01, 0.0, 0.0, 0.0);
     
     /* --- Indexer --- */

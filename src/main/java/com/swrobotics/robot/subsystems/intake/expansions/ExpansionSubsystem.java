@@ -32,7 +32,10 @@ public class ExpansionSubsystem extends SubsystemBase {
         config.MotorOutput.NeutralMode = NeutralModeValue.Brake;
         config.CurrentLimits.SupplyCurrentLimit = 40;
         config.CurrentLimits.SupplyCurrentLimitEnable = true;
-        config.addTunable(Constants.kExpansionPID);
+        config.Slot0.kP = 0.5;
+        config.Slot0.kI = 0;
+        config.Slot0.kD = 0;
+        config.Slot0.kG = 0;
 
         config.apply(motor);
         
