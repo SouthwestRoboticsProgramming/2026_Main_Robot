@@ -74,7 +74,7 @@ public final class DriveCommands {
             Translation2d tx = translationSupplier.get();
 
             Rotation2d currentRot = drive.getEstimatedPose().getRotation();
-            Rotation2d targetRot = AimCalc.getInstance().getDrivebaseAimAngle();
+            Rotation2d targetRot = Rotation2d.fromDegrees(180);
             
             double rotOutput = turnPid.calculate(
                     MathUtil.wrap(currentRot.getRadians(), -Math.PI, Math.PI),
@@ -403,5 +403,10 @@ public static Command driveThroughBump(SwerveDriveSubsystem drive) {
                     SmartDashboard.putNumber("FF Characterization/R2", R2);
                 })
         );
+    }
+
+    public static Command driveToPose(SwerveDriveSubsystem drive, Pose2d currentPose) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'driveToPose'");
     }
 }

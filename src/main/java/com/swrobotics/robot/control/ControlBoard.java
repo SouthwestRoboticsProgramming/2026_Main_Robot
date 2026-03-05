@@ -22,7 +22,7 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.POVButton;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 
-import com.swrobotics.robot.subsystems.climber.ClimberSubsystem;
+//import com.swrobotics.robot.subsystems.climber.ClimberSubsystem;
 import com.swrobotics.robot.subsystems.intake.expansions.ExpansionSubsystem;
 import com.swrobotics.robot.subsystems.intake.indexer.IndexerSubsystem;
 import com.swrobotics.robot.subsystems.intake.IntakeSubsystem;
@@ -36,7 +36,6 @@ public final class ControlBoard extends SubsystemBase {
      * Driver:
      * Left stick: drive translation
      * Right stick X: drive rotation
-     * Right trigger: shoot
      * Left trigger: intake
      * Right bumber: feed
      * left bumber: rindex
@@ -91,27 +90,28 @@ public final class ControlBoard extends SubsystemBase {
                 .alongWith(robot.shooter.commandSetState(ShooterSubsystem.State.RINDEX)));
 
         /* --- Shooter --- */
-        driver.rightTrigger()
+        operator.rightTrigger()
         .whileTrue(robot.shooter.commandSetState(ShooterSubsystem.State.SHOOT)
         .withTimeout(.75)
-        .andThen(robot.indexer.commandSetState(IndexerSubsystem.State.FEED)));
+        .andThen(robot.indexer.commandSetState(IndexerSubsystem.State.FEED))
+        .andThen(robot.shooter.commandSetState(ShooterSubsystem.State.SHOOT)));
 
         /* --- Hood --- */
         // operator.povDown().onTrue(robot.hood.commandManualUp());
         // operator.povUp().onTrue(robot.hood.commandManualDown());
 
         /* --- expansion --- */
-        driver.x().whileTrue(robot.expansion.commandSetState(ExpansionSubsystem.State.RETRACTED));
+        operator.x().whileTrue(robot.expansion.commandSetState(ExpansionSubsystem.State.RETRACTED));
 
         /* --- Climber --- */
-        driver.y().toggleOnTrue(robot.climber.commandSetState(ClimberSubsystem.State.EXTENDED));
+        //driver.y().toggleOnTrue(robot.climber.commandSetState(ClimberSubsystem.State.EXTENDED));
 
         driver.a()
                 .whileTrue(DriveCommands.driveFieldRelativeSnapToHub(robot.drive, () -> this.getDriveTranslation()));
                 //.alongWith(robot.hood.setMode(HoodSubsystem.HoodMode.AUTO_TRACK)));
 
-        //driver.y().whileTrue(DriveCommands.driveThroughBump(robot.drive));
-        //driver.b().whileTrue(DriveCommands.driveThroughTrench(robot.drive));
+        driver.y().whileTrue(DriveCommands.driveThroughBump(robot.drive));
+        driver.b().whileTrue(DriveCommands.driveThroughTrench(robot.drive));
 
     }
 

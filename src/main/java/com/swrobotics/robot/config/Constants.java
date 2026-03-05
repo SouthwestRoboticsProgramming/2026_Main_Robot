@@ -53,8 +53,8 @@ public final class Constants {
     public static final int kActive_InactiveAlert4Time2 = 30; //TODO: set active/inactive alert time later
 
     // Robot dimensions
-    public static final double kFrameLength = Units.inchesToMeters(27); // m
-    public static final double kFrameWidth = Units.inchesToMeters(27); // m
+    public static final double kFrameLength = Units.inchesToMeters(27.25); // m
+    public static final double kFrameWidth = Units.inchesToMeters(27.25); // m
     public static final double kHubHeightMeters = Units.inchesToMeters(49.5); // m
     public static final double kShooterHeightMeters = Units.inchesToMeters(20); //TODO: Measure inches
 
@@ -222,7 +222,7 @@ public final class Constants {
         public static final NTSlot0Configs kClimberPID = new NTSlot0Configs("Climber/PID", 15.0, 0.0, 0.2, 0.0, 0.0, 0.0);
 
     /* --- Expansion ---  */ 
-    public static final NTEntry<Double> kExpansionRetractedRotations = new NTDouble("Intake/Expansion/Retracted Rotations", -10).setPersistent();
+    public static final NTEntry<Double> kExpansionRetractedRotations = new NTDouble("Intake/Expansion/Retracted Rotations", 0).setPersistent();
     public static final NTEntry<Double> kExpansionExtendedRotations  = new NTDouble("Intake/Expansion/Extended Rotations", 10.0).setPersistent();
     public static final NTEntry<Double> kExpansionCruiseVelocity = new NTDouble("Intake/Expansion/Cruise Velocity", 40.0).setPersistent();   
     public static final NTEntry<Double> kExpansionAcceleration  = new NTDouble("Intake/Expansion/Acceleration", 160.0).setPersistent();
@@ -231,7 +231,7 @@ public final class Constants {
     /* --- Indexer --- */
     public static final NTEntry<Double> kIndexerRollVoltage = new NTDouble("Intake/Indexer/Intake Voltage", 10.0).setPersistent();
     public static final NTEntry<Double> kIndexerIdleVoltage = new NTDouble("Intake/Indexer/Idle Voltage", 0.0).setPersistent();
-    public static final NTEntry<Double> kIndexerHoldVoltage = new NTDouble("intake/Indexer/Hold Voltage", 8.0).setPersistent();
+    public static final NTEntry<Double> kIndexerHoldVoltage = new NTDouble("intake/Indexer/Hold Voltage", 10.0).setPersistent();
     
     /* --- Intake  ---  */ 
     public static final NTEntry<Double> kIntakeVoltage= new NTDouble("Intake/Intake Voltage", 6.0).setPersistent();
@@ -240,7 +240,7 @@ public final class Constants {
 
 
     /* --- Shooter --- */
-    public static final NTEntry<Double> kShooterRPS = new NTDouble("Shooter/Intake RPS", 100).setPersistent();
+    public static final NTEntry<Double> kShooterRPS = new NTDouble("Shooter/Intake RPS", 40).setPersistent();
     public static final NTEntry<Double> kShooterIdleRPS = new NTDouble("Shooter/Idle RPS", 0.0).setPersistent();
     public static final NTEntry<Double> kShooterWarmRPS = new NTDouble("Shooter/Warm RPS", 1.0).setPersistent();
     public static final NTEntry<Double> kShooterRindexRPS = new NTDouble("Shooter/Rindex RPS", -6.0).setPersistent();

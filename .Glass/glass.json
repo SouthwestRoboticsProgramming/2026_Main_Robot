@@ -6,5 +6,12 @@
   },
   "NetworkTables Info": {
     "visible": true
+  },
+  "NetworkTables Log": {
+    "visible": true
+  },
+  "NetworkTables Settings": {
+    "mode": "Client (NT4)",
+    "serverTeam": "2129"
   }
 }

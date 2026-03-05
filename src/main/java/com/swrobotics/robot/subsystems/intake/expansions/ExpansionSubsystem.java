@@ -47,7 +47,7 @@ public class ExpansionSubsystem extends SubsystemBase {
         double targetRotations;
 
         switch (targetState) {
-            case EXTENDED: targetRotations = 0; //Constants.kExpansionExtendedRotations.get();
+            case EXTENDED: targetRotations = Constants.kExpansionExtendedRotations.get();
             break;
             case RETRACTED: targetRotations = 0;
             break;

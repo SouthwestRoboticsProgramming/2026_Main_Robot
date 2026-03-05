@@ -33,7 +33,6 @@ public class ShooterSubsystem extends SubsystemBase {
     private final VelocityVoltage velocityControl = new VelocityVoltage(0);
     private final Follower followerControl =new Follower(14, MotorAlignmentValue.Opposed);
     private State targetState;
-    public PhoenixPIDController PID = new PhoenixPIDController(0, 0, 0);
 
     public ShooterSubsystem() {
 
@@ -43,7 +42,11 @@ public class ShooterSubsystem extends SubsystemBase {
         TalonFXConfigHelper config = new TalonFXConfigHelper();
         config.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
         config.MotorOutput.NeutralMode = NeutralModeValue.Coast;
-        PID.setPID(3.0, 0, 0);
+        config.Slot0.kP = .5;
+        config.Slot0.kI = 0;
+        config.Slot0.kD = 0;
+        config.Slot0.kV = 0.13;
+        config.Slot0.kA = 0;
         
         
 
@@ -60,19 +63,19 @@ public class ShooterSubsystem extends SubsystemBase {
         
         double targetRPS = 0;
         switch (targetState) {
-            case SHOOT: targetRPS = AimCalc.getInstance().getShooterRPS(); 
+            case SHOOT: targetRPS = 20; //Constants.kShooterRPS.get();
             break;
-            case IDLE: targetRPS = Constants.kShooterIdleRPS.get();
+            case IDLE: targetRPS = 0; //Constants.kShooterIdleRPS.get();
             break;
-            case WARM: targetRPS = Constants.kShooterWarmRPS.get(); // warm motor and keep it spinning so it can accelerate faster when we want to shoot, but this may need to be tuned based on the actual shooter mechanism and how much warmup is needed. Start with a value around 50-70% of the full shooting speed and adjust as needed based on testing.
+            case WARM: targetRPS = 4; //Constants.kShooterWarmRPS.get(); // warm motor and keep it spinning so it can accelerate faster when we want to shoot, but this may need to be tuned based on the actual shooter mechanism and how much warmup is needed. Start with a value around 50-70% of the full shooting speed and adjust as needed based on testing.
             break;
-            case RINDEX:  targetRPS = -Constants.kShooterRindexRPS.get(); // Run the shooter in reverse at full speed to help unjam balls or index them backwards. This is useful if a ball gets stuck in the shooter or if we want to move balls backwards from the indexer into the shooter. The speed can be adjusted as needed, but starting with full reverse speed is a good way to ensure it can clear jams effectively.
+            case RINDEX:  targetRPS = -10; Constants.kShooterRindexRPS.get(); // Run the shooter in reverse at full speed to help unjam balls or index them backwards. This is useful if a ball gets stuck in the shooter or if we want to move balls backwards from the indexer into the shooter. The speed can be adjusted as needed, but starting with full reverse speed is a good way to ensure it can clear jams effectively.
             break;
         }
 
 
 
-        motorL.setControl(velocityControl.withVelocity(targetRPS).withEnableFOC(true));
+        motorL.setControl(velocityControl.withVelocity(targetRPS).withEnableFOC(false));
         motorR.setControl(followerControl);
     }
 
