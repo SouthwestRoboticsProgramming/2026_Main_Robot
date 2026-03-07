@@ -309,7 +309,7 @@ public static Command driveThroughBump(SwerveDriveSubsystem drive) {
                 );
             }
 
-            double maxDriveSpeed = Constants.kSnapMaxSpeed.get();
+            double maxDriveSpeed = 10;//Constants.kSnapMaxSpeed.get();
             double driveSpeed = Math.hypot(xOutput, yOutput);
             if (driveSpeed > maxDriveSpeed) {
                 double scale = maxDriveSpeed / driveSpeed;

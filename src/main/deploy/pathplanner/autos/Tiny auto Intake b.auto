@@ -5,51 +5,45 @@
     "data": {
       "commands": [
         {
-          "type": "wait",
+          "type": "named",
           "data": {
-            "waitTime": 0.5
+            "name": "Shoot"
           }
         },
         {
           "type": "path",
           "data": {
-            "pathName": "shoot_goMid"
+            "pathName": "New New New New Path"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "Intake"
           }
         },
         {
           "type": "path",
           "data": {
-            "pathName": "intake"
+            "pathName": "shoot go intake"
           }
         },
         {
           "type": "path",
           "data": {
-            "pathName": "shoot2"
+            "pathName": "New Path"
           }
         },
         {
-          "type": "wait",
+          "type": "named",
           "data": {
-            "waitTime": 2.0
-          }
-        },
-        {
-          "type": "path",
-          "data": {
-            "pathName": "go to station"
-          }
-        },
-        {
-          "type": "path",
-          "data": {
-            "pathName": "pick up from station"
+            "name": "Shoot"
           }
         }
       ]
     }
   },
   "resetOdom": true,
-  "folder": null,
+  "folder": "Blue Autos",
   "choreoAuto": false
 }

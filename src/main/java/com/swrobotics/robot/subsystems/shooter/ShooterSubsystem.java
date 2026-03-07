@@ -63,13 +63,13 @@ public class ShooterSubsystem extends SubsystemBase {
         
         double targetRPS = 0;
         switch (targetState) {
-            case SHOOT: targetRPS = 20; //Constants.kShooterRPS.get();
+            case SHOOT: targetRPS = 18; //Constants.kShooterRPS.get();
             break;
             case IDLE: targetRPS = 0; //Constants.kShooterIdleRPS.get();
             break;
             case WARM: targetRPS = 4; //Constants.kShooterWarmRPS.get(); // warm motor and keep it spinning so it can accelerate faster when we want to shoot, but this may need to be tuned based on the actual shooter mechanism and how much warmup is needed. Start with a value around 50-70% of the full shooting speed and adjust as needed based on testing.
             break;
-            case RINDEX:  targetRPS = -10; Constants.kShooterRindexRPS.get(); // Run the shooter in reverse at full speed to help unjam balls or index them backwards. This is useful if a ball gets stuck in the shooter or if we want to move balls backwards from the indexer into the shooter. The speed can be adjusted as needed, but starting with full reverse speed is a good way to ensure it can clear jams effectively.
+            case RINDEX:  targetRPS = 0; //Constants.kShooterRindexRPS.get(); // Run the shooter in reverse at full speed to help unjam balls or index them backwards. This is useful if a ball gets stuck in the shooter or if we want to move balls backwards from the indexer into the shooter. The speed can be adjusted as needed, but starting with full reverse speed is a good way to ensure it can clear jams effectively.
             break;
         }
 

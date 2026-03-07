@@ -17,7 +17,9 @@ public class ExpansionSubsystem extends SubsystemBase {
 
     public enum State {
         RETRACTED,
-        EXTENDED
+        EXTENDED,
+        SLIGHTUP_EXTENDED,
+        SLIGHTDOWN_EXTENDED
     }
 
     private final TalonFX motor;
@@ -28,33 +30,38 @@ public class ExpansionSubsystem extends SubsystemBase {
 
         motor = IOAllocation.CAN.kExpansionMotor.createTalonFX();
         TalonFXConfigHelper config = new TalonFXConfigHelper();
-        config.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
-        config.MotorOutput.NeutralMode = NeutralModeValue.Brake;
-        config.CurrentLimits.SupplyCurrentLimit = 40;
+        config.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
+        config.MotorOutput.NeutralMode = NeutralModeValue.Coast;
+        config.CurrentLimits.SupplyCurrentLimit = 70;
         config.CurrentLimits.SupplyCurrentLimitEnable = true;
-        config.Slot0.kP = 0.5;
+        config.Slot0.kP = .1;
         config.Slot0.kI = 0;
-        config.Slot0.kD = 0;
-        config.Slot0.kG = 0;
+        config.Slot0.kD = 0.00;
+        config.Slot0.kG = 0.1;
 
         config.apply(motor);
         
         motor.setPosition(0);
         targetState = State.RETRACTED;
 
-        setDefaultCommand(commandSetState(State.EXTENDED));
+        setDefaultCommand(commandSetState(State.RETRACTED));
     }
 
     @Override
     public void periodic() {
         double targetRotations;
+        targetRotations = 0;
 
         switch (targetState) {
-            case EXTENDED: targetRotations = Constants.kExpansionExtendedRotations.get();
+            case EXTENDED: targetRotations = 24.0;
+            break;
+            case SLIGHTUP_EXTENDED: targetRotations = 10.0;
             break;
             case RETRACTED: targetRotations = 0;
             break;
-            default: targetRotations = 0;
+            case SLIGHTDOWN_EXTENDED: targetRotations= 28.0;
+            break;
+            
         }
 
         motor.setControl(positionControl.withPosition(targetRotations));
@@ -65,7 +72,12 @@ public class ExpansionSubsystem extends SubsystemBase {
     }
 
     public Command commandSetState(State targetState) {
-        return Commands.runOnce(() -> setTargetState(targetState), this);
+        return Commands.run(() -> setTargetState(targetState), this);
     }
+
+    
+
+
+    
 
 }

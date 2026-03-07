@@ -22,6 +22,7 @@ public final class VisionSubsystem extends SubsystemBase {
     public VisionSubsystem(SwerveDriveSubsystem drive) {
         this.drive = drive;
 
+        // Correctly handles your three-camera setup
         cameras = List.of(
                 new LimelightCamera(
                         "limelight-f",
@@ -50,15 +51,16 @@ public final class VisionSubsystem extends SubsystemBase {
         Pose2d currentPose = drive.getEstimatedPose();
         ChassisSpeeds currentSpeeds = drive.getRobotRelativeSpeeds();
 
+        // Yaw and rate are pulled from the drivetrain (Gyro)
         double yaw = currentPose.getRotation().getDegrees();
         double yawRate = Math.toDegrees(currentSpeeds.omegaRadiansPerSecond);
+        
+        // Feed the robot orientation to all Limelights for MegaTag 2 positioning
         for (LimelightCamera camera : cameras) {
             camera.updateRobotState(yaw, yawRate);
         }
 
-        // MegaTag 1 is unreliable while moving, so use MegaTag 2 then.
-        // However, still use MegaTag 1 when slow/stopped so the gyro can be
-        // corrected by vision measurements.
+        // Use MT2 when moving to avoid MT1 motion blur/latency artifacts
         boolean useMegaTag2 = Math.hypot(currentSpeeds.vxMetersPerSecond, currentSpeeds.vyMetersPerSecond)
                  > Constants.kVisionMT2SpeedThreshold;
 
@@ -67,6 +69,7 @@ public final class VisionSubsystem extends SubsystemBase {
             camera.getNewUpdates(updates, useMegaTag2);
         }
 
+        // Visualize what the cameras see
         Pose2d[] poses = new Pose2d[updates.size()];
         for (int i = 0; i < poses.length; i++) {
             poses[i] = updates.get(i).pose();
@@ -76,6 +79,7 @@ public final class VisionSubsystem extends SubsystemBase {
         if (ignoreUpdates)
             return;
 
+        // Apply measurements to the swerve drivetrain's pose estimator
         for (LimelightCamera.Update update : updates) {
             drive.addVisionMeasurement(update.pose(), update.timestamp(), update.stdDevs());
         }

@@ -19,7 +19,6 @@ public final class LimelightCamera {
     private static final String ORIENTATION_NAME = "robot_orientation_set";
     private static final String LOCATION_NAME = "camerapose_robotspace_set";
 
-    // forward, right, up in meters; pitch, yaw, roll in degrees CCW
     public record MountingLocation(
             double forward, double right, double up,
             double roll, double pitch, double yaw) {}
@@ -35,10 +34,10 @@ public final class LimelightCamera {
     private record PoseEstimate(Pose2d pose, double timestamp, int tagCount, double avgTagDist) {}
 
     private final Config config;
-
     private final DoubleArraySubscriber mt1EstimateSub;
     private final DoubleArraySubscriber mt2EstimateSub;
     private final DoubleArrayPublisher robotOrientationPub;
+    private final DoubleArrayPublisher mountingLocationPub;
 
     private double prevUpdateTimestamp;
 
@@ -52,7 +51,7 @@ public final class LimelightCamera {
 
         robotOrientationPub = table.getDoubleArrayTopic(ORIENTATION_NAME).publish();
 
-        DoubleArrayPublisher mountingLocationPub = table.getDoubleArrayTopic(LOCATION_NAME).publish();
+        mountingLocationPub = table.getDoubleArrayTopic(LOCATION_NAME).publish();
         mountingLocationPub.set(new double[] {
             location.forward(), location.right(), location.up(),
             location.roll(), location.pitch(), location.yaw()
@@ -75,13 +74,10 @@ public final class LimelightCamera {
     }
 
     private PoseEstimate decodeEstimate(DoubleArraySubscriber sub) {
-        // Limelight 3G AprilTag processing runs at about 30 FPS, which is less
-        // than the periodic rate of 50 Hz, so this shouldn't miss any frames
         TimestampedDoubleArray estimate = sub.getAtomic();
         long timestamp = estimate.timestamp;
         double[] data = estimate.value;
 
-        // Incomplete data from Limelight
         if (data.length < 10)
             return null;
 
@@ -92,7 +88,6 @@ public final class LimelightCamera {
         int tagCount = (int) data[7];
         double avgTagDist = data[9];
 
-        // No tags seen or Limelight returns origin for some reason
         if (tagCount <= 0 || (pose.getX() == 0 && pose.getY() == 0))
             return null;
 
@@ -104,38 +99,25 @@ public final class LimelightCamera {
     private void processEstimate(List<Update> updatesOut, PoseEstimate mt1, PoseEstimate mt2, boolean useMegaTag2) {
         PoseEstimate est = useMegaTag2 ? mt2 : mt1;
 
-        // Only process each frame once
         if (est == null || est.timestamp == prevUpdateTimestamp)
             return;
 
-        // If too far away, use MegaTag 2 estimate instead. MegaTag 1 estimate
-        // is too unstable at far distances
         if (!useMegaTag2 && est.avgTagDist > config.mt1MaxDistance && DriverStation.isEnabled()) {
             processEstimate(updatesOut, mt1, mt2, true);
             return;
         }
 
-        if (DriverStation.isDisabled())
-            useMegaTag2 = false;
-
         prevUpdateTimestamp = est.timestamp;
 
-        // Standard deviation of vision estimates appears to be proportional to
-        // the square of the distance to the tag. Also, estimates are more
-        // stable with more tags.
-        // TODO: How accurate is the divide by tag count? Do we even want it?
         double baseStdDev = MathUtil.square(est.avgTagDist) / est.tagCount;
 
-        // Calculate standard deviations by linear regressions on distance^2
-        double xyStdDev, thetaStdDev;
+        double xyStdDev;
         if (useMegaTag2) {
             xyStdDev = baseStdDev * config.xyStdDevCoeffMT2;
-            // Don't trust MT2 theta at all, it's just gyro theta but with latency
-            thetaStdDev = 99999999999999.0;
         } else {
             xyStdDev = baseStdDev * config.xyStdDevCoeffMT1;
-            thetaStdDev = baseStdDev * config.thetaStdDevCoeffMT1;
-        }
+
+        double thetaStdDev = 999999999.0;
 
         updatesOut.add(new Update(
                 est.pose,
@@ -143,4 +125,5 @@ public final class LimelightCamera {
                 VecBuilder.fill(xyStdDev, xyStdDev, thetaStdDev)
         ));
     }
+}
 }

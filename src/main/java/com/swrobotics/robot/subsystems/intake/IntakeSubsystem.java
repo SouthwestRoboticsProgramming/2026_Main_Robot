@@ -41,7 +41,6 @@ public class IntakeSubsystem extends SubsystemBase {
         config.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
         config.MotorOutput.NeutralMode = NeutralModeValue.Coast;
         voltageControl.withEnableFOC(true);
-        config.addTunable(Constants.kIntakePID);
 
         // apply the configuration to the motor
         config.apply(motor);
@@ -54,9 +53,9 @@ public class IntakeSubsystem extends SubsystemBase {
     public void periodic() {
         double targetVoltage = 0;
         switch (targetState) {
-            case INTAKE: targetVoltage = Constants.kIntakeVoltage.get();
+            case INTAKE: targetVoltage = 4.0; // Set to a positive voltage to intake balls. Adjust as needed for optimal performance.
             break;
-            case IDLE: targetVoltage = Constants.kIntakeIdleVoltage.get();
+            case IDLE: targetVoltage = 0.0;
             break;
         }
 

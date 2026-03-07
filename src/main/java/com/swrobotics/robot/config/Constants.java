@@ -177,20 +177,21 @@ public final class Constants {
             // These were tuned at MURA using red alliance speaker AprilTags
             2,
             0.00197,
-            0.002,
+            999999,//0.002,
             0.00117
     );
 
     public static final LimelightCamera.MountingLocation kLimelightBackLocation = new LimelightCamera.MountingLocation(
-        Units.inchesToMeters(13), Units.inchesToMeters(-10.673), Units.inchesToMeters(17.558), //z x y? jonah lowkey weird
+        Units.inchesToMeters(-13), Units.inchesToMeters(2.0), Units.inchesToMeters(9.25), //z x y? jonah lowkey weird
         // Degrees CCW
         0, 0, 180
     );
 
     public static final LimelightCamera.MountingLocation kLimelightRightLocation = new LimelightCamera.MountingLocation(
-        Units.inchesToMeters(10.05),Units.inchesToMeters(-12.3503), Units.inchesToMeters(9.502),
+        Units.inchesToMeters(-10.05),Units.inchesToMeters(12.3503), Units.inchesToMeters(9.502),
         // Degrees CCW
         0, 0, 270
+
     );
 
     public static final LimelightCamera.MountingLocation kLimelightFrontLocation = new LimelightCamera.MountingLocation(

@@ -1,5 +1,6 @@
 package com.swrobotics.robot.subsystems.intake.indexer;
 
+import com.ctre.phoenix6.controls.VelocityVoltage;
 // CTRE Phoenix 6 imports
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
@@ -23,7 +24,6 @@ public class IndexerSubsystem extends SubsystemBase {
     public enum State {
         IDLE,
         INTAKE,
-        HOLDING_BALL, // ball at top, upper stage stopped
         FEED,
         RINDEX // optional: run in reverse to clear jams, etc.
     }
@@ -32,7 +32,7 @@ public class IndexerSubsystem extends SubsystemBase {
     private final TalonFX FloorMotor;   // lower stage (keeps creeping)
     private final TalonFX ShooterFeederMotor;  // upper stage (stops when ball present)
     private final TalonFX BeltMotor;
-    //private final VelocityVoltage velocityControl = new VelocityVoltage(0);
+    //private final VelocityVoltage velocityControl = new VelocityVoltage(0).withEnableFOC(true);
     private final VoltageOut voltageControl = new VoltageOut(0).withEnableFOC(true);
 
     // CANrange sensor at top of tube
@@ -58,7 +58,7 @@ public class IndexerSubsystem extends SubsystemBase {
 
         config.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
         config.MotorOutput.NeutralMode = NeutralModeValue.Coast;
-        config.CurrentLimits.StatorCurrentLimit = 40.0;
+        config.CurrentLimits.StatorCurrentLimit = 60.0;
         config.CurrentLimits.StatorCurrentLimitEnable = true; 
 
         config2.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
@@ -84,9 +84,9 @@ public class IndexerSubsystem extends SubsystemBase {
         ballAtTop = detected;
 
         // If we’re intaking and now see a ball, go to HOLDING_BALL
-        if (targetState == State.INTAKE && ballAtTop) {
-            targetState = State.HOLDING_BALL;
-        }
+        // if (targetState == State.INTAKE && ballAtTop) {
+        //     targetState = State.HOLDING_BALL;
+        // }
 
         // Decide Voltage for each motor independently
         double FloorMotorsVoltage = 0.0; // Floor And belt motor (lower-stage, keeps creeping)
@@ -95,39 +95,33 @@ public class IndexerSubsystem extends SubsystemBase {
         switch (targetState) {
             case INTAKE : {
                 // Normal intake speed for both motors
-                FloorMotorsVoltage = Constants.kIndexerRollVoltage.get();
-                FeederVoltage = Constants.kIndexerRollVoltage.get();
-                break;
-            }
-            case HOLDING_BALL : {
-                // Lower motor creeps slowly to keep feeding / manage queue
-                FloorMotorsVoltage = Constants.kIndexerHoldVoltage.get(); // slower, new constant
-                FeederVoltage = Constants.kIndexerIdleVoltage.get(); // usually 0
+                FloorMotorsVoltage = 10.0;
+                FeederVoltage = 0;
                 break;
             }
             case IDLE : {
                 // Both motors stopped/idle
                 FloorMotorsVoltage = Constants.kIndexerIdleVoltage.get();
-                FeederVoltage = Constants.kIndexerIdleVoltage.get();
+                FeederVoltage =  Constants.kIndexerIdleVoltage.get();
                 break;
             }
             case FEED : {
                 // Both motors run at intake speed, ignoring ball presence
-                FloorMotorsVoltage = Constants.kIndexerRollVoltage.get();
-                FeederVoltage = Constants.kIndexerRollVoltage.get();
+                FloorMotorsVoltage = 10.0;
+                FeederVoltage = 12.0;
                 break;
             }
             case RINDEX : {
                 // Both motors run in reverse to clear jams
-                FloorMotorsVoltage = -Constants.kIndexerRollVoltage.get();
-                FeederVoltage = -Constants.kIndexerRollVoltage.get();
+                FloorMotorsVoltage = -10.0;
+                FeederVoltage = -12.0;
                 break;
                 
             }
         }
 
         // Apply controls
-        FloorMotor.setControl(voltageControl.withOutput(FloorMotorsVoltage));
+        FloorMotor.setControl(voltageControl.withOutput(0));
         ShooterFeederMotor.setControl(voltageControl.withOutput(FeederVoltage));
         BeltMotor.setControl(voltageControl.withOutput(FeederVoltage)); 
     }
@@ -147,15 +141,7 @@ public class IndexerSubsystem extends SubsystemBase {
         return ballAtTop;
     }
 
-    public Command intakeUntilBall() {
-        return Commands.run(() -> {
-        if (ballAtTop) {
-          setTargetState(State.HOLDING_BALL);
-        } else {
-          setTargetState(State.INTAKE);
-        }
-        }, this).until(() -> ballAtTop);
-    }
+
 
     // Command that conditionally intakes based on ball presence
     public Command ConditionalIntake() {

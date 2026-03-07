@@ -11,6 +11,7 @@ import com.swrobotics.robot.subsystems.vision.VisionSubsystem;
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.NamedCommands;
 import com.pathplanner.lib.commands.PathPlannerAuto;
+import com.swrobotics.robot.commands.AutonomousCommands;
 import com.swrobotics.robot.control.AimCalc;
 import com.swrobotics.robot.control.ControlBoard;
 import com.swrobotics.robot.logging.FieldView;
@@ -66,7 +67,8 @@ public class RobotContainer {
         controlboard = new ControlBoard(this);
 
         // Register Named Commands for Auto
-        NamedCommands.registerCommand("Example Named Command", Commands.print("The command ran!"));
+        NamedCommands.registerCommand("Shoot", AutonomousCommands.getShootCommand(this));
+        NamedCommands.registerCommand("Intake", AutonomousCommands.getIntakeCommand(this));
 
         // Create a chooser to select the autonomous
         List<AutoEntry> autos = buildPathPlannerAutos();
