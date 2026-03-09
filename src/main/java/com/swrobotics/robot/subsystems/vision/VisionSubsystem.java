@@ -38,8 +38,8 @@ public final class VisionSubsystem extends SubsystemBase {
                         Constants.kLimelightConfig)
         );
 
-        ignoreUpdates = false;
-        setDefaultCommand(Commands.run(() -> ignoreUpdates = false, this));
+        ignoreUpdates = true;
+        setDefaultCommand(Commands.run(() -> ignoreUpdates = true, this));
     }
 
     public Command commandIgnoreUpdates() {

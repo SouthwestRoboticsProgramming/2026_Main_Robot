@@ -5,15 +5,9 @@
     "data": {
       "commands": [
         {
-          "type": "named",
-          "data": {
-            "name": "Shoot"
-          }
-        },
-        {
           "type": "path",
           "data": {
-            "pathName": "New New New New Path"
+            "pathName": "shoot_goMid"
           }
         },
         {
@@ -25,13 +19,43 @@
         {
           "type": "path",
           "data": {
-            "pathName": "shoot go intake"
+            "pathName": "intake"
           }
         },
         {
           "type": "path",
           "data": {
-            "pathName": "New Path"
+            "pathName": "shoot2"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "Shoot"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "end"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "Intake"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "intake2"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "shoot3"
           }
         },
         {
@@ -44,6 +68,6 @@
     }
   },
   "resetOdom": true,
-  "folder": "Blue Autos",
+  "folder": "Risky",
   "choreoAuto": false
 }

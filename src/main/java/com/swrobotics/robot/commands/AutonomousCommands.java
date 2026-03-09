@@ -17,8 +17,9 @@ public class AutonomousCommands {
 
     public static Command getIntakeCommand(RobotContainer robot) {
         return robot.expansion.commandSetState(ExpansionSubsystem.State.EXTENDED)
-                .withTimeout(1.0)
+                .withTimeout(.2)
                 .andThen(robot.intake.commandSetState(IntakeSubsystem.State.INTAKE)
-                    .alongWith(robot.indexer.commandSetState(IndexerSubsystem.State.INTAKE)));
+                    .alongWith(robot.indexer.commandSetState(IndexerSubsystem.State.INTAKE)).withTimeout(.1));
     }
+    
 }

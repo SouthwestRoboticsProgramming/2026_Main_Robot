@@ -16,6 +16,7 @@ public class AimCalc {
 
     private Rotation2d angleToHub = new Rotation2d();
     private double distanceToHub = 0.0;
+    private double staticHoodAngle = Units.degreesToRadians(35);
     
 
     // Hood angle management

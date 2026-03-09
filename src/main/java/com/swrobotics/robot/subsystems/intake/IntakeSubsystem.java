@@ -53,7 +53,7 @@ public class IntakeSubsystem extends SubsystemBase {
     public void periodic() {
         double targetVoltage = 0;
         switch (targetState) {
-            case INTAKE: targetVoltage = 4.0; // Set to a positive voltage to intake balls. Adjust as needed for optimal performance.
+            case INTAKE: targetVoltage = 6.0; // Set to a positive voltage to intake balls. Adjust as needed for optimal performance.
             break;
             case IDLE: targetVoltage = 0.0;
             break;
