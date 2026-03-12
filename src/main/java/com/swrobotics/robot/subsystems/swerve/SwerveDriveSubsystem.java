@@ -176,22 +176,36 @@ public final class SwerveDriveSubsystem extends SubsystemBase {
         }
     }
 
+    // Inside SwerveDriveSubsystem.java
+
+    // Add this helper method
+    public Translation2d getFieldRelativeVelocity() {
+        ChassisSpeeds robotRel = currentState.Speeds;
+        // Rotate robot-relative speeds by the current gyro heading to get field-relative
+        return new Translation2d(robotRel.vxMetersPerSecond, robotRel.vyMetersPerSecond)
+                .rotateBy(getEstimatedPose().getRotation());
+    }
+
     @Override
     public void periodic() {
-        if (RobotBase.isSimulation()) {
-            drivetrain.updateSimState(Constants.kPeriodicTime, 12.0);
-        }
+       if (RobotBase.isSimulation()) {
+        drivetrain.updateSimState(Constants.kPeriodicTime, 12.0);
+    }
 
-        currentState = drivetrain.getState();
-        rawGyroRotation = Rotation2d.fromDegrees(rawGyroAngleSignal.refresh().getValueAsDouble());
+    currentState = drivetrain.getState();
+    rawGyroRotation = Rotation2d.fromDegrees(rawGyroAngleSignal.refresh().getValueAsDouble());
+    FieldView.robotPose.setPose(currentState.Pose);
 
-        FieldView.robotPose.setPose(currentState.Pose);
+    if (CALIBRATE.get()) {
+        CALIBRATE.set(false);
+        calibrateModuleOffsets();
+    }
 
-        if (CALIBRATE.get()) {
-            CALIBRATE.set(false);
-            calibrateModuleOffsets();
-        }
+    // FEED THE DATA: Rotate robot-relative speeds to field-relative for AimCalc
+    var robotRel = currentState.Speeds;
+    Translation2d fieldVel = new Translation2d(robotRel.vxMetersPerSecond, robotRel.vyMetersPerSecond)
+            .rotateBy(currentState.Pose.getRotation());
 
-        AimCalc.getInstance().update(getEstimatedPose());
+    AimCalc.getInstance().update(currentState.Pose, fieldVel.getX(), fieldVel.getY());
     }
 }

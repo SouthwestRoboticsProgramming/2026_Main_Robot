@@ -69,6 +69,8 @@ public class RobotContainer {
         // Register Named Commands for Auto
         NamedCommands.registerCommand("Shoot", AutonomousCommands.getShootCommand(this));
         NamedCommands.registerCommand("Intake", AutonomousCommands.getIntakeCommand(this));
+        NamedCommands.registerCommand("Expand", AutonomousCommands.getExpandCommand(this));
+        NamedCommands.registerCommand("Retract", AutonomousCommands.getRetractCommand(this));
 
         // Create a chooser to select the autonomous
         List<AutoEntry> autos = buildPathPlannerAutos();

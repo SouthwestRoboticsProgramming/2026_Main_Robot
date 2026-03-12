@@ -9,6 +9,7 @@ import com.swrobotics.robot.subsystems.intake.IntakeSubsystem;
 import com.swrobotics.robot.subsystems.shooter.ShooterSubsystem;
 
 public class AutonomousCommands {
+    
     public static Command getShootCommand(RobotContainer robot) {
         return robot.shooter.commandSetState(ShooterSubsystem.State.SHOOT)
                     .withTimeout(.75)
@@ -16,10 +17,24 @@ public class AutonomousCommands {
     }
 
     public static Command getIntakeCommand(RobotContainer robot) {
-        return robot.expansion.commandSetState(ExpansionSubsystem.State.EXTENDED)
-                .withTimeout(.2)
-                .andThen(robot.intake.commandSetState(IntakeSubsystem.State.INTAKE)
-                    .alongWith(robot.indexer.commandSetState(IndexerSubsystem.State.INTAKE)).withTimeout(.1));
+        return robot.intake.commandSetState(IntakeSubsystem.State.INTAKE)
+        .alongWith(robot.indexer.commandSetState(IndexerSubsystem.State.INTAKE)).withTimeout(.1);
     }
+
+    public static Command getExpandCommand(RobotContainer robot) {
+        return robot.expansion.commandSetState(ExpansionSubsystem.State.EXTENDED).withTimeout(.3);
+    }
+    
+    public static Command getRetractCommand(RobotContainer robot) {
+        return robot.expansion.commandSetState(ExpansionSubsystem.State.RETRACTED).withTimeout(.3);
+    }
+    
+
+     public static Command getIntakePath(RobotContainer robot) {
+        return Commands.sequence(
+            getExpandCommand(robot),
+            getIntakeCommand(robot)
+        );
+     }
     
 }

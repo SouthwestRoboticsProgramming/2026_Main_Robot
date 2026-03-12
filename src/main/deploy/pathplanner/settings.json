@@ -3,8 +3,9 @@
   "robotLength": 0.768,
   "holonomicMode": true,
   "pathFolders": [
-    "shoot auto",
+    "depot",
     "full length auto blue",
+    "shoot auto",
     "small auto 1 blue"
   ],
   "autoFolders": [

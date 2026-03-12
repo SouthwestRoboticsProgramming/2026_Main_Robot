@@ -182,22 +182,22 @@ public final class Constants {
     );
 
     public static final LimelightCamera.MountingLocation kLimelightBackLocation = new LimelightCamera.MountingLocation(
-        Units.inchesToMeters(-13), Units.inchesToMeters(2.0), Units.inchesToMeters(9.25), //z x y? jonah lowkey weird
+        Units.inchesToMeters(13), Units.inchesToMeters(-2.0), Units.inchesToMeters(9.25), //z x y? jonah lowkey weird
         // Degrees CCW
-        0, 0, 180
+        0, 0, 0
     );
 
     public static final LimelightCamera.MountingLocation kLimelightRightLocation = new LimelightCamera.MountingLocation(
-        Units.inchesToMeters(-10.05),Units.inchesToMeters(12.3503), Units.inchesToMeters(9.502),
+        Units.inchesToMeters(10.05),Units.inchesToMeters(-12.3503), Units.inchesToMeters(9.502),
         // Degrees CCW
-        0, 0, 270
+        0, 0, 90
 
     );
 
     public static final LimelightCamera.MountingLocation kLimelightFrontLocation = new LimelightCamera.MountingLocation(
         // TODO: These are guesses, they should be measured in CAD
-        Units.inchesToMeters(-4.84), Units.inchesToMeters(-10.213), Units.inchesToMeters(18.132),
-        0, 15, 0
+        Units.inchesToMeters(-4.84), Units.inchesToMeters(10.213), Units.inchesToMeters(18.132),
+        0, 15, 180
     );
 
    /* --- Hood --- */ //TODO: Adjust constant values

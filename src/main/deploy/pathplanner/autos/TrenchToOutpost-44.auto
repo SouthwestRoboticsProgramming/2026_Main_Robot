@@ -13,25 +13,25 @@
         {
           "type": "path",
           "data": {
-            "pathName": "New New New New Path"
+            "pathName": "go to depot"
           }
         },
         {
           "type": "named",
           "data": {
-            "name": "Intake"
+            "name": "VacuumOn"
           }
         },
         {
           "type": "path",
           "data": {
-            "pathName": "shoot go intake"
+            "pathName": "intake at depot"
           }
         },
         {
           "type": "path",
           "data": {
-            "pathName": "New Path"
+            "pathName": "shootdepot"
           }
         },
         {

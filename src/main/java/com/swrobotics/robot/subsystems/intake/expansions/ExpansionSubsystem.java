@@ -32,9 +32,9 @@ public class ExpansionSubsystem extends SubsystemBase {
         TalonFXConfigHelper config = new TalonFXConfigHelper();
         config.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
         config.MotorOutput.NeutralMode = NeutralModeValue.Coast;
-        config.CurrentLimits.SupplyCurrentLimit = 70;
+        config.CurrentLimits.SupplyCurrentLimit = 80;
         config.CurrentLimits.SupplyCurrentLimitEnable = true;
-        config.Slot0.kP = .1;
+        config.Slot0.kP = .2;
         config.Slot0.kI = 0;
         config.Slot0.kD = 0.00;
         config.Slot0.kG = 0.1;

@@ -1,91 +1,63 @@
 package com.swrobotics.robot.subsystems.shooter;
 
 import com.ctre.phoenix6.controls.Follower;
-import com.ctre.phoenix6.controls.VelocityVoltage; // Switched to Velocity
+import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.MotorAlignmentValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
-import com.ctre.phoenix6.swerve.utility.PhoenixPIDController;
 import com.swrobotics.lib.ctre.TalonFXConfigHelper;
-import com.swrobotics.robot.config.Constants;
 import com.swrobotics.robot.config.IOAllocation;
-import com.swrobotics.robot.control.AimCalc;
-
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
-import java.util.function.DoubleSupplier;
-
 public class ShooterSubsystem extends SubsystemBase {
-
     public enum State {
-        IDLE,
-        SHOOT,
-        WARM, // Shooter is at a lower speed to warm up but not shoot
-        RINDEX // Shooter is running in reverse to help unjam balls or index them backwards
+        IDLE(0), SHOOT(60), WARM(15), RINDEX(-10); 
+        public final double rps;
+        State(double rps) { this.rps = rps; }
     }
     
     private final TalonFX motorL;
     private final TalonFX motorR;
-
     private final VelocityVoltage velocityControl = new VelocityVoltage(0);
-    private final Follower followerControl =new Follower(14, MotorAlignmentValue.Opposed);
-    private State targetState;
+    private State targetState = State.IDLE;
+    
+    private double dynamicRPS = 0;
+    private boolean useDynamic = false;
 
     public ShooterSubsystem() {
-
         motorL = IOAllocation.CAN.kShooterL.createTalonFX();
         motorR = IOAllocation.CAN.kShooterR.createTalonFX();
-        
         TalonFXConfigHelper config = new TalonFXConfigHelper();
+        config.Feedback.SensorToMechanismRatio = 1.0 / 3.0; 
         config.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
         config.MotorOutput.NeutralMode = NeutralModeValue.Coast;
-        config.Slot0.kP = .5;
-        config.Slot0.kI = 0;
-        config.Slot0.kD = 0;
-        config.Slot0.kV = 0.13;
-        config.Slot0.kA = 0;
-        
-        
-
-
-        
+        config.Slot0.kP = 0.5; 
+        config.Slot0.kV = 0.13; 
         config.apply(motorL, motorR);
-        targetState = State.IDLE;
-
-        setDefaultCommand(commandSetState(ShooterSubsystem.State.IDLE));
+        motorR.setControl(new Follower(motorL.getDeviceID(), MotorAlignmentValue.Opposed));
     }
 
     @Override
     public void periodic() {
-        
-        double targetRPS = 0;
-        switch (targetState) {
-            case SHOOT: targetRPS = 18; //Constants.kShooterRPS.get();
-            break;
-            case IDLE: targetRPS = 0; //Constants.kShooterIdleRPS.get();
-            break;
-            case WARM: targetRPS = 4; //Constants.kShooterWarmRPS.get(); // warm motor and keep it spinning so it can accelerate faster when we want to shoot, but this may need to be tuned based on the actual shooter mechanism and how much warmup is needed. Start with a value around 50-70% of the full shooting speed and adjust as needed based on testing.
-            break;
-            case RINDEX:  targetRPS = 0; //Constants.kShooterRindexRPS.get(); // Run the shooter in reverse at full speed to help unjam balls or index them backwards. This is useful if a ball gets stuck in the shooter or if we want to move balls backwards from the indexer into the shooter. The speed can be adjusted as needed, but starting with full reverse speed is a good way to ensure it can clear jams effectively.
-            break;
-        }
-
-
-
-        motorL.setControl(velocityControl.withVelocity(targetRPS).withEnableFOC(false));
-        motorR.setControl(followerControl);
+        double setpoint = useDynamic ? dynamicRPS : targetState.rps;
+        motorL.setControl(velocityControl.withVelocity(setpoint));
     }
 
-    public void setTargetState(State targetState) {
-        this.targetState = targetState;
+    public void setDynamicRPS(double rps) {
+        this.dynamicRPS = rps;
+        this.useDynamic = true;
     }
 
-    public Command commandSetState(State targetState) {
-        return Commands.run(() -> {
-            setTargetState(targetState);
-        }, this);
+    public void stopDynamic() { this.useDynamic = false; }
+
+    public boolean isAtTargetRPS() {
+        double target = useDynamic ? dynamicRPS : targetState.rps;
+        if (target <= 0) return false;
+        return Math.abs(motorL.getVelocity().getValueAsDouble() - target) < 2.0;
     }
+
+    public void setTargetState(State state) { this.targetState = state; }
+    public Command commandSetState(State state) { return run(() -> setTargetState(state)); }
 }

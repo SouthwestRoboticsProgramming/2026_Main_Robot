@@ -92,11 +92,8 @@ public final class ControlBoard extends SubsystemBase {
                  .whileTrue(robot.indexer.commandSetState(IndexerSubsystem.State.RINDEX));
 
         /* --- Shooter --- */
-        operator.rightTrigger()
-        .whileTrue(robot.shooter.commandSetState(ShooterSubsystem.State.SHOOT)
-        .withTimeout(.75)
-        .andThen(robot.indexer.commandSetState(IndexerSubsystem.State.FEED))
-        .andThen(robot.shooter.commandSetState(ShooterSubsystem.State.SHOOT)));
+        operator.rightTrigger().whileTrue(robot.indexer.commandSetState(IndexerSubsystem.State.FEED));
+        
         operator.a().onTrue(robot.expansion.commandSetState(ExpansionSubsystem.State.SLIGHTDOWN_EXTENDED));
         operator.b().onTrue(robot.expansion.commandSetState(ExpansionSubsystem.State.SLIGHTUP_EXTENDED));
 
@@ -111,10 +108,16 @@ public final class ControlBoard extends SubsystemBase {
         /* --- Climber --- */
         //driver.y().toggleOnTrue(robot.climber.commandSetState(ClimberSubsystem.State.EXTENDED));
 
-        driver.a()
-                .whileTrue(DriveCommands.driveFieldRelativeSnapToHub(robot.drive, () -> this.getDriveTranslation()));
-                //.alongWith(robot.hood.setMode(HoodSubsystem.HoodMode.AUTO_TRACK)));
+// Inside ControlBoard.java or RobotContainer.java
 
+// Assuming 'driver' is your CommandXboxController
+driver.leftTrigger().whileTrue(DriveCommands.shootOnTheMove(robot.drive, robot.shooter, robot.hood,
+        () -> new Translation2d(
+                -driver.getLeftY(), 
+                -driver.getLeftX()
+            ).times(Constants.kSnapMaxSpeed.get()) // Driver's desired field-relative translation
+    )
+);
         //driver.y().whileTrue(DriveCommands.driveThroughBump(robot.drive));
         //driver.b().whileTrue(DriveCommands.driveThroughTrench(robot.drive));
 
@@ -228,6 +231,5 @@ public final class ControlBoard extends SubsystemBase {
 
     @Override
     public void periodic() {
-        AimCalc.getInstance().setSpeedMultiplier(driver.getRightTriggerAxis());
     }
 }
