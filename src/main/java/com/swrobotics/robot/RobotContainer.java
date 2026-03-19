@@ -21,6 +21,7 @@ import com.swrobotics.robot.subsystems.shooter.hood.HoodSubsystem;
 import com.swrobotics.robot.subsystems.intake.IntakeSubsystem;
 import com.swrobotics.robot.subsystems.intake.expansions.ExpansionSubsystem;
 import com.swrobotics.robot.subsystems.intake.indexer.IndexerSubsystem;
+import com.swrobotics.robot.subsystems.shooter.turret.TurretSubsystem;
 
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.RobotBase;
@@ -45,6 +46,7 @@ public class RobotContainer {
     public final ShooterSubsystem shooter;
     public final IntakeSubsystem intake;
     public final HoodSubsystem hood;
+    public final TurretSubsystem turret;
     public final ExpansionSubsystem expansion;
     //public final ClimberSubsystem climber;
 
@@ -60,6 +62,7 @@ public class RobotContainer {
         shooter = new ShooterSubsystem();
         intake = new IntakeSubsystem();
         hood = new HoodSubsystem();
+        turret = new TurretSubsystem(drive);
         expansion = new ExpansionSubsystem();
         //climber = new ClimberSubsystem();
 

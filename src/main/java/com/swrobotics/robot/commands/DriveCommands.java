@@ -11,6 +11,7 @@ import com.swrobotics.robot.control.AimCalc;
 import com.swrobotics.robot.subsystems.intake.indexer.IndexerSubsystem;
 import com.swrobotics.robot.subsystems.shooter.ShooterSubsystem;
 import com.swrobotics.robot.subsystems.shooter.hood.HoodSubsystem;
+import com.swrobotics.robot.subsystems.shooter.turret.TurretSubsystem;
 import com.swrobotics.robot.subsystems.swerve.SwerveDriveSubsystem;
 
 import edu.wpi.first.math.controller.PIDController;
@@ -65,8 +66,7 @@ public final class DriveCommands {
             SwerveDriveSubsystem drive,
 
             Supplier<Translation2d> translationSupplier
-) {
-        PIDController turnPid = new PIDController(0, 0, 0); // Values set to 0, changed a few lines later
+) {        PIDController turnPid = new PIDController(0, 0, 0); // Values set to 0, changed a few lines later
         turnPid.enableContinuousInput(-Math.PI, Math.PI);
 
         return Commands.startRun(() -> {
@@ -174,10 +174,65 @@ public final class DriveCommands {
         .finallyDo(() -> {
             shooter.stopDynamic();
             shooter.setTargetState(ShooterSubsystem.State.IDLE);
-            hood.setMode(HoodSubsystem.HoodMode.MANUAL);
         });
     }
+    public static Command shootOnTheMoveTurret(
+            SwerveDriveSubsystem drive,
+            ShooterSubsystem shooter,
+            HoodSubsystem hood,
+            TurretSubsystem turret,
+            IndexerSubsystem indexer,
+            Supplier<Translation2d> translationSupplier,
+            boolean isAuto
+    ) {
+        PIDController turnPid = new PIDController(Constants.kSnapTurnKp.get(), 0, Constants.kSnapTurnKd.get());
+        turnPid.enableContinuousInput(-Math.PI, Math.PI);
+        turnPid.setTolerance(Math.toRadians(2.5));
 
+        return Commands.run(() -> {
+            Translation2d driveVel = translationSupplier.get();
+
+            // 1. Aim Drivebase (Manual only)
+            if (!isAuto) {
+                double rotOutput = turnPid.calculate(
+                    drive.getEstimatedPose().getRotation().getRadians(), 
+                    AimCalc.getInstance().getDrivebaseAimAngle().getRadians()
+                );
+                drive.setControl(new SwerveRequest.FieldCentric()
+                    .withVelocityX(driveVel.getX())
+                    .withVelocityY(driveVel.getY())
+                    .withRotationalRate(rotOutput));
+            }
+
+            // 2. Command Subsystems to track AimCalc
+            // We call initialize() on these to ensure they switch to SCORING/AUTO modes
+            shooter.setDynamicRPS(AimCalc.getInstance().getShooterRPS());
+            hood.cmdAutoTrack().initialize(); 
+            turret.cmdScoring().initialize(); 
+
+            // 3. Fire Logic - Triple Check
+            boolean driveReady = isAuto || turnPid.atSetpoint();
+            boolean shooterReady = shooter.isAtTargetRPS();
+            boolean turretReady = turret.isOnTarget();
+            boolean hoodReady = hood.isAtTarget(); // New check for gear-ratio compensated position
+
+            if (driveReady && shooterReady && turretReady && hoodReady) {
+                indexer.commandSetState(IndexerSubsystem.State.FEED);
+            } else {
+                indexer.commandSetState(IndexerSubsystem.State.IDLE);
+            }
+        }, drive, shooter, hood, turret, indexer)
+        .finallyDo((interrupted) -> {
+            // Cleanup: Stop the flywheels and put the hood/turret back to idle
+            shooter.setTargetState(ShooterSubsystem.State.IDLE);
+            indexer.commandSetState(IndexerSubsystem.State.IDLE);
+            turret.cmdIdle().initialize();
+            
+            // Set hood to manual at its current position to "lock" it
+            hood.setManualTargetMotorRot(hood.getPhysicalDegrees() / 360.0).initialize();
+        });
+    }
+    
     private static Pose2d getClosestPose(Pose2d currentPose, List<Pose2d> candidates) {
     Pose2d closest = candidates.get(0);
     double minDistance = currentPose.getTranslation().getDistance(closest.getTranslation());
