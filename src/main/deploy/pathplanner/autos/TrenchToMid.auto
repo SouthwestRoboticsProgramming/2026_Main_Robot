@@ -1,0 +1,61 @@
+{
+  "version": "2025.0",
+  "command": {
+    "type": "sequential",
+    "data": {
+      "commands": [
+        {
+          "type": "named",
+          "data": {
+            "name": "Shoot"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "shoot_goMid"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "shoot2"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "Shoot"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "end"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "intake2"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "shoot3"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "Shoot"
+          }
+        }
+      ]
+    }
+  },
+  "resetOdom": true,
+  "folder": "Risky",
+  "choreoAuto": false
+}

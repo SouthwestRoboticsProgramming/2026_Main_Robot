@@ -11,14 +11,16 @@ import com.swrobotics.robot.subsystems.vision.VisionSubsystem;
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.NamedCommands;
 import com.pathplanner.lib.commands.PathPlannerAuto;
+import com.swrobotics.robot.commands.AutonomousCommands;
+import com.swrobotics.robot.control.AimCalc;
 import com.swrobotics.robot.control.ControlBoard;
 import com.swrobotics.robot.logging.FieldView;
-import com.swrobotics.robot.subsystems.climber.ClimberSubsystem;
-import com.swrobotics.robot.subsystems.hood.HoodSubsystem;
-import com.swrobotics.robot.subsystems.indexer.IndexerSubsystem;
+//import com.swrobotics.robot.subsystems.climber.ClimberSubsystem;
 import com.swrobotics.robot.subsystems.shooter.ShooterSubsystem;
+import com.swrobotics.robot.subsystems.shooter.hood.HoodSubsystem;
 import com.swrobotics.robot.subsystems.intake.IntakeSubsystem;
 import com.swrobotics.robot.subsystems.intake.expansions.ExpansionSubsystem;
+import com.swrobotics.robot.subsystems.intake.indexer.IndexerSubsystem;
 
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.RobotBase;
@@ -44,7 +46,7 @@ public class RobotContainer {
     public final IntakeSubsystem intake;
     public final HoodSubsystem hood;
     public final ExpansionSubsystem expansion;
-    public final ClimberSubsystem climber;
+    //public final ClimberSubsystem climber;
 
     public final ControlBoard controlboard;
 
@@ -59,13 +61,16 @@ public class RobotContainer {
         intake = new IntakeSubsystem();
         hood = new HoodSubsystem();
         expansion = new ExpansionSubsystem();
-        climber = new ClimberSubsystem();
+        //climber = new ClimberSubsystem();
 
         // ControlBoard must be initialized last
         controlboard = new ControlBoard(this);
 
         // Register Named Commands for Auto
-        NamedCommands.registerCommand("Example Named Command", Commands.print("The command ran!"));
+        NamedCommands.registerCommand("Shoot", AutonomousCommands.getShootCommand(this));
+        NamedCommands.registerCommand("Intake", AutonomousCommands.getIntakeCommand(this));
+        NamedCommands.registerCommand("Expand", AutonomousCommands.getExpandCommand(this));
+        NamedCommands.registerCommand("Retract", AutonomousCommands.getRetractCommand(this));
 
         // Create a chooser to select the autonomous
         List<AutoEntry> autos = buildPathPlannerAutos();

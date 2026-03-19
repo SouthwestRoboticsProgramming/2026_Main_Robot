@@ -13,6 +13,7 @@ import com.swrobotics.robot.config.Constants;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.util.Units;
+
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -21,12 +22,12 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.POVButton;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 
-import com.swrobotics.robot.subsystems.climber.ClimberSubsystem;
-import com.swrobotics.robot.subsystems.hood.HoodSubsystem;
-import com.swrobotics.robot.subsystems.indexer.IndexerSubsystem;
+//import com.swrobotics.robot.subsystems.climber.ClimberSubsystem;
 import com.swrobotics.robot.subsystems.intake.expansions.ExpansionSubsystem;
+import com.swrobotics.robot.subsystems.intake.indexer.IndexerSubsystem;
 import com.swrobotics.robot.subsystems.intake.IntakeSubsystem;
 import com.swrobotics.robot.subsystems.shooter.ShooterSubsystem;
+//import com.swrobotics.robot.subsystems.shooter.hood.HoodSubsystem;
 
 public final class ControlBoard extends SubsystemBase {
     /*
@@ -35,12 +36,15 @@ public final class ControlBoard extends SubsystemBase {
      * Driver:
      * Left stick: drive translation
      * Right stick X: drive rotation
+     * Left trigger: intake
+     * Right bumber: feed
+     * left bumber: rindex
      * 
      * Start: Reset gyro
      * Back: Reset gyro
      * 
      * Operator:
-     * (none)
+     * 
      */
 
     private static final NTEntry<Boolean> CHARACTERISE_WHEEL_RADIUS = new NTBoolean("Drive/Characterize Wheel Radius", false);
@@ -60,166 +64,63 @@ public final class ControlBoard extends SubsystemBase {
         driveControlFilter = new DriveAccelFilter(Constants.kDriveControlMaxAccel);
 
         configureControls();
+        configureRumbles();
     }
 
     private void configureControls() {
         // Gyro reset buttons
-        driver.start().onFalse(Commands.run(() -> robot.drive.resetRotation(new Rotation2d())));
-        driver.back().onFalse(Commands.run(() -> robot.drive.resetRotation(new Rotation2d()))); // Two buttons to reset gyro so the driver can't get confused
+        driver.povUp().onFalse(Commands.runOnce(() -> robot.drive.resetRotation(new Rotation2d())));
+        driver.back().onFalse(Commands.runOnce(() -> robot.drive.resetRotation(new Rotation2d()))); // Two buttons to reset gyro so the driver can't get confused
 
         robot.drive.setDefaultCommand(DriveCommands.driveFieldRelative(
                 robot.drive,
-                this::getDriveTranslation,
+                () -> this.getDriveTranslation(),
                 this::getDriveRotation
         ));
 
         new Trigger(CHARACTERISE_WHEEL_RADIUS::get).whileTrue(new CharacterizeWheelsCommand(robot.drive));
         
-        // controller rumble
-        new Trigger(
-            () ->
-                    DriverStation.isTeleopEnabled()
-                            && DriverStation.getMatchTime() > 0
-                            && DriverStation.getMatchTime() <= Constants.kTransferAlertTime)
-            .onTrue(RumblePatternCommands.inactive_Active_TransferAlert(driver, 0.75)
-                    .alongWith(RumblePatternCommands.inactive_Active_TransferAlert(operator, 0.75)));
-
-        new Trigger(
-                () ->
-                        DriverStation.isTeleopEnabled()
-                                && DriverStation.getMatchTime() > 0
-                                && DriverStation.getMatchTime() <= Constants.kActive_InactiveAlert1Time)
-                .onTrue(RumblePatternCommands.inactive_Active_TransferAlert(driver, 0.5)
-                        .alongWith(RumblePatternCommands.inactive_Active_TransferAlert(operator, 0.5)));
-
-        new Trigger(
-            () ->
-                    DriverStation.isTeleopEnabled()
-                            && DriverStation.getMatchTime() > 0
-                            && DriverStation.getMatchTime() <= Constants.kActive_InactiveAlert1Time2)
-            .onTrue(RumblePatternCommands.inactive_Active_TransferAlert(driver, 0.75)
-                    .alongWith(RumblePatternCommands.inactive_Active_TransferAlert(operator, 0.75)));
-
-
-        new Trigger(
-            () ->
-                    DriverStation.isTeleopEnabled()
-                            && DriverStation.getMatchTime() > 0
-                            && DriverStation.getMatchTime() <= Constants.kActive_InactiveAlert2Time)
-            .onTrue(RumblePatternCommands.inactive_Active_TransferAlert(driver, 0.5)
-                    .alongWith(RumblePatternCommands.inactive_Active_TransferAlert(operator, 0.5)));
-        
-        new Trigger(
-            () ->
-                    DriverStation.isTeleopEnabled()
-                            && DriverStation.getMatchTime() > 0
-                            && DriverStation.getMatchTime() <= Constants.kActive_InactiveAlert2Time2)
-            .onTrue(RumblePatternCommands.inactive_Active_TransferAlert(driver, 0.75)
-                    .alongWith(RumblePatternCommands.inactive_Active_TransferAlert(operator, 0.75)));
-        
-        new Trigger(
-            () ->
-                    DriverStation.isTeleopEnabled()
-                            && DriverStation.getMatchTime() > 0
-                            && DriverStation.getMatchTime() <= Constants.kActive_InactiveAlert3Time)
-            .onTrue(RumblePatternCommands.inactive_Active_TransferAlert(driver, 0.5)
-                    .alongWith(RumblePatternCommands.inactive_Active_TransferAlert(operator, 0.5)));
-        
-        new Trigger(
-            () ->
-                    DriverStation.isTeleopEnabled()
-                            && DriverStation.getMatchTime() > 0
-                            && DriverStation.getMatchTime() <= Constants.kActive_InactiveAlert3Time2)
-            .onTrue(RumblePatternCommands.inactive_Active_TransferAlert(driver, 0.75)
-                    .alongWith(RumblePatternCommands.inactive_Active_TransferAlert(operator, 0.75)));
-        
-        new Trigger(
-            () ->
-                    DriverStation.isTeleopEnabled()
-                            && DriverStation.getMatchTime() > 0
-                            && DriverStation.getMatchTime() <= Constants.kActive_InactiveAlert4Time)
-            .onTrue(RumblePatternCommands.inactive_Active_TransferAlert(driver, 0.5)
-                    .alongWith(RumblePatternCommands.inactive_Active_TransferAlert(operator, 0.5)));
-
-        new Trigger(
-            () ->
-                    DriverStation.isTeleopEnabled()
-                            && DriverStation.getMatchTime() > 0
-                            && DriverStation.getMatchTime() <= Constants.kActive_InactiveAlert4Time2)
-            .onTrue(RumblePatternCommands.inactive_Active_TransferAlert(driver, 0.75)
-                    .alongWith(RumblePatternCommands.inactive_Active_TransferAlert(operator, 0.75)));
-                    
-                    
-        
-
-        // Endgame Notice (controller rumble)
-        new Trigger(
-                () ->
-                        DriverStation.isTeleopEnabled()
-                                && DriverStation.getMatchTime() > 0
-                                && DriverStation.getMatchTime() <= Constants.kEndgameAlertTime)
-                .onTrue(RumblePatternCommands.endgameAlert(driver, 0.75)
-                        .alongWith(RumblePatternCommands.endgameAlert(operator, 0.75)));
-
-        new Trigger(
-                 () ->
-                        DriverStation.isTeleopEnabled()
-                                && DriverStation.getMatchTime() > 0
-                                && DriverStation.getMatchTime() <= Constants.kEndgameAlert2Time)
-                .onTrue(RumblePatternCommands.endgameAlertFinalCountdown(driver, 0.75));
-        
-
-        //* --- Driver controller --- *//
-
-        
-
         /* --- Intake/indexer --- */
-        robot.intake.setDefaultCommand(robot.intake.commandSetState(IntakeSubsystem.State.IDLE));
-        robot.indexer.setDefaultCommand(robot.indexer.commandSetState(IndexerSubsystem.State.IDLE));
-
-        driver.rightTrigger()
-                .whileTrue(robot.intake.commandSetState(IntakeSubsystem.State.INTAKE)
-                .alongWith(robot.indexer.commandSetState(IndexerSubsystem.State.INTAKE)));
-
-        /* --- Shooter --- */
-        robot.shooter.setDefaultCommand(robot.shooter.commandSetState(ShooterSubsystem.State.IDLE));
 
         driver.leftTrigger()
-                .whileTrue(robot.shooter.commandSetState(ShooterSubsystem.State.SHOOT));
+                 .whileTrue(robot.intake.commandSetState(IntakeSubsystem.State.INTAKE)
+                .alongWith(robot.indexer.commandSetState(IndexerSubsystem.State.INTAKE)));
+        // operator.leftTrigger()
+        //          .whileTrue(robot.intake.commandSetState(IntakeSubsystem.State.INTAKE)
+        //         .alongWith(robot.indexer.commandSetState(IndexerSubsystem.State.INTAKE)));
+        driver.leftBumper()
+                 .whileTrue(robot.indexer.commandSetState(IndexerSubsystem.State.RINDEX));
 
-        //TODO: add /Hood/Expansion controls
+        /* --- Shooter --- */
+        operator.rightTrigger().whileTrue(robot.indexer.commandSetState(IndexerSubsystem.State.FEED));
         
+        operator.a().onTrue(robot.expansion.commandSetState(ExpansionSubsystem.State.SLIGHTDOWN_EXTENDED));
+        operator.b().onTrue(robot.expansion.commandSetState(ExpansionSubsystem.State.SLIGHTUP_EXTENDED));
+
+
         /* --- Hood --- */
-        robot.hood.setDefaultCommand(robot.hood.commandSetState(HoodSubsystem.State.AUTO_TRACKING));
-        driver.x()
-                .whileTrue(robot.hood.commandToggleAutoManual()); 
+        // operator.povDown().onTrue(robot.hood.commandManualUp());
+        // operator.povUp().onTrue(robot.hood.commandManualDown());
+
         /* --- expansion --- */
-        
-        driver.start().onTrue(robot.expansion.commandSetState(ExpansionSubsystem.State.EXTENDED));
-        
-        //TODO: add Autoalign controls
+        operator.x().toggleOnTrue(robot.expansion.commandSetState(ExpansionSubsystem.State.EXTENDED));
 
-        //* --- Operator controller --- *//
+        /* --- Climber --- */
+        //driver.y().toggleOnTrue(robot.climber.commandSetState(ClimberSubsystem.State.EXTENDED));
 
-        /* Feed command */
+// Inside ControlBoard.java or RobotContainer.java
 
-        /* Rindex Command */
-        operator.leftTrigger()
-                .whileTrue(robot.indexer.commandSetState(IndexerSubsystem.State.RINDEX));
+// Assuming 'driver' is your CommandXboxController
+driver.leftTrigger().whileTrue(DriveCommands.shootOnTheMove(robot.drive, robot.shooter, robot.hood,
+        () -> new Translation2d(
+                -driver.getLeftY(), 
+                -driver.getLeftX()
+            ).times(Constants.kSnapMaxSpeed.get()) // Driver's desired field-relative translation
+    )
+);
+        //driver.y().whileTrue(DriveCommands.driveThroughBump(robot.drive));
+        //driver.b().whileTrue(DriveCommands.driveThroughTrench(robot.drive));
 
-
-        operator.povDown()
-                .onTrue(robot.hood.commandManualUp());
-
-        operator.povUp()
-                .onTrue(robot.hood.commandManualDown());
-
-        //TODO: add Climber controls
-        robot.climber.setDefaultCommand(robot.climber.commandSetState(ClimberSubsystem.State.RETRACTED));
-        operator.y().toggleOnTrue(robot.climber.commandSetState(ClimberSubsystem.State.EXTENDED));
-
-
-   
     }
 
     /**
@@ -261,8 +162,74 @@ public final class ControlBoard extends SubsystemBase {
         return Units.rotationsToRadians(input * Constants.kDriveControlMaxTurnSpeed);
     }
 
+    private void configureRumbles() {
+        // Transfer rumble
+        new Trigger(
+            () ->
+                    DriverStation.isTeleopEnabled()
+                            && DriverStation.getMatchTime() > 0
+                            && DriverStation.getMatchTime() <= Constants.kTransferAlertTime)
+            .onTrue(RumblePatternCommands.inactive_Active_TransferAlert(driver, 0.75)
+                    .alongWith(RumblePatternCommands.inactive_Active_TransferAlert(operator, 0.75)));
+
+
+
+        new Trigger(
+            () ->
+                    DriverStation.isTeleopEnabled()
+                            && DriverStation.getMatchTime() > 0
+                            && DriverStation.getMatchTime() <= Constants.kActive_InactiveAlert1Time2)
+            .onTrue(RumblePatternCommands.inactive_Active_TransferAlert(driver, 0.75)
+                    .alongWith(RumblePatternCommands.inactive_Active_TransferAlert(operator, 0.75)));
+
+
+        
+        new Trigger(
+            () ->
+                    DriverStation.isTeleopEnabled()
+                            && DriverStation.getMatchTime() > 0
+                            && DriverStation.getMatchTime() <= Constants.kActive_InactiveAlert2Time2)
+            .onTrue(RumblePatternCommands.inactive_Active_TransferAlert(driver, 0.75)
+                    .alongWith(RumblePatternCommands.inactive_Active_TransferAlert(operator, 0.75)));
+
+        
+        new Trigger(
+            () ->
+                    DriverStation.isTeleopEnabled()
+                            && DriverStation.getMatchTime() > 0
+                            && DriverStation.getMatchTime() <= Constants.kActive_InactiveAlert3Time2)
+            .onTrue(RumblePatternCommands.inactive_Active_TransferAlert(driver, 0.75)
+                    .alongWith(RumblePatternCommands.inactive_Active_TransferAlert(operator, 0.75)));
+        
+
+
+        new Trigger(
+            () ->
+                    DriverStation.isTeleopEnabled()
+                            && DriverStation.getMatchTime() > 0
+                            && DriverStation.getMatchTime() <= Constants.kActive_InactiveAlert4Time2)
+            .onTrue(RumblePatternCommands.inactive_Active_TransferAlert(driver, 0.75)
+                    .alongWith(RumblePatternCommands.inactive_Active_TransferAlert(operator, 0.75)));
+                    
+                    
+        // Endgame Notice (controller rumble)
+        new Trigger(
+                () ->
+                        DriverStation.isTeleopEnabled()
+                                && DriverStation.getMatchTime() > 0
+                                && DriverStation.getMatchTime() <= Constants.kEndgameAlertTime)
+                .onTrue(RumblePatternCommands.endgameAlert(driver, 0.75)
+                        .alongWith(RumblePatternCommands.endgameAlert(operator, 0.75)));
+
+        new Trigger(
+                 () ->
+                        DriverStation.isTeleopEnabled()
+                                && DriverStation.getMatchTime() > 0
+                                && DriverStation.getMatchTime() <= Constants.kEndgameAlert2Time)
+                .onTrue(RumblePatternCommands.endgameAlertFinalCountdown(driver, 0.75));
+    }
+
     @Override
     public void periodic() {
-        
     }
 }

@@ -2,9 +2,15 @@ package com.swrobotics.robot.commands;
 
 import com.ctre.phoenix6.swerve.SwerveModule;
 import com.ctre.phoenix6.swerve.SwerveRequest;
+
 import com.swrobotics.lib.utils.MathUtil;
 import com.swrobotics.lib.utils.PolynomialRegression;
 import com.swrobotics.robot.config.Constants;
+import com.swrobotics.robot.config.FieldPositions;
+import com.swrobotics.robot.control.AimCalc;
+import com.swrobotics.robot.subsystems.intake.indexer.IndexerSubsystem;
+import com.swrobotics.robot.subsystems.shooter.ShooterSubsystem;
+import com.swrobotics.robot.subsystems.shooter.hood.HoodSubsystem;
 import com.swrobotics.robot.subsystems.swerve.SwerveDriveSubsystem;
 
 import edu.wpi.first.math.controller.PIDController;
@@ -12,6 +18,8 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -19,8 +27,8 @@ import edu.wpi.first.wpilibj2.command.Commands;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Supplier;
-
 public final class DriveCommands {
     public static Command driveRobotRelative(
             SwerveDriveSubsystem drive,
@@ -53,30 +61,34 @@ public final class DriveCommands {
                     .withRotationalRate(rot));
         }, drive);
     }
-
-    public static Command driveFieldRelativeSnapToHub(
+        public static Command driveFieldRelativeSnapTo180(
             SwerveDriveSubsystem drive,
 
-            Supplier<Translation2d> translationSupplier,
-            Supplier<Rotation2d> targetRotationSupplier) {
-        PIDController turnPid = new PIDController(0, 0, 0);
+            Supplier<Translation2d> translationSupplier
+) {
+        PIDController turnPid = new PIDController(0, 0, 0); // Values set to 0, changed a few lines later
         turnPid.enableContinuousInput(-Math.PI, Math.PI);
 
         return Commands.startRun(() -> {
             turnPid.setPID(Constants.kSnapTurnKp.get(), 0, Constants.kSnapTurnKd.get());
+            turnPid.setTolerance(Math.toRadians(Constants.kSnapThetaDeadzone.get()));
             turnPid.reset();
         }, () -> {
             Translation2d tx = translationSupplier.get();
 
             Rotation2d currentRot = drive.getEstimatedPose().getRotation();
-            Rotation2d targetRot = targetRotationSupplier.get();
+            Rotation2d targetRot = Rotation2d.fromDegrees(180);
+            
             double rotOutput = turnPid.calculate(
                     MathUtil.wrap(currentRot.getRadians(), -Math.PI, Math.PI),
                     MathUtil.wrap(targetRot.getRadians(), -Math.PI, Math.PI)
             );
-
+            if (turnPid.atSetpoint()) {
+                rotOutput = 0;
+            }else {
             double maxTurnSpeed = Units.rotationsToRadians(Constants.kSnapMaxTurnSpeed.get());
             rotOutput = MathUtil.clamp(rotOutput, -maxTurnSpeed, maxTurnSpeed);
+            }
 
             drive.setControl(new SwerveRequest.FieldCentric()
                     .withVelocityX(tx.getX())
@@ -84,6 +96,191 @@ public final class DriveCommands {
                     .withRotationalRate(rotOutput));
         }, drive);
     }
+
+    public static Command driveFieldRelativeSnapToHub(
+            SwerveDriveSubsystem drive,
+
+            Supplier<Translation2d> translationSupplier
+) {
+        PIDController turnPid = new PIDController(0, 0, 0); // Values set to 0, changed a few lines later
+        turnPid.enableContinuousInput(-Math.PI, Math.PI);
+
+        return Commands.startRun(() -> {
+            turnPid.setPID(Constants.kSnapTurnKp.get(), 0, Constants.kSnapTurnKd.get());
+            turnPid.setTolerance(Math.toRadians(Constants.kSnapThetaDeadzone.get()));
+            turnPid.reset();
+        }, () -> {
+            Translation2d tx = translationSupplier.get();
+            
+            Rotation2d currentRot = drive.getEstimatedPose().getRotation();
+            Rotation2d targetRot = AimCalc.getInstance().getDrivebaseAimAngle();
+            // TEMP
+            Constants.currentAngle.set(Math.abs(currentRot.getDegrees()));
+            Constants.targetAngle.set(Math.abs(targetRot.getDegrees()));
+            
+
+            double rotOutput = turnPid.calculate(
+                    MathUtil.wrap(currentRot.getRadians(), -Math.PI, Math.PI),
+                    MathUtil.wrap(targetRot.getRadians(), -Math.PI, Math.PI)
+            );
+            if (turnPid.atSetpoint()) {
+                rotOutput = 0;
+            }else {
+            double maxTurnSpeed = Units.rotationsToRadians(Constants.kSnapMaxTurnSpeed.get());
+            rotOutput = MathUtil.clamp(rotOutput, -maxTurnSpeed, maxTurnSpeed);
+            }
+
+            drive.setControl(new SwerveRequest.FieldCentric()
+                    .withVelocityX(tx.getX())
+                    .withVelocityY(tx.getY())
+                    .withRotationalRate(rotOutput));
+        }, drive);
+    }
+    // Inside DriveCommands.java
+
+    public static Command shootOnTheMove(
+            SwerveDriveSubsystem drive,
+            ShooterSubsystem shooter,
+            HoodSubsystem hood,
+            Supplier<Translation2d> translationSupplier
+    ) {
+        PIDController turnPid = new PIDController(
+            Constants.kAutoTurnKp.get(), 0, 0); 
+        turnPid.enableContinuousInput(-Math.PI, Math.PI);
+
+        return Commands.run(() -> {
+            Translation2d driveVel = translationSupplier.get();
+
+            // 1. Aim Drivebase
+            double rotOutput = turnPid.calculate(
+                drive.getEstimatedPose().getRotation().getRadians(), 
+                AimCalc.getInstance().getDrivebaseAimAngle().getRadians()
+            );
+
+            drive.setControl(new SwerveRequest.FieldCentric()
+                .withVelocityX(driveVel.getX())
+                .withVelocityY(driveVel.getY())
+                .withRotationalRate(rotOutput));
+
+            // 2. Prep Shooter & Hood
+            shooter.setDynamicRPS(AimCalc.getInstance().getShooterRPS());
+            
+            // 3. Fire Logic
+            boolean aimed = Math.abs(turnPid.getError()) < Math.toRadians(2.0);
+            boolean shooterReady = shooter.isAtTargetRPS();
+
+        }, drive, shooter, hood)
+        //.beforeStarting(() -> hood.setMode(HoodSubsystem.HoodMode.AUTO_TRACK))
+        .finallyDo(() -> {
+            shooter.stopDynamic();
+            shooter.setTargetState(ShooterSubsystem.State.IDLE);
+            hood.setMode(HoodSubsystem.HoodMode.MANUAL);
+        });
+    }
+
+    private static Pose2d getClosestPose(Pose2d currentPose, List<Pose2d> candidates) {
+    Pose2d closest = candidates.get(0);
+    double minDistance = currentPose.getTranslation().getDistance(closest.getTranslation());
+
+    for (Pose2d pose : candidates) {
+        double dist = currentPose.getTranslation().getDistance(pose.getTranslation());
+        if (dist < minDistance) {
+            minDistance = dist;
+            closest = pose;
+        }
+    }
+    return closest;
+    }
+    public static Pose2d getCorrespondingPose(Pose2d currentTarget, Alliance alliance) {
+    // Trench Mapping
+    if (currentTarget.equals(FieldPositions.kLDSBlueTrenchPose)) return FieldPositions.kLCBlueTrenchPose;
+    if (currentTarget.equals(FieldPositions.kLCBlueTrenchPose)) return FieldPositions.kLDSBlueTrenchPose;
+    if (currentTarget.equals(FieldPositions.kRCBlueTrenchPose)) return FieldPositions.kRDSBlueTrenchPose;
+    if (currentTarget.equals(FieldPositions.kRDSBlueTrenchPose)) return FieldPositions.kRCBlueTrenchPose;
+    if (currentTarget.equals(FieldPositions.kLDSRedTrenchPose)) return FieldPositions.kLCRedTrenchPose;
+    if (currentTarget.equals(FieldPositions.kLCRedTrenchPose)) return FieldPositions.kLDSRedTrenchPose;
+    if (currentTarget.equals(FieldPositions.kRCRedTrenchPose)) return FieldPositions.kRDSRedTrenchPose;
+    if (currentTarget.equals(FieldPositions.kRDSRedTrenchPose)) return FieldPositions.kRCRedTrenchPose;
+
+    // Bump Mapping
+    if (currentTarget.equals(FieldPositions.kLDSBlueBumpPose)) return FieldPositions.kLCBlueBumpPose;
+    if (currentTarget.equals(FieldPositions.kLCBlueBumpPose)) return FieldPositions.kLDSBlueBumpPose;
+    if (currentTarget.equals(FieldPositions.kRCBlueBumpPose)) return FieldPositions.kRDSBlueBumpPose;
+    if (currentTarget.equals(FieldPositions.kRDSBlueBumpPose)) return FieldPositions.kRCBlueBumpPose;
+    if (currentTarget.equals(FieldPositions.kLDSRedBumpPose)) return FieldPositions.kLCRedBumpPose;
+    if (currentTarget.equals(FieldPositions.kLCRedBumpPose)) return FieldPositions.kLDSRedBumpPose;
+    if (currentTarget.equals(FieldPositions.kRCRedBumpPose)) return FieldPositions.kRDSRedBumpPose;
+    if (currentTarget.equals(FieldPositions.kRDSRedBumpPose)) return FieldPositions.kRCRedBumpPose;
+
+    return currentTarget;
+    }
+
+    
+
+    public static Command driveThroughTrench(SwerveDriveSubsystem drive) {
+    return Commands.defer(() -> {
+        Alliance alliance = DriverStation.getAlliance().orElse(Alliance.Red);
+        Pose2d currentPose = drive.getEstimatedPose();
+
+        // Gather candidates using your required alliance syntax
+        List<Pose2d> trenchPoses = List.of(
+            FieldPositions.kLDSBlueTrenchPose, 
+            FieldPositions.kLCBlueTrenchPose, 
+            FieldPositions.kRCBlueTrenchPose, 
+            FieldPositions.kRDSBlueTrenchPose,
+            FieldPositions.kLDSRedTrenchPose, 
+            FieldPositions.kLCRedTrenchPose, 
+            FieldPositions.kRCRedTrenchPose, 
+            FieldPositions.kRDSRedTrenchPose
+        );
+
+        Pose2d entryPose = getClosestPose(currentPose, trenchPoses);
+        Pose2d exitPose = getCorrespondingPose(entryPose, alliance);
+        
+        // Use 180 for Red, 0 for Blue
+        Rotation2d trenchRot = (alliance == Alliance.Red) ? Rotation2d.fromDegrees(180) : Rotation2d.fromDegrees(0);
+
+        return Commands.sequence(
+            // Phase 1: Drive to the entrance point
+            snapToPoseUntilInTolerance(drive, () -> new Pose2d(entryPose.getTranslation(), trenchRot), () -> 0.1),
+            // Phase 2: Drive through to the exit point
+            snapToPose(drive, () -> new Pose2d(exitPose.getTranslation(), trenchRot))
+        );
+    }, Set.of(drive));
+}
+
+public static Command driveThroughBump(SwerveDriveSubsystem drive) {
+    return Commands.defer(() -> {
+        Alliance alliance = DriverStation.getAlliance().orElse(Alliance.Red);
+        Pose2d currentPose = drive.getEstimatedPose();
+
+        List<Pose2d> bumpPoses = List.of(
+            FieldPositions.kLDSBlueBumpPose, 
+            FieldPositions.kLCBlueBumpPose,
+            FieldPositions.kRCBlueBumpPose,
+            FieldPositions.kRDSBlueBumpPose,
+            FieldPositions.kLDSRedBumpPose,
+            FieldPositions.kLCRedBumpPose,
+            FieldPositions.kRCRedBumpPose,
+            FieldPositions.kRDSRedBumpPose
+        );
+
+        Pose2d entryPose = getClosestPose(currentPose, bumpPoses);
+        Pose2d exitPose = getCorrespondingPose(entryPose, alliance);
+        
+        // Use 135 for Red, 45 for Blue
+        Rotation2d bumpRot = (alliance == Alliance.Red) ? Rotation2d.fromDegrees(135) : Rotation2d.fromDegrees(45);
+
+        return Commands.sequence(
+            // Phase 1: Snap to the bump approach
+            snapToPoseUntilInTolerance(drive, () -> new Pose2d(entryPose.getTranslation(), bumpRot), () -> 0.1),
+            // Phase 2: Drive over the bump to the exit
+            snapToPose(drive, () -> new Pose2d(exitPose.getTranslation(), bumpRot))
+        );
+    }, Set.of(drive));
+}
+    
+
     public static Command driveSnapToTarget(
         SwerveDriveSubsystem drive,
         Supplier<Translation2d> translationSupplier,
@@ -155,7 +352,7 @@ public final class DriveCommands {
                 );
             }
 
-            double maxDriveSpeed = Constants.kSnapMaxSpeed.get();
+            double maxDriveSpeed = 10;//Constants.kSnapMaxSpeed.get();
             double driveSpeed = Math.hypot(xOutput, yOutput);
             if (driveSpeed > maxDriveSpeed) {
                 double scale = maxDriveSpeed / driveSpeed;
@@ -249,5 +446,10 @@ public final class DriveCommands {
                     SmartDashboard.putNumber("FF Characterization/R2", R2);
                 })
         );
+    }
+
+    public static Command driveToPose(SwerveDriveSubsystem drive, Pose2d currentPose) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'driveToPose'");
     }
 }

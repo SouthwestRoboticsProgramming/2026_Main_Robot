@@ -15,6 +15,7 @@ import com.swrobotics.lib.field.FieldInfo;
 import com.swrobotics.lib.net.NTBoolean;
 import com.swrobotics.lib.net.NTEntry;
 import com.swrobotics.robot.config.Constants;
+import com.swrobotics.robot.control.AimCalc;
 import com.swrobotics.robot.logging.FieldView;
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.VecBuilder;
@@ -33,13 +34,10 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public final class SwerveDriveSubsystem extends SubsystemBase {
     private static final NTBoolean CALIBRATE = new NTBoolean("Drive/Modules/Calibrate", false);
-
     private final SwerveDrivetrain<TalonFX, TalonFX, CANcoder> drivetrain;
     private final StatusSignal<Angle> rawGyroAngleSignal;
-
     private SwerveDrivetrain.SwerveDriveState currentState;
     private Rotation2d rawGyroRotation;
-
 
     public SwerveDriveSubsystem() {
         int kModuleCount = Constants.kSwerveModuleInfos.length;
@@ -47,15 +45,9 @@ public final class SwerveDriveSubsystem extends SubsystemBase {
         for (int i = 0; i < kModuleCount; i++) {
             SwerveModuleInfo info = Constants.kSwerveModuleInfos[i];
             moduleConstants[i] = Constants.kModuleConstantsFactory.createModuleConstants(
-                info.turnId(),
-                info.driveId(),
-                info.encoderId(),
-                info.offset().get(),
-                info.position().getX(),
-                info.position().getY(),
-                false,
-                true,
-                false
+                info.turnId(), info.driveId(), info.encoderId(),
+                info.offset().get(), info.position().getX(), info.position().getY(),
+                false, true, false
             );
         }
 
@@ -64,15 +56,12 @@ public final class SwerveDriveSubsystem extends SubsystemBase {
             Constants.kDrivetrainConstants,
             Constants.kOdometryUpdateFreq,
             Constants.kOdometryStdDevs,
-            // These values have no effect, they are overridden by the
-            // standard deviations given to drivetrain.addVisionMeasurement()
-            VecBuilder.fill(0.6, 0.6, 0.6),
+            VecBuilder.fill(0.1, 0.1, 0.1), // Trust encoders more for recovery
             moduleConstants
         );
 
         for (int i = 0; i < kModuleCount; i++) {
             SwerveModule<TalonFX, TalonFX, CANcoder> module = drivetrain.getModule(i);
-
             CurrentLimitsConfigs driveLimits = new CurrentLimitsConfigs()
                 .withStatorCurrentLimit(Constants.kDriveStatorCurrentLimit)
                 .withSupplyCurrentLowerLimit(Constants.kDriveSupplyCurrentLimit)
@@ -80,47 +69,44 @@ public final class SwerveDriveSubsystem extends SubsystemBase {
             module.getDriveMotor().getConfigurator().apply(driveLimits);
         }
 
-        // Set operator perspective to field +X axis (0 degrees) so coordinate
-        // system stays centered on blue alliance origin
         drivetrain.setOperatorPerspectiveForward(new Rotation2d(0));
-
         rawGyroAngleSignal = drivetrain.getPigeon2().getYaw();
-
         currentState = drivetrain.getState();
         rawGyroRotation = Rotation2d.fromDegrees(rawGyroAngleSignal.refresh().getValueAsDouble());
 
+        // CONFIGURE AUTOBUILDER
         AutoBuilder.configure(
-                this::getEstimatedPose,
-                this::resetPose,
-                this::getRobotRelativeSpeeds,
-                (speeds, feedforwards) -> {
-                    setControl(new SwerveRequest.ApplyRobotSpeeds()
-                            .withSpeeds(speeds)
-                            .withWheelForceFeedforwardsX(feedforwards.robotRelativeForcesXNewtons())
-                            .withWheelForceFeedforwardsY(feedforwards.robotRelativeForcesYNewtons())
-                            .withDriveRequestType(SwerveModule.DriveRequestType.Velocity));
-                },
-                new PPHolonomicDriveController(
-                        new PIDConstants(Constants.kAutoDriveKp, Constants.kAutoDriveKd),
-                        new PIDConstants(Constants.kAutoTurnKp.get(), Constants.kAutoTurnKd.get())
-                ),
-                Constants.kPathPlannerRobotConfig,
-                () -> FieldInfo.getAlliance() == DriverStation.Alliance.Red,
-                this
+            this::getEstimatedPose,
+            this::resetPose,
+            this::getRobotRelativeSpeeds,
+            (speeds, feedforwards) -> {
+                setControl(new SwerveRequest.ApplyRobotSpeeds()
+                    .withSpeeds(speeds)
+                    .withWheelForceFeedforwardsX(feedforwards.robotRelativeForcesXNewtons())
+                    .withWheelForceFeedforwardsY(feedforwards.robotRelativeForcesYNewtons())
+                    .withDriveRequestType(SwerveModule.DriveRequestType.Velocity));
+            },
+            new PPHolonomicDriveController(
+                new PIDConstants(Constants.kAutoDriveKp, 0.0), // Translation PID
+                new PIDConstants(Constants.kAutoTurnKp.get(), 0.0) // Rotation PID
+            ),
+            Constants.kPathPlannerRobotConfig,
+            () -> {
+                var alliance = DriverStation.getAlliance();
+                return alliance.isPresent() && alliance.get() == DriverStation.Alliance.Red;
+            },
+            this
         );
 
+        setupPathLogging();
+    }
+
+    private void setupPathLogging() {
         PathPlannerLogging.setLogActivePathCallback((path) -> {
-            if (path != null) {
-                FieldView.pathPlannerPath.setPoses(path);
-                if (path.isEmpty())
-                    FieldView.pathPlannerSetpoint.setPoses();
-            } else {
-                FieldView.pathPlannerSetpoint.setPoses();
-            }
+            if (path != null) FieldView.pathPlannerPath.setPoses(path);
         });
         PathPlannerLogging.setLogTargetPoseCallback((target) -> {
-            if (target != null)
-                FieldView.pathPlannerSetpoint.setPose(target);
+            if (target != null) FieldView.pathPlannerSetpoint.setPose(target);
         });
     }
 
@@ -190,20 +176,36 @@ public final class SwerveDriveSubsystem extends SubsystemBase {
         }
     }
 
+    // Inside SwerveDriveSubsystem.java
+
+    // Add this helper method
+    public Translation2d getFieldRelativeVelocity() {
+        ChassisSpeeds robotRel = currentState.Speeds;
+        // Rotate robot-relative speeds by the current gyro heading to get field-relative
+        return new Translation2d(robotRel.vxMetersPerSecond, robotRel.vyMetersPerSecond)
+                .rotateBy(getEstimatedPose().getRotation());
+    }
+
     @Override
     public void periodic() {
-        if (RobotBase.isSimulation()) {
-            drivetrain.updateSimState(Constants.kPeriodicTime, 12.0);
-        }
+       if (RobotBase.isSimulation()) {
+        drivetrain.updateSimState(Constants.kPeriodicTime, 12.0);
+    }
 
-        currentState = drivetrain.getState();
-        rawGyroRotation = Rotation2d.fromDegrees(rawGyroAngleSignal.refresh().getValueAsDouble());
+    currentState = drivetrain.getState();
+    rawGyroRotation = Rotation2d.fromDegrees(rawGyroAngleSignal.refresh().getValueAsDouble());
+    FieldView.robotPose.setPose(currentState.Pose);
 
-        FieldView.robotPose.setPose(currentState.Pose);
+    if (CALIBRATE.get()) {
+        CALIBRATE.set(false);
+        calibrateModuleOffsets();
+    }
 
-        if (CALIBRATE.get()) {
-            CALIBRATE.set(false);
-            calibrateModuleOffsets();
-        }
+    // FEED THE DATA: Rotate robot-relative speeds to field-relative for AimCalc
+    var robotRel = currentState.Speeds;
+    Translation2d fieldVel = new Translation2d(robotRel.vxMetersPerSecond, robotRel.vyMetersPerSecond)
+            .rotateBy(currentState.Pose.getRotation());
+
+    AimCalc.getInstance().update(currentState.Pose, fieldVel.getX(), fieldVel.getY());
     }
 }
