@@ -5,6 +5,10 @@ import edu.wpi.first.wpilibj.*;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
+import org.littletonrobotics.junction.LoggedRobot;
+import org.littletonrobotics.junction.Logger;
+import org.littletonrobotics.junction.networktables.NT4Publisher;
+import org.littletonrobotics.junction.wpilog.WPILOGWriter;
 
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -12,7 +16,8 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 /**
  * The main robot class.
  */
-public final class Robot extends TimedRobot {
+public final class Robot extends LoggedRobot {
+
     
     private static final Queue<Runnable> mainThreadOperations = new ConcurrentLinkedQueue<>();
 
@@ -23,9 +28,25 @@ public final class Robot extends TimedRobot {
     private Command autonomousCommand;
     private RobotContainer robotContainer;
 
+
     @Override
     public void robotInit() {
         // Create a RobotContainer to manage our subsystems and our buttons
+
+        Logger.recordMetadata("2026Rebuilt", "glop"); // Set a metadata value
+
+
+        if(isReal()) {
+            Logger.addDataReceiver(new WPILOGWriter());
+            Logger.addDataReceiver(new NT4Publisher());
+        }
+        else  {
+            setUseTiming(false); // Run as fast as possible
+            //String logPath = LogFileUtil.findReplayLog(); // Pull the replay log from AdvantageScope (or prompt the user)
+            //Logger.setReplaySource(new WPILOGReader(logPath)); // Read replay log
+            Logger.addDataReceiver(new NT4Publisher()); // Publish data to Networktables
+        }
+        Logger.start();
         robotContainer = new RobotContainer();
     }
 
