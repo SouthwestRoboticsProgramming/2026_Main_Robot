@@ -13,7 +13,7 @@ public class AutonomousCommands {
     public static Command getShootCommand(RobotContainer robot) {
         return robot.shooter.commandSetState(ShooterSubsystem.State.SHOOT)
                     .withTimeout(.75)
-                    .andThen(robot.indexer.commandSetState(IndexerSubsystem.State.FEED)).withTimeout(4);
+                    .andThen(robot.indexer.commandSetState(IndexerSubsystem.State.FEED)).withTimeout(5);
     }
 
     public static Command getIntakeCommand(RobotContainer robot) {
@@ -24,17 +24,25 @@ public class AutonomousCommands {
     public static Command getExpandCommand(RobotContainer robot) {
         return robot.expansion.commandSetState(ExpansionSubsystem.State.EXTENDED).withTimeout(.3);
     }
-    
+
     public static Command getRetractCommand(RobotContainer robot) {
         return robot.expansion.commandSetState(ExpansionSubsystem.State.RETRACTED).withTimeout(.3);
     }
-    
 
-     public static Command getIntakePath(RobotContainer robot) {
+    public static Command getShootPath(RobotContainer robot) {
+        return Commands.sequence(
+            getShootCommand(robot),
+            getRetractCommand(robot)
+        );
+    }
+
+    public static Command getIntakePath(RobotContainer robot) {
         return Commands.sequence(
             getExpandCommand(robot),
             getIntakeCommand(robot)
         );
-     }
+    }
+
+ 
     
 }

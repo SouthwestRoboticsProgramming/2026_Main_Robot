@@ -3,58 +3,56 @@
   "waypoints": [
     {
       "anchor": {
-        "x": 2.1974928774928775,
-        "y": 7.394259259259258
+        "x": 6.0,
+        "y": 5.8
       },
       "prevControl": null,
       "nextControl": {
-        "x": 2.39469170841973,
-        "y": 7.240595271672437
+        "x": 5.863409415121256,
+        "y": 4.960114122681883
       },
       "isLocked": false,
       "linkedName": null
     },
     {
       "anchor": {
-        "x": 0.4920227920227922,
-        "y": 7.006652421652421
+        "x": 6.186875891583453,
+        "y": 3.239272467902996
       },
       "prevControl": {
-        "x": 0.6470655270655272,
-        "y": 7.6914245014245015
+        "x": 5.718213215286479,
+        "y": 3.2397811279616078
       },
       "nextControl": {
-        "x": 0.3593911699815837,
-        "y": 6.420862757637083
+        "x": 6.700133137287151,
+        "y": 3.2387154074117586
       },
       "isLocked": false,
       "linkedName": null
     },
     {
       "anchor": {
-        "x": 0.4920227920227922,
-        "y": 5.159059829059829
+        "x": 7.0,
+        "y": 5.2
       },
       "prevControl": {
-        "x": 0.4661823361823365,
-        "y": 5.843831908831908
+        "x": 7.063380398230057,
+        "y": 4.571761104092262
       },
       "nextControl": null,
       "isLocked": false,
       "linkedName": null
     }
   ],
-  "rotationTargets": [],
-  "constraintZones": [],
-  "pointTowardsZones": [],
-  "eventMarkers": [
+  "rotationTargets": [
     {
-      "name": "shoot",
-      "waypointRelativePos": 0,
-      "endWaypointRelativePos": null,
-      "command": null
+      "waypointRelativePos": 1.0,
+      "rotationDegrees": 180.0
     }
   ],
+  "constraintZones": [],
+  "pointTowardsZones": [],
+  "eventMarkers": [],
   "globalConstraints": {
     "maxVelocity": 5.0,
     "maxAcceleration": 11.7,
@@ -65,13 +63,13 @@
   },
   "goalEndState": {
     "velocity": 0,
-    "rotation": 91.09471548832927
+    "rotation": -90.0
   },
   "reversed": false,
-  "folder": "small autos",
+  "folder": "citrus auto copies",
   "idealStartingState": {
     "velocity": 0,
-    "rotation": 90.21942957213706
+    "rotation": 90.0
   },
   "useDefaultConstraints": true
 }

@@ -106,16 +106,16 @@ public final class Constants {
     public static final double kDriveSupplyCurrentLimit = 40; // A
     public static final double kDriveCurrentLimitTime = 0.25; // sec
 
-    public static final double kDriveWheelCOF = 1.2; // TODO: Measure?
+    public static final double kDriveWheelCOF = 1.2; // TODO: Measure?k
 
     public static final double kDriveWheelSpacingX = 63.0 / 100; // m
     public static final double kDriveWheelSpacingY = 55.3 / 100; // m
     public static final double kDriveRadius = Math.hypot(kDriveWheelSpacingX / 2, kDriveWheelSpacingY / 2);
 
-    public static final NTEntry<Double> kFrontLeftOffset = new NTDouble("Drive/Modules/Front Left Offset (rot)", -0.33935546875).setPersistent();
-    public static final NTEntry<Double> kFrontRightOffset = new NTDouble("Drive/Modules/Front Right Offset (rot)", 0.323486328125).setPersistent();
-    public static final NTEntry<Double> kBackLeftOffset = new NTDouble("Drive/Modules/Back Left Offset (rot)", -0.320556640625).setPersistent();
-    public static final NTEntry<Double> kBackRightOffset = new NTDouble("Drive/Modules/Back Right Offset (rot)", -0.367431640625).setPersistent();
+    public static final NTEntry<Double> kFrontLeftOffset = new NTDouble("Drive/Modules/Front Left Offset (rot)",-0.08935546875).setPersistent();
+    public static final NTEntry<Double> kFrontRightOffset = new NTDouble("Drive/Modules/Front Right Offset (rot)", 0.918701171875).setPersistent();
+    public static final NTEntry<Double> kBackLeftOffset = new NTDouble("Drive/Modules/Back Left Offset (rot)", 0.1923828125).setPersistent();
+    public static final NTEntry<Double> kBackRightOffset = new NTDouble("Drive/Modules/Back Right Offset (rot)",-0.416015625).setPersistent();
     public static final SwerveModuleInfo[] kSwerveModuleInfos = {
             new SwerveModuleInfo(IOAllocation.CAN.kSwerveFL, kDriveWheelSpacingX / 2, kDriveWheelSpacingY / 2, Constants.kFrontLeftOffset, "Front Left"),
             new SwerveModuleInfo(IOAllocation.CAN.kSwerveFR, kDriveWheelSpacingX / 2, -kDriveWheelSpacingY / 2, Constants.kFrontRightOffset, "Front Right"),

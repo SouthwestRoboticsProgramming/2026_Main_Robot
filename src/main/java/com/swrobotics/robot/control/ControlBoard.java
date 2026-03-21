@@ -83,19 +83,21 @@ public final class ControlBoard extends SubsystemBase {
         /* --- Intake/indexer --- */
 
         driver.leftTrigger()
-                 .whileTrue(robot.intake.commandSetState(IntakeSubsystem.State.INTAKE)
+                .whileTrue(robot.intake.commandSetState(IntakeSubsystem.State.INTAKE)
+                //.alongWith(robot.indexer.intakeUntilCommand()));
                 .alongWith(robot.indexer.commandSetState(IndexerSubsystem.State.INTAKE)));
-        // operator.leftTrigger()
-        //          .whileTrue(robot.intake.commandSetState(IntakeSubsystem.State.INTAKE)
-        //         .alongWith(robot.indexer.commandSetState(IndexerSubsystem.State.INTAKE)));
         driver.leftBumper()
                  .whileTrue(robot.indexer.commandSetState(IndexerSubsystem.State.RINDEX));
 
         /* --- Shooter --- */
-        operator.rightTrigger().whileTrue(robot.indexer.commandSetState(IndexerSubsystem.State.FEED));
         
-        operator.a().onTrue(robot.expansion.commandSetState(ExpansionSubsystem.State.SLIGHTDOWN_EXTENDED));
-        operator.b().onTrue(robot.expansion.commandSetState(ExpansionSubsystem.State.SLIGHTUP_EXTENDED));
+        driver.rightTrigger()
+                .whileTrue(robot.shooter.commandSetState(ShooterSubsystem.State.SHOOT)
+                .withTimeout(.75)
+                .andThen(robot.indexer.commandSetState(IndexerSubsystem.State.FEED)));
+        
+        // operator.a().onTrue(robot.expansion.commandSetState(ExpansionSubsystem.State.SLIGHTDOWN_EXTENDED));
+        // operator.b().onTrue(robot.expansion.commandSetState(ExpansionSubsystem.State.SLIGHTUP_EXTENDED));
 
 
         /* --- Hood --- */
@@ -103,21 +105,19 @@ public final class ControlBoard extends SubsystemBase {
         // operator.povUp().onTrue(robot.hood.commandManualDown());
 
         /* --- expansion --- */
-        operator.x().toggleOnTrue(robot.expansion.commandSetState(ExpansionSubsystem.State.EXTENDED));
+        driver.x().toggleOnTrue(robot.expansion.commandSetState(ExpansionSubsystem.State.EXTENDED));
 
         /* --- Climber --- */
         //driver.y().toggleOnTrue(robot.climber.commandSetState(ClimberSubsystem.State.EXTENDED));
 
-// Inside ControlBoard.java or RobotContainer.java
 
-// Assuming 'driver' is your CommandXboxController
-driver.leftTrigger().whileTrue(DriveCommands.shootOnTheMove(robot.drive, robot.shooter, robot.hood,
-        () -> new Translation2d(
-                -driver.getLeftY(), 
-                -driver.getLeftX()
-            ).times(Constants.kSnapMaxSpeed.get()) // Driver's desired field-relative translation
-    )
-);
+// driver.rightTrigger().whileTrue(DriveCommands.shootOnTheMove(robot.drive, robot.shooter, robot.hood,
+//         () -> new Translation2d(
+//                 -driver.getLeftY(), 
+//                 -driver.getLeftX()
+//             ).times(Constants.kSnapMaxSpeed.get()) // Driver's desired field-relative translation
+//     )
+// );
         //driver.y().whileTrue(DriveCommands.driveThroughBump(robot.drive));
         //driver.b().whileTrue(DriveCommands.driveThroughTrench(robot.drive));
 

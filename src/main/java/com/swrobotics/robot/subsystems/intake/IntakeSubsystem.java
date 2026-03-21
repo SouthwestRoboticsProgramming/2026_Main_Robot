@@ -40,7 +40,7 @@ public class IntakeSubsystem extends SubsystemBase {
         TalonFXConfigHelper config = new TalonFXConfigHelper();
         config.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
         config.MotorOutput.NeutralMode = NeutralModeValue.Coast;
-        voltageControl.withEnableFOC(true);
+        voltageControl.withEnableFOC(false);
 
         // apply the configuration to the motor
         config.apply(motor);
