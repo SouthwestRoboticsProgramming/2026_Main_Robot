@@ -3,6 +3,7 @@ package com.swrobotics.robot.config;
 import com.ctre.phoenix6.CANBus;
 import com.ctre.phoenix6.hardware.CANcoder;
 import com.ctre.phoenix6.hardware.TalonFX;
+import com.ctre.phoenix6.hardware.TalonFXS;
 import com.ctre.phoenix6.hardware.CANrange;
 import edu.wpi.first.wpilibj.RobotBase;
 
@@ -26,17 +27,15 @@ public final class IOAllocation {
 
         public static final CanId kShooterL = new CanId(14, kGerald);
         public static final CanId kShooterR = new CanId(15, kGerald);
+        public static final CanId kHoodMotor = new CanId(16, kGerald);
 
-        public static final CanId kIndexerFloor = new CanId(16, kGerald);
-        public static final CanId kIndexerShooter = new CanId(17, kGerald);
-        public static final CanId kIndexerBelt = new CanId(18, kGerald);
-        public static final CanId kIndexerCANrange = new CanId(19, kGerald);
-
-        public static final CanId kIntakeMotor = new CanId(20, kGerald);
-
-        public static final CanId kExpansionMotor = new CanId(21, kGerald);
-
-        public static final CanId kHoodMotor = new CanId(22, kGerald);
+        public static final CanId kIndexerFloor = new CanId(17, kGerald);
+        public static final CanId kIndexerShooter = new CanId(18, kGerald);
+        public static final CanId kIndexerBelt = new CanId(19, kGerald);
+        public static final CanId kIndexerKicker = new CanId(20, kGerald);
+        public static final CanId kIndexerCANrange = new CanId(21, kGerald);
+        public static final CanId kIntakeMotor = new CanId(22, kGerald);
+        public static final CanId kExpansionMotor = new CanId(23, kGerald);
     }
 
     public static final class RIO {
@@ -88,6 +87,10 @@ public final class IOAllocation {
 
         public TalonFX createTalonFX() {
             return new TalonFX(id(), new CANBus(bus()));
+        }
+
+        public TalonFXS createTalonFXS() {
+            return new TalonFXS(id(), new CANBus(bus()));
         }
 
         public CANcoder createCANcoder() {

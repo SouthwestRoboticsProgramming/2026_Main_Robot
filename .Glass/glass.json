@@ -1,7 +1,45 @@
 {
   "NetworkTables": {
-    "Persistent Values": {
-      "open": false
+    "persistent": {
+      "Drive": {
+        "Modules": {
+          "open": true
+        },
+        "open": true
+      }
+    },
+    "retained": {
+      "SmartDashboard": {
+        "open": true
+      }
+    },
+    "transitory": {
+      "Drive": {
+        "Modules": {
+          "open": true
+        },
+        "open": true
+      },
+      "Shuffleboard": {
+        "open": true
+      }
+    },
+    "types": {
+      "/FMSInfo": "FMSInfo",
+      "/SmartDashboard/Auto Delay": "String Chooser",
+      "/SmartDashboard/Auto Selector": "String Chooser",
+      "/SmartDashboard/Field View": "Field2d",
+      "/SmartDashboard/Left": "Field2d",
+      "/SmartDashboard/PathPlanner": "Alerts",
+      "/SmartDashboard/Right": "Field2d",
+      "/SmartDashboard/Robot View": "Mechanism2d"
+    },
+    "windows": {
+      "/SmartDashboard/Auto Selector": {
+        "window": {
+          "visible": true
+        }
+      }
     }
   },
   "NetworkTables Info": {

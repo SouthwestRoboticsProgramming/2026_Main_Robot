@@ -3,10 +3,11 @@
   "robotLength": 0.768,
   "holonomicMode": true,
   "pathFolders": [
+    "citrus auto copies",
     "depot",
     "full length auto blue",
     "shoot auto",
-    "small auto 1 blue"
+    "small autos"
   ],
   "autoFolders": [
     "Risky",
@@ -38,7 +39,7 @@
   "bumperOffsetY": 0.0,
   "robotFeatures": [
     "{\"name\":\"Intake down\",\"type\":\"rounded_rect\",\"data\":{\"center\":{\"x\":-0.5,\"y\":0.0},\"size\":{\"width\":0.6,\"length\":0.301},\"borderRadius\":0.0,\"strokeWidth\":0.01,\"filled\":false}}",
-    "{\"name\":\"Shooter\",\"type\":\"circle\",\"data\":{\"center\":{\"x\":0.07,\"y\":0.225},\"radius\":0.12,\"strokeWidth\":0.01,\"filled\":false}}",
+    "{\"name\":\"Shooter\",\"type\":\"circle\",\"data\":{\"center\":{\"x\":0.2,\"y\":0.2},\"radius\":0.13,\"strokeWidth\":0.01,\"filled\":false}}",
     "{\"name\":\"Robot\",\"type\":\"rounded_rect\",\"data\":{\"center\":{\"x\":0.0,\"y\":0.0},\"size\":{\"width\":0.692,\"length\":0.692},\"borderRadius\":0.0,\"strokeWidth\":0.01,\"filled\":false}}"
   ]
 }

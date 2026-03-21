@@ -136,47 +136,46 @@ public final class DriveCommands {
                     .withRotationalRate(rotOutput));
         }, drive);
     }
-    // Inside DriveCommands.java
 
-    public static Command shootOnTheMove(
-            SwerveDriveSubsystem drive,
-            ShooterSubsystem shooter,
-            HoodSubsystem hood,
-            Supplier<Translation2d> translationSupplier
-    ) {
-        PIDController turnPid = new PIDController(
-            Constants.kAutoTurnKp.get(), 0, 0); 
-        turnPid.enableContinuousInput(-Math.PI, Math.PI);
+    // public static Command shootOnTheMove(
+    //         SwerveDriveSubsystem drive,
+    //         ShooterSubsystem shooter,
+    //         HoodSubsystem hood,
+    //         Supplier<Translation2d> translationSupplier
+    // ) {
+    //     PIDController turnPid = new PIDController(
+    //         Constants.kAutoTurnKp.get(), 0, 0); 
+    //     turnPid.enableContinuousInput(-Math.PI, Math.PI);
 
-        return Commands.run(() -> {
-            Translation2d driveVel = translationSupplier.get();
+    //     return Commands.run(() -> {
+    //         Translation2d driveVel = translationSupplier.get();
 
-            // 1. Aim Drivebase
-            double rotOutput = turnPid.calculate(
-                drive.getEstimatedPose().getRotation().getRadians(), 
-                AimCalc.getInstance().getDrivebaseAimAngle().getRadians()
-            );
+    //         // 1. Aim Drivebase
+    //         double rotOutput = turnPid.calculate(
+    //             drive.getEstimatedPose().getRotation().getRadians(), 
+    //             AimCalc.getInstance().getDrivebaseAimAngle().getRadians()
+    //         );
 
-            drive.setControl(new SwerveRequest.FieldCentric()
-                .withVelocityX(driveVel.getX())
-                .withVelocityY(driveVel.getY())
-                .withRotationalRate(rotOutput));
+    //         drive.setControl(new SwerveRequest.FieldCentric()
+    //             .withVelocityX(driveVel.getX())
+    //             .withVelocityY(driveVel.getY())
+    //             .withRotationalRate(rotOutput));
 
-            // 2. Prep Shooter & Hood
-            shooter.setDynamicRPS(AimCalc.getInstance().getShooterRPS());
+    //         // 2. Prep Shooter & Hood
+    //         shooter.setDynamicRPS(AimCalc.getInstance().getShooterRPS());
             
-            // 3. Fire Logic
-            boolean aimed = Math.abs(turnPid.getError()) < Math.toRadians(2.0);
-            boolean shooterReady = shooter.isAtTargetRPS();
+    //         // 3. Fire Logic
+    //         boolean aimed = Math.abs(turnPid.getError()) < Math.toRadians(2.0);
+    //         boolean shooterReady = shooter.isAtTargetRPS();
 
-        }, drive, shooter, hood)
-        //.beforeStarting(() -> hood.setMode(HoodSubsystem.HoodMode.AUTO_TRACK))
-        .finallyDo(() -> {
-            shooter.stopDynamic();
-            shooter.setTargetState(ShooterSubsystem.State.IDLE);
-            hood.setMode(HoodSubsystem.HoodMode.MANUAL);
-        });
-    }
+    //     }, drive, shooter, hood)
+    //     //.beforeStarting(() -> hood.setMode(HoodSubsystem.HoodMode.AUTO_TRACK))
+    //     .finallyDo(() -> {
+    //         shooter.stopDynamic();
+    //         shooter.setTargetState(ShooterSubsystem.State.IDLE);
+    //         hood.setMode(HoodSubsystem.HoodMode.MANUAL);
+    //     });
+    // }
 
     private static Pose2d getClosestPose(Pose2d currentPose, List<Pose2d> candidates) {
     Pose2d closest = candidates.get(0);

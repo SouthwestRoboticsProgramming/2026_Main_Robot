@@ -23,7 +23,7 @@ public class ExpansionSubsystem extends SubsystemBase {
     }
 
     private final TalonFX motor;
-    private final PositionVoltage positionControl = new PositionVoltage(0).withEnableFOC(true);
+    private final PositionVoltage positionControl = new PositionVoltage(0).withEnableFOC(false);
     private State targetState;
 
     public ExpansionSubsystem() {
@@ -53,7 +53,7 @@ public class ExpansionSubsystem extends SubsystemBase {
         targetRotations = 0;
 
         switch (targetState) {
-            case EXTENDED: targetRotations = 24.0;
+            case EXTENDED: targetRotations = 28.0;
             break;
             case SLIGHTUP_EXTENDED: targetRotations = 10.0;
             break;

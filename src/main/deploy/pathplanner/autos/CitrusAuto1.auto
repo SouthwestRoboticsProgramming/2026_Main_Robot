@@ -5,15 +5,9 @@
     "data": {
       "commands": [
         {
-          "type": "named",
-          "data": {
-            "name": "Shoot"
-          }
-        },
-        {
           "type": "path",
           "data": {
-            "pathName": "go to depot"
+            "pathName": "CitrusGoMid"
           }
         },
         {
@@ -27,36 +21,42 @@
           "data": {
             "commands": [
               {
-                "type": "path",
-                "data": {
-                  "pathName": "intake at depot"
-                }
-              },
-              {
                 "type": "named",
                 "data": {
                   "name": "Intake"
+                }
+              },
+              {
+                "type": "path",
+                "data": {
+                  "pathName": "CitrusIntake1"
                 }
               }
             ]
           }
         },
         {
-          "type": "named",
-          "data": {
-            "name": "Retract"
-          }
-        },
-        {
           "type": "path",
           "data": {
-            "pathName": "shootdepot"
+            "pathName": "CitrusShoot1"
           }
         },
         {
           "type": "named",
           "data": {
             "name": "Shoot"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "CitrusGoMid2"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "CitrusIntake2"
           }
         }
       ]
