@@ -44,10 +44,17 @@ public final class SwerveDriveSubsystem extends SubsystemBase {
         var moduleConstants = new SwerveModuleConstants[kModuleCount];
         for (int i = 0; i < kModuleCount; i++) {
             SwerveModuleInfo info = Constants.kSwerveModuleInfos[i];
+            
+            // Invert the diagonal (Front Left [0] and Back Right [3])
+            // If it's the OTHER diagonal, change this to (i == 1 || i == 2)
+            //boolean driveInverted = (i == 1 || i == 2); 
+        
             moduleConstants[i] = Constants.kModuleConstantsFactory.createModuleConstants(
                 info.turnId(), info.driveId(), info.encoderId(),
                 info.offset().get(), info.position().getX(), info.position().getY(),
-                false, true, false
+                false, // Apply the diagonal inversion here
+                true,          // Keep steer motor inverted as it was
+                false
             );
         }
 
@@ -201,7 +208,6 @@ public final class SwerveDriveSubsystem extends SubsystemBase {
         calibrateModuleOffsets();
     }
 
-    // FEED THE DATA: Rotate robot-relative speeds to field-relative for AimCalc
     var robotRel = currentState.Speeds;
     Translation2d fieldVel = new Translation2d(robotRel.vxMetersPerSecond, robotRel.vyMetersPerSecond)
             .rotateBy(currentState.Pose.getRotation());
