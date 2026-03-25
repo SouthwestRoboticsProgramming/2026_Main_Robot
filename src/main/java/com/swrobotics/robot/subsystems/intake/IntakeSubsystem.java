@@ -9,7 +9,6 @@ import com.ctre.phoenix6.signals.NeutralModeValue;
 
 // Sw Robotics imports
 import com.swrobotics.lib.ctre.TalonFXConfigHelper;
-import com.swrobotics.robot.config.Constants;
 import com.swrobotics.robot.config.IOAllocation;
 
 // WPILib imports
@@ -27,8 +26,8 @@ public class IntakeSubsystem extends SubsystemBase {
 
     // The motor controlling the intake mechanism
     private final TalonFX motor;
-    //private final VelocityVoltage velocityControl = new VelocityVoltage(0);
-    private final VoltageOut voltageControl = new VoltageOut(0);
+    private final VelocityVoltage velocityControl = new VelocityVoltage(0).withEnableFOC(false);
+    //private final VoltageOut voltageControl = new VoltageOut(0);
     private State targetState;
 
     public IntakeSubsystem() {
@@ -40,7 +39,6 @@ public class IntakeSubsystem extends SubsystemBase {
         TalonFXConfigHelper config = new TalonFXConfigHelper();
         config.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
         config.MotorOutput.NeutralMode = NeutralModeValue.Coast;
-        voltageControl.withEnableFOC(false);
 
         // apply the configuration to the motor
         config.apply(motor);
@@ -51,16 +49,16 @@ public class IntakeSubsystem extends SubsystemBase {
 
     @Override
     public void periodic() {
-        double targetVoltage = 0;
+        double targetRPS = 0;
         switch (targetState) {
-            case INTAKE: targetVoltage = 6.0; // Set to a positive voltage to intake balls. Adjust as needed for optimal performance.
+            case INTAKE: targetRPS = 30.0; // Set to a positive voltage to intake balls. Adjust as needed for optimal performance.
             break;
-            case IDLE: targetVoltage = 0.0;
+            case IDLE: targetRPS = 0.0;
             break;
         }
 
         // Apply control
-        motor.setControl(voltageControl.withOutput(targetVoltage)); 
+        motor.setControl(velocityControl.withVelocity(targetRPS)); 
     }
 
     public void setTargetState(State targetState) {

@@ -22,10 +22,9 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.POVButton;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 
-//import com.swrobotics.robot.subsystems.climber.ClimberSubsystem;
-import com.swrobotics.robot.subsystems.intake.expansions.ExpansionSubsystem;
 import com.swrobotics.robot.subsystems.intake.indexer.IndexerSubsystem;
 import com.swrobotics.robot.subsystems.intake.IntakeSubsystem;
+import com.swrobotics.robot.subsystems.intake.expansion.ExpansionSubsystem;
 import com.swrobotics.robot.subsystems.shooter.ShooterSubsystem;
 //import com.swrobotics.robot.subsystems.shooter.hood.HoodSubsystem;
 
@@ -37,14 +36,14 @@ public final class ControlBoard extends SubsystemBase {
      * Left stick: drive translation
      * Right stick X: drive rotation
      * Left trigger: intake
-     * Right bumber: feed
+     * Right trigger: shoot
      * left bumber: rindex
-     * 
-     * Start: Reset gyro
-     * Back: Reset gyro
+     * Y: Drive through bump
+     * B: Drive through trench
+     * X: Expand/Retract intake
+     * POVup: Reset gyro
      * 
      * Operator:
-     * 
      */
 
     private static final NTEntry<Boolean> CHARACTERISE_WHEEL_RADIUS = new NTBoolean("Drive/Characterize Wheel Radius", false);
@@ -82,42 +81,31 @@ public final class ControlBoard extends SubsystemBase {
         
         /* --- Intake/indexer --- */
 
+        // driver.leftTrigger()
+        //         .whileTrue(robot.intake.commandSetState(IntakeSubsystem.State.INTAKE)
+        //         //.alongWith(robot.indexer.intakeUntilCommand()));
+        //         .alongWith(robot.indexer.commandSetState(IndexerSubsystem.State.INTAKE)));
         driver.leftTrigger()
-                .whileTrue(robot.intake.commandSetState(IntakeSubsystem.State.INTAKE)
-                //.alongWith(robot.indexer.intakeUntilCommand()));
-                .alongWith(robot.indexer.commandSetState(IndexerSubsystem.State.INTAKE)));
+        .whileTrue(robot.indexer.intakeUntilCommand());
         driver.leftBumper()
                  .whileTrue(robot.indexer.commandSetState(IndexerSubsystem.State.RINDEX));
 
-        /* --- Shooter --- */
-        
+        /* --- Shooter --- */        
         driver.rightTrigger()
                 .whileTrue(robot.shooter.commandSetState(ShooterSubsystem.State.SHOOT)
                 .withTimeout(.75)
                 .andThen(robot.indexer.commandSetState(IndexerSubsystem.State.FEED)));
-        
-        // operator.a().onTrue(robot.expansion.commandSetState(ExpansionSubsystem.State.SLIGHTDOWN_EXTENDED));
-        // operator.b().onTrue(robot.expansion.commandSetState(ExpansionSubsystem.State.SLIGHTUP_EXTENDED));
-
-
-        /* --- Hood --- */
-        // operator.povDown().onTrue(robot.hood.commandManualUp());
-        // operator.povUp().onTrue(robot.hood.commandManualDown());
+        // driver.rightTrigger().whileTrue(DriveCommands.shootOnTheMove(robot.drive, robot.shooter, robot.hood,
+        //         () -> new Translation2d(
+        //                 -driver.getLeftY(), 
+        //                 -driver.getLeftX()
+        //             ).times(Constants.kSnapMaxSpeed.get()) // Driver's desired field-relative translation
+        // ));
 
         /* --- expansion --- */
         driver.x().toggleOnTrue(robot.expansion.commandSetState(ExpansionSubsystem.State.EXTENDED));
 
-        /* --- Climber --- */
-        //driver.y().toggleOnTrue(robot.climber.commandSetState(ClimberSubsystem.State.EXTENDED));
 
-
-// driver.rightTrigger().whileTrue(DriveCommands.shootOnTheMove(robot.drive, robot.shooter, robot.hood,
-//         () -> new Translation2d(
-//                 -driver.getLeftY(), 
-//                 -driver.getLeftX()
-//             ).times(Constants.kSnapMaxSpeed.get()) // Driver's desired field-relative translation
-//     )
-// );
         //driver.y().whileTrue(DriveCommands.driveThroughBump(robot.drive));
         //driver.b().whileTrue(DriveCommands.driveThroughTrench(robot.drive));
 

@@ -1,4 +1,4 @@
-package com.swrobotics.robot.subsystems.intake.expansions;
+package com.swrobotics.robot.subsystems.intake.expansion;
 
 import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;

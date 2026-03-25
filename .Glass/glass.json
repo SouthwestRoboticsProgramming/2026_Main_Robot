@@ -8,11 +8,6 @@
         "open": true
       }
     },
-    "retained": {
-      "SmartDashboard": {
-        "open": true
-      }
-    },
     "transitory": {
       "Drive": {
         "Modules": {
