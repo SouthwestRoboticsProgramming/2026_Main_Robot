@@ -91,10 +91,10 @@ public final class ControlBoard extends SubsystemBase {
 
         /* --- Shooter --- */
         
-        driver.rightTrigger()
-                .whileTrue(robot.shooter.commandSetState(ShooterSubsystem.State.SHOOT)
-                .withTimeout(.75)
-                .andThen(robot.indexer.commandSetState(IndexerSubsystem.State.FEED)));
+        // driver.rightTrigger()
+        //         .whileTrue(robot.shooter.commandSetState(ShooterSubsystem.State.SHOOT_AUTO)
+        //         .withTimeout(.75)
+        //         .andThen(robot.indexer.commandSetState(IndexerSubsystem.State.FEED)));
         
         // operator.a().onTrue(robot.expansion.commandSetState(ExpansionSubsystem.State.SLIGHTDOWN_EXTENDED));
         // operator.b().onTrue(robot.expansion.commandSetState(ExpansionSubsystem.State.SLIGHTUP_EXTENDED));
@@ -111,15 +111,13 @@ public final class ControlBoard extends SubsystemBase {
         //driver.y().toggleOnTrue(robot.climber.commandSetState(ClimberSubsystem.State.EXTENDED));
 
 
-// driver.rightTrigger().whileTrue(DriveCommands.shootOnTheMove(robot.drive, robot.shooter, robot.hood,
-//         () -> new Translation2d(
-//                 -driver.getLeftY(), 
-//                 -driver.getLeftX()
-//             ).times(Constants.kSnapMaxSpeed.get()) // Driver's desired field-relative translation
-//     )
-// );
-        //driver.y().whileTrue(DriveCommands.driveThroughBump(robot.drive));
-        //driver.b().whileTrue(DriveCommands.driveThroughTrench(robot.drive));
+driver.rightTrigger().whileTrue(DriveCommands.shootOnTheMove(robot.drive, robot.shooter, robot.hood, robot.indexer,
+        () -> -driver.getLeftY(),
+        () -> -driver.getLeftX()
+    )
+);
+        driver.y().whileTrue(DriveCommands.driveThroughBump(robot.drive));
+        driver.b().whileTrue(DriveCommands.driveThroughTrench(robot.drive));
 
     }
 

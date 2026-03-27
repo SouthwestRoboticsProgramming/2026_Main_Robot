@@ -1,6 +1,8 @@
 package com.swrobotics.robot;
 
 import com.swrobotics.lib.net.NTEntry;
+import com.swrobotics.robot.logging.Telemetry;
+
 import edu.wpi.first.wpilibj.*;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
@@ -27,10 +29,12 @@ public final class Robot extends TimedRobot {
     public void robotInit() {
         // Create a RobotContainer to manage our subsystems and our buttons
         robotContainer = new RobotContainer();
+        Telemetry.init();
     }
 
     @Override
     public void robotPeriodic() {
+        Telemetry.periodic();
         Threads.setCurrentThreadPriority(true, 99);
         CommandScheduler.getInstance().run(); // Leave this alone
 

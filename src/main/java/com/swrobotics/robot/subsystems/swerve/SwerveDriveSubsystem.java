@@ -6,7 +6,10 @@ import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
 import com.ctre.phoenix6.configs.MagnetSensorConfigs;
 import com.ctre.phoenix6.hardware.CANcoder;
 import com.ctre.phoenix6.hardware.TalonFX;
-import com.ctre.phoenix6.swerve.*;
+import com.ctre.phoenix6.swerve.SwerveDrivetrain;
+import com.ctre.phoenix6.swerve.SwerveModule;
+import com.ctre.phoenix6.swerve.SwerveModuleConstants;
+import com.ctre.phoenix6.swerve.SwerveRequest;
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.config.PIDConstants;
 import com.pathplanner.lib.controllers.PPHolonomicDriveController;
@@ -17,6 +20,7 @@ import com.swrobotics.lib.net.NTEntry;
 import com.swrobotics.robot.config.Constants;
 import com.swrobotics.robot.control.AimCalc;
 import com.swrobotics.robot.logging.FieldView;
+
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -34,6 +38,7 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public final class SwerveDriveSubsystem extends SubsystemBase {
     private static final NTBoolean CALIBRATE = new NTBoolean("Drive/Modules/Calibrate", false);
+
     private final SwerveDrivetrain<TalonFX, TalonFX, CANcoder> drivetrain;
     private final StatusSignal<Angle> rawGyroAngleSignal;
     private SwerveDrivetrain.SwerveDriveState currentState;
@@ -44,16 +49,12 @@ public final class SwerveDriveSubsystem extends SubsystemBase {
         var moduleConstants = new SwerveModuleConstants[kModuleCount];
         for (int i = 0; i < kModuleCount; i++) {
             SwerveModuleInfo info = Constants.kSwerveModuleInfos[i];
-            
-            // Invert the diagonal (Front Left [0] and Back Right [3])
-            // If it's the OTHER diagonal, change this to (i == 1 || i == 2)
-            //boolean driveInverted = (i == 1 || i == 2); 
-        
+
             moduleConstants[i] = Constants.kModuleConstantsFactory.createModuleConstants(
                 info.turnId(), info.driveId(), info.encoderId(),
                 info.offset().get(), info.position().getX(), info.position().getY(),
-                false, // Apply the diagonal inversion here
-                true,          // Keep steer motor inverted as it was
+                false, // drive inverted
+                true,  // steer inverted
                 false
             );
         }
@@ -63,7 +64,7 @@ public final class SwerveDriveSubsystem extends SubsystemBase {
             Constants.kDrivetrainConstants,
             Constants.kOdometryUpdateFreq,
             Constants.kOdometryStdDevs,
-            VecBuilder.fill(0.1, 0.1, 0.1), // Trust encoders more for recovery
+            VecBuilder.fill(0.1, 0.1, 0.1), // Vision std devs
             moduleConstants
         );
 
@@ -81,7 +82,7 @@ public final class SwerveDriveSubsystem extends SubsystemBase {
         currentState = drivetrain.getState();
         rawGyroRotation = Rotation2d.fromDegrees(rawGyroAngleSignal.refresh().getValueAsDouble());
 
-        // CONFIGURE AUTOBUILDER
+        // AUTOBUILDER
         AutoBuilder.configure(
             this::getEstimatedPose,
             this::resetPose,
@@ -94,8 +95,8 @@ public final class SwerveDriveSubsystem extends SubsystemBase {
                     .withDriveRequestType(SwerveModule.DriveRequestType.Velocity));
             },
             new PPHolonomicDriveController(
-                new PIDConstants(Constants.kAutoDriveKp, 0.0), // Translation PID
-                new PIDConstants(Constants.kAutoTurnKp.get(), 0.0) // Rotation PID
+                new PIDConstants(Constants.kAutoDriveKp, 0.0),
+                new PIDConstants(Constants.kAutoTurnKp.get(), 0.0)
             ),
             Constants.kPathPlannerRobotConfig,
             () -> {
@@ -155,17 +156,43 @@ public final class SwerveDriveSubsystem extends SubsystemBase {
     }
 
     public double getFFCharacterizationVelocity() {
-        double avgVelocity = 0;
+        double avgVelocity = 0.0;
         for (SwerveModuleState state : currentState.ModuleStates) {
             avgVelocity += Math.abs(state.speedMetersPerSecond);
         }
-        avgVelocity /= 4;
-
+        avgVelocity /= currentState.ModuleStates.length;
         return avgVelocity;
     }
 
-    public Translation2d fieldToRobotRelative(Translation2d fieldRel) {
-        return fieldRel.rotateBy(currentState.Pose.getRotation().unaryMinus());
+    // Field-relative velocity helper
+    public Translation2d getFieldRelativeVelocity() {
+        ChassisSpeeds robotRel = currentState.Speeds;
+        return new Translation2d(
+            robotRel.vxMetersPerSecond,
+            robotRel.vyMetersPerSecond
+        ).rotateBy(currentState.Pose.getRotation());
+    }
+
+    @Override
+    public void periodic() {
+        if (RobotBase.isSimulation()) {
+            drivetrain.updateSimState(Constants.kPeriodicTime, 12.0);
+        }
+
+        currentState = drivetrain.getState();
+        rawGyroRotation = Rotation2d.fromDegrees(rawGyroAngleSignal.refresh().getValueAsDouble());
+        FieldView.robotPose.setPose(currentState.Pose);
+
+        if (CALIBRATE.get()) {
+            CALIBRATE.set(false);
+            calibrateModuleOffsets();
+        }
+
+        // Field-relative velocity for AimCalc
+        Translation2d fieldVel = getFieldRelativeVelocity();
+
+        // Update AimCalc with pose and field-relative velocity
+        AimCalc.getInstance().update(currentState.Pose, fieldVel.getX(), fieldVel.getY());
     }
 
     private void calibrateModuleOffsets() {
@@ -181,37 +208,5 @@ public final class SwerveDriveSubsystem extends SubsystemBase {
             offset.set(offset.get() - position);
             canCoder.getConfigurator().apply(new MagnetSensorConfigs().withMagnetOffset(offset.get()));
         }
-    }
-
-    // Inside SwerveDriveSubsystem.java
-
-    // Add this helper method
-    public Translation2d getFieldRelativeVelocity() {
-        ChassisSpeeds robotRel = currentState.Speeds;
-        // Rotate robot-relative speeds by the current gyro heading to get field-relative
-        return new Translation2d(robotRel.vxMetersPerSecond, robotRel.vyMetersPerSecond)
-                .rotateBy(getEstimatedPose().getRotation());
-    }
-
-    @Override
-    public void periodic() {
-       if (RobotBase.isSimulation()) {
-        drivetrain.updateSimState(Constants.kPeriodicTime, 12.0);
-    }
-
-    currentState = drivetrain.getState();
-    rawGyroRotation = Rotation2d.fromDegrees(rawGyroAngleSignal.refresh().getValueAsDouble());
-    FieldView.robotPose.setPose(currentState.Pose);
-
-    if (CALIBRATE.get()) {
-        CALIBRATE.set(false);
-        calibrateModuleOffsets();
-    }
-
-    var robotRel = currentState.Speeds;
-    Translation2d fieldVel = new Translation2d(robotRel.vxMetersPerSecond, robotRel.vyMetersPerSecond)
-            .rotateBy(currentState.Pose.getRotation());
-
-    AimCalc.getInstance().update(currentState.Pose, fieldVel.getX(), fieldVel.getY());
     }
 }

@@ -1,6 +1,10 @@
 package com.swrobotics.robot.control;
 
+import java.util.TreeMap;
+
+import com.swrobotics.robot.config.Constants;
 import com.swrobotics.robot.config.FieldPositions;
+
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
@@ -8,38 +12,103 @@ import edu.wpi.first.wpilibj.DriverStation;
 
 public class AimCalc {
     private static final AimCalc instance = new AimCalc();
-    private Rotation2d drivebaseAimAngle = new Rotation2d();
-    private Rotation2d hoodAngle = new Rotation2d();
-    private double shooterRPS = 0;
-    private double virtualDistance = 0;
-
-    private AimCalc() {}
     public static AimCalc getInstance() { return instance; }
 
-    public void update(Pose2d robotPose, double vx, double vy) {
-        var alliance = DriverStation.getAlliance().orElse(DriverStation.Alliance.Blue);
-        Translation2d hubTarget = FieldPositions.getAllianceHubPose(alliance).getTranslation();
-        Translation2d robotPos = robotPose.getTranslation();
+    // ---------------- TUNING CONSTANTS ----------------
+    // Base flight time offset (seconds)
+    public static double kBaseFlightTime = 0.4;
+    // Additional flight time per meter of distance (seconds per meter)
+    public static double kFlightTimePerMeter = 0.10;
 
-        double staticDist = robotPos.getDistance(hubTarget);
-        
-        double shotTime = staticDist * 0.12; 
+    private final TreeMap<Double, ShotParams> shotMap = new TreeMap<>();
 
-        double virtualX = hubTarget.getX() - (vx * shotTime);
-        double virtualY = hubTarget.getY() - (vy * shotTime);
-        Translation2d virtualTarget = new Translation2d(virtualX, virtualY);
+    private Rotation2d drivebaseAimAngle = new Rotation2d();
+    private Rotation2d hoodAngle = new Rotation2d();
+    private double shooterRPS = 0.0;
+    private double lastDistanceToHub = 0.0;
 
-        Translation2d delta = virtualTarget.minus(robotPos);
+    private record ShotParams(double rps, double hoodDegrees) {}
+
+    private AimCalc() {
+        // ---------------- INITIAL LUT (EXAMPLE) ----------------
+        // Replace these with your measured values.
+        shotMap.put(1.0,  new ShotParams(15, 30));
+        shotMap.put(1.25, new ShotParams(17, 30));
+        shotMap.put(1.5,  new ShotParams(20, 30));
+        shotMap.put(1.75, new ShotParams(25, 30));
+    }
+
+    public void update(Pose2d robotPose, double fieldVx, double fieldVy) {
+        // Alliance-relative hub position
+        Translation2d hubTarget = FieldPositions.getAllianceHubPose(
+            DriverStation.getAlliance().orElse(DriverStation.Alliance.Blue)
+        ).getTranslation();
+
+        // Shooter offset from robot center, rotated into field frame
+        Translation2d shooterOffset = new Translation2d(
+            Constants.kShooterOffsetX,
+            Constants.kShooterOffsetY
+        ).rotateBy(robotPose.getRotation());
+
+        Translation2d shooterFieldPos = robotPose.getTranslation().plus(shooterOffset);
+
+        // Static distance to hub
+        double staticDist = shooterFieldPos.getDistance(hubTarget);
+        lastDistanceToHub = staticDist;
+
+        // Estimate flight time based on distance (simple linear model)
+        double shotTime = estimateFlightTime(staticDist);
+
+        // Compensate for robot motion: virtual target
+        Translation2d robotMotionDuringShot = new Translation2d(
+            fieldVx * shotTime,
+            fieldVy * shotTime
+        );
+        Translation2d virtualTarget = hubTarget.minus(robotMotionDuringShot);
+
+        Translation2d delta = virtualTarget.minus(shooterFieldPos);
+
         drivebaseAimAngle = delta.getAngle();
-        virtualDistance = delta.getNorm();
+        double vDist = delta.getNorm();
 
-        double d = virtualDistance;
-        shooterRPS = 40.0 + (d * 4.5); // Example linear ramp
-        double hoodDeg = 1.95 * d * d - 9.5 * d + 33.2; // Example curve
-        hoodAngle = Rotation2d.fromDegrees(hoodDeg);
+        ShotParams params = getInterpolatedParams(vDist);
+        shooterRPS = params.rps;
+        hoodAngle = Rotation2d.fromDegrees(params.hoodDegrees);
+    }
+
+    private double estimateFlightTime(double distanceMeters) {
+        // TUNING: adjust kBaseFlightTime and kFlightTimePerMeter
+        return kBaseFlightTime + kFlightTimePerMeter * distanceMeters;
+    }
+
+    private ShotParams getInterpolatedParams(double distance) {
+        // Clamp distance to LUT range for safety
+        double minKey = shotMap.firstKey();
+        double maxKey = shotMap.lastKey();
+        double clamped = Math.max(minKey, Math.min(maxKey, distance));
+
+        Double lowKey = shotMap.floorKey(clamped);
+        Double highKey = shotMap.ceilingKey(clamped);
+
+        if (lowKey == null && highKey == null) {
+            // Should not happen if map not empty
+            return new ShotParams(0.0, 0.0);
+        }
+        if (lowKey == null) return shotMap.get(highKey);
+        if (highKey == null) return shotMap.get(lowKey);
+        if (lowKey.equals(highKey)) return shotMap.get(lowKey);
+
+        ShotParams low = shotMap.get(lowKey);
+        ShotParams high = shotMap.get(highKey);
+        double t = (clamped - lowKey) / (highKey - lowKey);
+
+        double rps = low.rps + t * (high.rps - low.rps);
+        double hoodDeg = low.hoodDegrees + t * (high.hoodDegrees - low.hoodDegrees);
+        return new ShotParams(rps, hoodDeg);
     }
 
     public Rotation2d getDrivebaseAimAngle() { return drivebaseAimAngle; }
     public Rotation2d getHoodAngle() { return hoodAngle; }
     public double getShooterRPS() { return shooterRPS; }
+    public double getLastDistanceToHub() { return lastDistanceToHub; }
 }

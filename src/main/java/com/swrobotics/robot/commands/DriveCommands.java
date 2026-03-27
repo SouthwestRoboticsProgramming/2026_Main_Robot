@@ -15,6 +15,7 @@ import com.swrobotics.robot.subsystems.swerve.SwerveDriveSubsystem;
 
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.util.Units;
@@ -29,6 +30,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Supplier;
+
 public final class DriveCommands {
     public static Command driveRobotRelative(
             SwerveDriveSubsystem drive,
@@ -137,45 +139,39 @@ public final class DriveCommands {
         }, drive);
     }
 
-    // public static Command shootOnTheMove(
-    //         SwerveDriveSubsystem drive,
-    //         ShooterSubsystem shooter,
-    //         HoodSubsystem hood,
-    //         Supplier<Translation2d> translationSupplier
-    // ) {
-    //     PIDController turnPid = new PIDController(
-    //         Constants.kAutoTurnKp.get(), 0, 0); 
-    //     turnPid.enableContinuousInput(-Math.PI, Math.PI);
 
-    //     return Commands.run(() -> {
-    //         Translation2d driveVel = translationSupplier.get();
 
-    //         // 1. Aim Drivebase
-    //         double rotOutput = turnPid.calculate(
-    //             drive.getEstimatedPose().getRotation().getRadians(), 
-    //             AimCalc.getInstance().getDrivebaseAimAngle().getRadians()
-    //         );
+public static Command shootOnTheMove(
+        SwerveDriveSubsystem drive,
+        ShooterSubsystem shooter,
+        HoodSubsystem hood,
+        IndexerSubsystem indexer,
+        Supplier<Double> translationX,
+        Supplier<Double> translationY
+) {
+    PIDController turnPid = new PIDController(Constants.kSnapTurnKp.get(), 0, Constants.kSnapTurnKd.get()); 
+    turnPid.enableContinuousInput(-Math.PI, Math.PI);
 
-    //         drive.setControl(new SwerveRequest.FieldCentric()
-    //             .withVelocityX(driveVel.getX())
-    //             .withVelocityY(driveVel.getY())
-    //             .withRotationalRate(rotOutput));
+    return Commands.run(() -> {
+        Pose2d currentPose = drive.getEstimatedPose();
+        Rotation2d targetAngle = AimCalc.getInstance().getDrivebaseAimAngle();
 
-    //         // 2. Prep Shooter & Hood
-    //         shooter.setDynamicRPS(AimCalc.getInstance().getShooterRPS());
-            
-    //         // 3. Fire Logic
-    //         boolean aimed = Math.abs(turnPid.getError()) < Math.toRadians(2.0);
-    //         boolean shooterReady = shooter.isAtTargetRPS();
+        double rotOutput = turnPid.calculate(currentPose.getRotation().getRadians(), targetAngle.getRadians());
 
-    //     }, drive, shooter, hood)
-    //     //.beforeStarting(() -> hood.setMode(HoodSubsystem.HoodMode.AUTO_TRACK))
-    //     .finallyDo(() -> {
-    //         shooter.stopDynamic();
-    //         shooter.setTargetState(ShooterSubsystem.State.IDLE);
-    //         hood.setMode(HoodSubsystem.HoodMode.MANUAL);
-    //     });
-    // }
+        drive.setControl(new SwerveRequest.FieldCentric()
+            .withVelocityX(translationX.get())
+            .withVelocityY(translationY.get())
+            .withRotationalRate(rotOutput));
+
+        shooter.setTargetState(ShooterSubsystem.State.SHOOT_AUTO);
+        hood.setMode(HoodSubsystem.HoodMode.AUTO_TRACK);
+        if (turnPid.atSetpoint() && shooter.isAtTargetRPS() && hood.isAtTarget()) {
+            indexer.setTargetState(IndexerSubsystem.State.FEED);
+        } else {
+            indexer.setTargetState(IndexerSubsystem.State.HOLD);
+        }
+    }, drive, shooter, hood, indexer);
+}
 
     private static Pose2d getClosestPose(Pose2d currentPose, List<Pose2d> candidates) {
     Pose2d closest = candidates.get(0);

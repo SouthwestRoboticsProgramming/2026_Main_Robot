@@ -56,7 +56,6 @@ public final class Constants {
     public static final double kFrameLength = Units.inchesToMeters(27.25); // m
     public static final double kFrameWidth = Units.inchesToMeters(27.25); // m
     public static final double kHubHeightMeters = Units.inchesToMeters(49.5); // m
-    public static final double kShooterHeightMeters = Units.inchesToMeters(20); //TODO: Measure inches
 
     public static final double kRobotMass = Units.lbsToKilograms(135); // TODO: Measure
     // Approximation of robot as uniform cuboid
@@ -202,8 +201,8 @@ public final class Constants {
 
    /* --- Hood --- */ //TODO: Adjust constant values
     public static final NTEntry<Boolean> kHoodInverted = new NTBoolean("Shooter/Hood/Inverted", false).setPersistent();
-    public static final NTEntry<Double> kHoodMaxAngle = new NTDouble("Shooter/Hood/Max Angle (Deg)", 25.0).setPersistent();
-    public static final NTEntry<Double> kHoodMinAngle = new NTDouble("Shooter/Hood/Min Angle (Deg)", 10.0).setPersistent();
+    public static final NTEntry<Double> kHoodMaxAngle = new NTDouble("Shooter/Hood/Max Angle (Deg)", 40.0).setPersistent();
+    public static final NTEntry<Double> kHoodMinAngle = new NTDouble("Shooter/Hood/Min Angle (Deg)", 22.7).setPersistent();
     public static final NTEntry<Double> kHoodCruiseVelocity = new NTDouble("Shooter/Hood/Cruise Velocity", 60.0).setPersistent();
     public static final NTEntry<Double> kHoodAcceleration = new NTDouble("Shooter/Hood/Acceleration", 120.0).setPersistent();
 
@@ -244,6 +243,10 @@ public final class Constants {
     public static final NTEntry<Double> kShooterWarmRPS = new NTDouble("Shooter/Warm RPS", 1.0).setPersistent();
     public static final NTEntry<Double> kShooterRindexRPS = new NTDouble("Shooter/Rindex RPS", -6.0).setPersistent();
     public static final NTSlot0Configs kShooterPID = new NTSlot0Configs("Shooter/PID", 3.0, 0.000, 0.0, 0.0, 0.13, 0.53);
+    // --- Shooter Geometry ---
+    public static final double kShooterOffsetX = Units.inchesToMeters(10.0); // Positive is Forward
+    public static final double kShooterOffsetY = Units.inchesToMeters(-10.0); // Negative is Right (Corner mount)
+    public static final double kShooterHeightMeters = Units.inchesToMeters(20.0);
     
    
 }
