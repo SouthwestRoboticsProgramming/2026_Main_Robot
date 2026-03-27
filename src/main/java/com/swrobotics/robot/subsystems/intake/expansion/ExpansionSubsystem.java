@@ -1,4 +1,4 @@
-package com.swrobotics.robot.subsystems.intake.expansions;
+package com.swrobotics.robot.subsystems.intake.expansion;
 
 import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
@@ -18,8 +18,6 @@ public class ExpansionSubsystem extends SubsystemBase {
     public enum State {
         RETRACTED,
         EXTENDED,
-        SLIGHTUP_EXTENDED,
-        SLIGHTDOWN_EXTENDED
     }
 
     private final TalonFX motor;
@@ -55,11 +53,7 @@ public class ExpansionSubsystem extends SubsystemBase {
         switch (targetState) {
             case EXTENDED: targetRotations = 28.0;
             break;
-            case SLIGHTUP_EXTENDED: targetRotations = 10.0;
-            break;
             case RETRACTED: targetRotations = 0;
-            break;
-            case SLIGHTDOWN_EXTENDED: targetRotations= 28.0;
             break;
             
         }

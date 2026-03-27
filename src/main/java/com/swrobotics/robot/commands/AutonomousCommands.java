@@ -3,9 +3,10 @@ package com.swrobotics.robot.commands;
 import com.swrobotics.robot.RobotContainer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
-import com.swrobotics.robot.subsystems.intake.expansions.ExpansionSubsystem;
+
 import com.swrobotics.robot.subsystems.intake.indexer.IndexerSubsystem;
 import com.swrobotics.robot.subsystems.intake.IntakeSubsystem;
+import com.swrobotics.robot.subsystems.intake.expansion.ExpansionSubsystem;
 import com.swrobotics.robot.subsystems.shooter.ShooterSubsystem;
 
 public class AutonomousCommands {

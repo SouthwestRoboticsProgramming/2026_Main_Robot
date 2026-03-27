@@ -1,11 +1,14 @@
 package com.swrobotics.robot.subsystems.intake.indexer;
 
-
+import com.ctre.phoenix6.configs.CANrangeConfiguration;
+import com.ctre.phoenix6.controls.Follower;
 import com.ctre.phoenix6.controls.VelocityVoltage;
+import com.ctre.phoenix6.hardware.CANrange;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.hardware.TalonFXS;
-import com.ctre.phoenix6.hardware.CANrange;
 import com.ctre.phoenix6.signals.InvertedValue;
+import com.ctre.phoenix6.signals.MotorAlignmentValue;
+import com.ctre.phoenix6.signals.MotorArrangementValue; // Added for Minion config
 import com.ctre.phoenix6.signals.NeutralModeValue;
 
 import com.swrobotics.lib.ctre.TalonFXSConfigHelper;
@@ -24,30 +27,28 @@ public class IndexerSubsystem extends SubsystemBase {
         INTAKE,
         HOLD,
         FEED,
-        RINDEX // optional: run in reverse to clear jams, etc.
+        RINDEX 
     }
 
-    private final TalonFX FloorMotor; //Rollers
-    private final TalonFX ShooterFeederMotor; //Top belt and Feeder
-    private final TalonFX BeltMotor; //Bottom belt
-    private final TalonFXS KickerMotor; //Kicker 
-    private final VelocityVoltage velocityControl = new VelocityVoltage(0).withEnableFOC(false);
+    private final TalonFX floorMotor; 
+    private final TalonFX shooterFeederMotor; 
+    private final TalonFX beltMotor; 
+    private final TalonFXS kickerMotor; // Minion Motor
     private final CANrange canrange;
+
+    private final VelocityVoltage velocityControl = new VelocityVoltage(0).withEnableFOC(false);
+    private final Follower Kicker = new Follower(0, MotorAlignmentValue.Opposed); // Belt will follow the shooter feeder motor
     private boolean ballAtTop = false;
     private State targetState;
 
     public IndexerSubsystem() {
-        FloorMotor = IOAllocation.CAN.kIndexerFloor.createTalonFX();
-        ShooterFeederMotor = IOAllocation.CAN.kIndexerShooter.createTalonFX();
-        BeltMotor = IOAllocation.CAN.kIndexerBelt.createTalonFX();
-        KickerMotor = IOAllocation.CAN.kIndexerKicker.createTalonFXS();
+        floorMotor = IOAllocation.CAN.kIndexerFloor.createTalonFX();
+        shooterFeederMotor = IOAllocation.CAN.kIndexerShooter.createTalonFX();
+        beltMotor = IOAllocation.CAN.kIndexerBelt.createTalonFX();
+        kickerMotor = IOAllocation.CAN.kIndexerKicker.createTalonFXS();
         canrange = IOAllocation.CAN.kIndexerCANrange.createCANrange();
 
         TalonFXConfigHelper config = new TalonFXConfigHelper();
-        TalonFXConfigHelper config2 = new TalonFXConfigHelper();
-        TalonFXSConfigHelper config3 = new TalonFXSConfigHelper();
-        
-        //Current limits might be nice for these motors.
         config.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
         config.MotorOutput.NeutralMode = NeutralModeValue.Coast;
         config.CurrentLimits.StatorCurrentLimit = 60.0;
@@ -55,7 +56,7 @@ public class IndexerSubsystem extends SubsystemBase {
         config.Slot0.kP = 0.2;
         config.Slot0.kV = 0.13;
 
-
+        TalonFXConfigHelper config2 = new TalonFXConfigHelper();
         config2.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
         config2.MotorOutput.NeutralMode = NeutralModeValue.Coast;
         config2.CurrentLimits.StatorCurrentLimit = 60.0;
@@ -63,16 +64,23 @@ public class IndexerSubsystem extends SubsystemBase {
         config2.Slot0.kP = 0.2;
         config2.Slot0.kV = 0.13;
 
-        config3.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
+        TalonFXSConfigHelper config3 = new TalonFXSConfigHelper();
+        config3.Commutation.MotorArrangement = MotorArrangementValue.Minion_JST;
         config3.MotorOutput.NeutralMode = NeutralModeValue.Coast;
-        config3.CurrentLimits.StatorCurrentLimit = 60.0;
+        config3.CurrentLimits.StatorCurrentLimit = 40.0;
         config3.CurrentLimits.StatorCurrentLimitEnable = true; 
-        config3.Slot0.kP = 0.2;
+        config3.Slot0.kP = 0.1;
         config3.Slot0.kV = 0.13;
 
-        config.apply(FloorMotor, BeltMotor);
-        config2.apply( ShooterFeederMotor);
-        config3.apply(KickerMotor);
+        config.apply(floorMotor, beltMotor);
+        config2.apply(shooterFeederMotor);
+        config3.apply(kickerMotor);
+        kickerMotor.setControl(new Follower(shooterFeederMotor.getDeviceID(), MotorAlignmentValue.Opposed));
+        
+        // --- CANrange Detector Configuration ---
+        CANrangeConfiguration rangeConfig = new CANrangeConfiguration();
+
+        canrange.getConfigurator().apply(rangeConfig);
         
         targetState = State.IDLE;
         setDefaultCommand(commandSetState(IndexerSubsystem.State.IDLE));
@@ -80,48 +88,45 @@ public class IndexerSubsystem extends SubsystemBase {
 
     @Override
     public void periodic() {
+        // Read the CANrange detection state
+        ballAtTop = canrange.getIsDetected().getValue();
 
-        boolean detected = canrange.getIsDetected().getValue();
-        ballAtTop = detected;
-
-        // Decide Voltage for each motor independently
-        double FloorMotorsRPS = 0.0; // Floor motor (rollers)
-        double FeederRPS = 0.0; // upper-stage (belts, kicker, and feeder) 
+        double floorRPS = 0.0;
+        double beltRPS = 0.0; // Belt will follow the shooter feeder motor
+        double feederRPS = 0.0; 
 
         switch (targetState) {
-            case INTAKE : {
-                FloorMotorsRPS = 20.0;
-                FeederRPS = 0.0;
+            case INTAKE:
+                floorRPS = 20.0;
+                beltRPS = 20.0;
+                feederRPS = 30.0;
                 break;
-            }
-            case IDLE : {
-                FloorMotorsRPS = Constants.kIndexerIdleVoltage.get();
-                FeederRPS =  Constants.kIndexerIdleVoltage.get();
+            case IDLE:
+                floorRPS = Constants.kIndexerIdleVoltage.get();
+                beltRPS = Constants.kIndexerIdleVoltage.get();
+                feederRPS = Constants.kIndexerIdleVoltage.get();
                 break;
-            }
-            case HOLD : {
-                FloorMotorsRPS = 10.0;
-                FeederRPS = 0.0;
+            case HOLD:
+                floorRPS = 10.0;
+                beltRPS = 10.0;
+                feederRPS = 0.0;
                 break;
-            }
-            case FEED : {
-                FloorMotorsRPS = 20.0;
-                FeederRPS = 20.0;
+            case FEED:
+                floorRPS = 20.0;
+                beltRPS = 20.0;
+                feederRPS = 20.0;
                 break;
-            }
-            case RINDEX : {
-                // Both motors run in reverse to clear jams
-                FloorMotorsRPS = -20.0;
-                FeederRPS = -25.0;
+            case RINDEX:
+                floorRPS = -20.0;
+                beltRPS = -20.0;
+                feederRPS = -25.0;
                 break;
-                
-            }
         }
 
-        FloorMotor.setControl(velocityControl.withVelocity(FloorMotorsRPS));
-        KickerMotor.setControl(velocityControl.withVelocity(FeederRPS));
-        ShooterFeederMotor.setControl(velocityControl.withVelocity(FeederRPS));
-        BeltMotor.setControl(velocityControl.withVelocity(FeederRPS)); 
+        // Apply calculated velocities
+        floorMotor.setControl(velocityControl.withVelocity(floorRPS));
+        beltMotor.setControl(velocityControl.withVelocity(beltRPS)); 
+        shooterFeederMotor.setControl(velocityControl.withVelocity(feederRPS));
     }
 
     public void setTargetState(State targetState) {
@@ -137,8 +142,13 @@ public class IndexerSubsystem extends SubsystemBase {
     }
 
     public Command intakeUntilCommand() {
-        return Commands.run(() -> setTargetState(State.INTAKE), this)
-                .until(this::isBallAtTop)
-                .finallyDo((interrupted) -> setTargetState(State.HOLD));
+        return Commands.sequence(
+            // Phase 1: Run INTAKE until sensor sees the ball
+            commandSetState(State.INTAKE).until(this::isBallAtTop),
+            
+            // Phase 2: Switch to HOLD and stay there until the command is finished 
+            // (usually because the user released the button)
+            commandSetState(State.IDLE)
+        );
     }
 }

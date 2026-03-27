@@ -209,18 +209,6 @@ public final class Constants {
     public static final NTSlot0Configs kHoodPID = new NTSlot0Configs("Shooter/Hood/PID", 6.0, 0.8, 0.0, 0.0, 0.1, 0.0);
 
     
-
-    /* --- Climber ---  */ //TODO: Add climber constants here later
-        // Logic for 16.875:1 Gear Ratio
-        public static final NTEntry<Double> kClimberTall = new NTDouble("Climber/Height", 45.0).setPersistent(); 
-        public static final NTEntry<Double> kClimberCalibrationTime = new NTDouble("Climber/CalibrationTime", 0.2).setPersistent();
-        public static final NTEntry<Double> kClimberCalibrationVelocity = new NTDouble("Climber/CalibrationVelocity", 0.05).setPersistent(); 
-        public static final NTEntry<Double> kClimberCalibrationVoltage = new NTDouble("Climber/CalibrationVoltage", 2.5).setPersistent();
-        public static final NTEntry<Double> kClimberCalibrationPosition = new NTDouble("Climber/Calibration Position", 0.0).setPersistent();
-        // With a 16.875 ratio, 1 rotation of the output is 16.875 rotations of the motor.
-        // We want a strong P-gain to hold 130lbs. 
-        public static final NTSlot0Configs kClimberPID = new NTSlot0Configs("Climber/PID", 15.0, 0.0, 0.2, 0.0, 0.0, 0.0);
-
     /* --- Expansion ---  */ 
     public static final NTEntry<Double> kExpansionRetractedRotations = new NTDouble("Intake/Expansion/Retracted Rotations", 0).setPersistent();
     public static final NTEntry<Double> kExpansionExtendedRotations  = new NTDouble("Intake/Expansion/Extended Rotations", 10.0).setPersistent();
@@ -232,9 +220,6 @@ public final class Constants {
     public static final NTEntry<Double> kIndexerHoldVoltage = new NTDouble("intake/Indexer/Hold Voltage", 10.0).setPersistent();
     
     /* --- Intake  ---  */ 
-    public static final NTEntry<Double> kIntakeVoltage= new NTDouble("Intake/Intake Voltage", 6.0).setPersistent();
-    public static final NTEntry<Double> kIntakeIdleVoltage = new NTDouble("Intake/Idle Voltage", 0.0).setPersistent();
-    public static final NTSlot0Configs kIntakePID = new NTSlot0Configs("Intake/PID", 1.0, 0, 0, 0, 0, 0 );
 
 
     /* --- Shooter --- */
