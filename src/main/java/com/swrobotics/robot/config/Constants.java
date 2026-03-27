@@ -205,29 +205,11 @@ public final class Constants {
     public static final NTEntry<Double> kHoodMinAngle = new NTDouble("Shooter/Hood/Min Angle (Deg)", 22.7).setPersistent();
     public static final NTEntry<Double> kHoodCruiseVelocity = new NTDouble("Shooter/Hood/Cruise Velocity", 60.0).setPersistent();
     public static final NTEntry<Double> kHoodAcceleration = new NTDouble("Shooter/Hood/Acceleration", 120.0).setPersistent();
-
     public static final NTSlot0Configs kHoodPID = new NTSlot0Configs("Shooter/Hood/PID", 6.0, 0.8, 0.0, 0.0, 0.1, 0.0);
-
-    
-    /* --- Expansion ---  */ 
-    public static final NTEntry<Double> kExpansionRetractedRotations = new NTDouble("Intake/Expansion/Retracted Rotations", 0).setPersistent();
-    public static final NTEntry<Double> kExpansionExtendedRotations  = new NTDouble("Intake/Expansion/Extended Rotations", 10.0).setPersistent();
-    public static final NTSlot0Configs kExpansionPID = new NTSlot0Configs("Intake/Expansion/PID", 3.0, 0.001, 0.01, 0.0, 0.0, 0.0);
     
     /* --- Indexer --- */
-    public static final NTEntry<Double> kIndexerRollVoltage = new NTDouble("Intake/Indexer/Intake Voltage", 10.0).setPersistent();
     public static final NTEntry<Double> kIndexerIdleVoltage = new NTDouble("Intake/Indexer/Idle Voltage", 0.0).setPersistent();
-    public static final NTEntry<Double> kIndexerHoldVoltage = new NTDouble("intake/Indexer/Hold Voltage", 10.0).setPersistent();
-    
-    /* --- Intake  ---  */ 
 
-
-    /* --- Shooter --- */
-    public static final NTEntry<Double> kShooterRPS = new NTDouble("Shooter/Intake RPS", 40).setPersistent();
-    public static final NTEntry<Double> kShooterIdleRPS = new NTDouble("Shooter/Idle RPS", 0.0).setPersistent();
-    public static final NTEntry<Double> kShooterWarmRPS = new NTDouble("Shooter/Warm RPS", 1.0).setPersistent();
-    public static final NTEntry<Double> kShooterRindexRPS = new NTDouble("Shooter/Rindex RPS", -6.0).setPersistent();
-    public static final NTSlot0Configs kShooterPID = new NTSlot0Configs("Shooter/PID", 3.0, 0.000, 0.0, 0.0, 0.13, 0.53);
     // --- Shooter Geometry ---
     public static final double kShooterOffsetX = Units.inchesToMeters(10.0); // Positive is Forward
     public static final double kShooterOffsetY = Units.inchesToMeters(-10.0); // Negative is Right (Corner mount)

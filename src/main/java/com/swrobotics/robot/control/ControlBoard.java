@@ -81,22 +81,21 @@ public final class ControlBoard extends SubsystemBase {
         
         /* --- Intake/indexer --- */
 
-        // driver.leftTrigger()
-        //         .whileTrue(robot.intake.commandSetState(IntakeSubsystem.State.INTAKE)
-        //         //.alongWith(robot.indexer.intakeUntilCommand()));
-        //         .alongWith(robot.indexer.commandSetState(IndexerSubsystem.State.INTAKE)));
         driver.leftTrigger()
-        .whileTrue(robot.indexer.intakeUntilCommand());
+                .whileTrue(robot.intake.commandSetState(IntakeSubsystem.State.INTAKE)
+                //.alongWith(robot.indexer.intakeUntilCommand()));
+                .alongWith(robot.indexer.commandSetState(IndexerSubsystem.State.INTAKE)));
+
         driver.leftBumper()
                  .whileTrue(robot.indexer.commandSetState(IndexerSubsystem.State.RINDEX));
 
 
         /* --- Shooter --- */
         
-        // driver.rightTrigger()
-        //         .whileTrue(robot.shooter.commandSetState(ShooterSubsystem.State.SHOOT_AUTO)
-        //         .withTimeout(.75)
-        //         .andThen(robot.indexer.commandSetState(IndexerSubsystem.State.FEED)));
+        driver.rightTrigger()
+                .whileTrue(robot.shooter.commandSetState(ShooterSubsystem.State.SHOOT_MANUAL)
+                .withTimeout(.75)
+                .andThen(robot.indexer.commandSetState(IndexerSubsystem.State.FEED)));
     
 //         driver.rightTrigger()
 //                 .whileTrue(robot.shooter.commandSetState(ShooterSubsystem.State.SHOOT)
@@ -110,13 +109,14 @@ public final class ControlBoard extends SubsystemBase {
 
 
 
-driver.rightTrigger().whileTrue(DriveCommands.shootOnTheMove(robot.drive, robot.shooter, robot.hood, robot.indexer,
-        () -> -driver.getLeftY(),
-        () -> -driver.getLeftX()
-    )
-);
-        driver.y().whileTrue(DriveCommands.driveThroughBump(robot.drive));
-        driver.b().whileTrue(DriveCommands.driveThroughTrench(robot.drive));
+// driver.rightTrigger().whileTrue(DriveCommands.shootOnTheMove(robot.drive, robot.shooter, robot.hood, robot.indexer,
+//         () -> -driver.getLeftY(),
+//         () -> -driver.getLeftX()
+//     )
+// );
+        // driver.y().whileTrue(DriveCommands.driveThroughBump(robot.drive));
+        // driver.b().whileTrue(DriveCommands.driveThroughTrench(robot.drive));
+        driver.y().whileTrue(robot.hood.commandNudgeAngleDegrees(5));
 
 
     }

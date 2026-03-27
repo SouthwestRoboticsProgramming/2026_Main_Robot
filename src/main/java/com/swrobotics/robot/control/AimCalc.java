@@ -14,7 +14,7 @@ public class AimCalc {
     private static final AimCalc instance = new AimCalc();
     public static AimCalc getInstance() { return instance; }
 
-    // ---------------- TUNING CONSTANTS ----------------
+
     // Base flight time offset (seconds)
     public static double kBaseFlightTime = 0.4;
     // Additional flight time per meter of distance (seconds per meter)
@@ -30,12 +30,11 @@ public class AimCalc {
     private record ShotParams(double rps, double hoodDegrees) {}
 
     private AimCalc() {
-        // ---------------- INITIAL LUT (EXAMPLE) ----------------
-        // Replace these with your measured values.
-        shotMap.put(1.0,  new ShotParams(15, 30));
-        shotMap.put(1.25, new ShotParams(17, 30));
-        shotMap.put(1.5,  new ShotParams(20, 30));
-        shotMap.put(1.75, new ShotParams(25, 30));
+        //TODO: Tune TS boy
+        shotMap.put(1.0,  new ShotParams(20, 30));
+        shotMap.put(1.25, new ShotParams(20, 50));
+        shotMap.put(1.5,  new ShotParams(20, 20));
+        shotMap.put(1.75, new ShotParams(20, 20));
     }
 
     public void update(Pose2d robotPose, double fieldVx, double fieldVy) {
@@ -44,7 +43,7 @@ public class AimCalc {
             DriverStation.getAlliance().orElse(DriverStation.Alliance.Blue)
         ).getTranslation();
 
-        // Shooter offset from robot center, rotated into field frame
+        // Shooter offset from robot center
         Translation2d shooterOffset = new Translation2d(
             Constants.kShooterOffsetX,
             Constants.kShooterOffsetY
@@ -52,11 +51,9 @@ public class AimCalc {
 
         Translation2d shooterFieldPos = robotPose.getTranslation().plus(shooterOffset);
 
-        // Static distance to hub
         double staticDist = shooterFieldPos.getDistance(hubTarget);
         lastDistanceToHub = staticDist;
 
-        // Estimate flight time based on distance (simple linear model)
         double shotTime = estimateFlightTime(staticDist);
 
         // Compensate for robot motion: virtual target
@@ -82,7 +79,6 @@ public class AimCalc {
     }
 
     private ShotParams getInterpolatedParams(double distance) {
-        // Clamp distance to LUT range for safety
         double minKey = shotMap.firstKey();
         double maxKey = shotMap.lastKey();
         double clamped = Math.max(minKey, Math.min(maxKey, distance));

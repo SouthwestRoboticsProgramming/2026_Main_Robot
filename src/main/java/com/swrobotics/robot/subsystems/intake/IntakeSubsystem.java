@@ -1,7 +1,5 @@
 package com.swrobotics.robot.subsystems.intake;
 
-// Ctre imports
-import com.ctre.phoenix6.controls.VelocityVoltage; // Switched to Velocity
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
@@ -26,8 +24,7 @@ public class IntakeSubsystem extends SubsystemBase {
 
     // The motor controlling the intake mechanism
     private final TalonFX motor;
-    private final VelocityVoltage velocityControl = new VelocityVoltage(0).withEnableFOC(false);
-    //private final VoltageOut voltageControl = new VoltageOut(0);
+    private final VoltageOut voltageControl = new VoltageOut(0);
     private State targetState;
 
     public IntakeSubsystem() {
@@ -49,16 +46,16 @@ public class IntakeSubsystem extends SubsystemBase {
 
     @Override
     public void periodic() {
-        double targetRPS = 0;
+        double targetVoltage = 0;
         switch (targetState) {
-            case INTAKE: targetRPS = 30.0; // Set to a positive voltage to intake balls. Adjust as needed for optimal performance.
+            case INTAKE: targetVoltage = 12.0; // Set to a positive voltage to intake balls. Adjust as needed for optimal performance.
             break;
-            case IDLE: targetRPS = 0.0;
+            case IDLE: targetVoltage = 0.0;
             break;
         }
 
         // Apply control
-        motor.setControl(velocityControl.withVelocity(targetRPS)); 
+        motor.setControl(voltageControl.withOutput(targetVoltage)); 
     }
 
     public void setTargetState(State targetState) {
