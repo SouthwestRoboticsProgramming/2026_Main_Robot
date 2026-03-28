@@ -94,7 +94,7 @@ public final class ControlBoard extends SubsystemBase {
         /* --- Shooter --- */
         
         driver.rightTrigger()
-                .whileTrue(robot.shooter.commandSetState(ShooterSubsystem.State.SHOOT_MANUAL)
+                .whileTrue(robot.shooter.commandSetState(ShooterSubsystem.State.SHOOT)
                 .withTimeout(.75)
                 .andThen(robot.indexer.commandSetState(IndexerSubsystem.State.FEED)));
     
