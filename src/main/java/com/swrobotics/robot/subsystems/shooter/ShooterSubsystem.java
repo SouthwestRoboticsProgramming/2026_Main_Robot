@@ -15,7 +15,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class ShooterSubsystem extends SubsystemBase {
-    public enum State { IDLE, SHOOT_AUTO, SHOOT_MANUAL, WARM, RINDEX }
+    public enum State { IDLE, SHOOT, WARM, RINDEX }
 
     private final TalonFX motorL;
     private final TalonFX motorR;
@@ -52,11 +52,9 @@ public class ShooterSubsystem extends SubsystemBase {
             case IDLE:
                 currentTargetRPS = 0.0;
                 break;
-            case SHOOT_AUTO:
-                currentTargetRPS = AimCalc.getInstance().getShooterRPS();
-                break;
-            case SHOOT_MANUAL:
-                currentTargetRPS = manualRps;
+
+            case SHOOT:
+                currentTargetRPS = 20;
                 break;
             case WARM:
                 currentTargetRPS = 10.0; // TUNE
@@ -75,9 +73,8 @@ public class ShooterSubsystem extends SubsystemBase {
     }
 
     public boolean isAtTargetRPS() {
-        if (targetState != State.SHOOT_AUTO && targetState != State.SHOOT_MANUAL) return false;
-        // Tolerance: ±2 RPS
-        return Math.abs(motorL.getVelocity().getValueAsDouble() - currentTargetRPS) < 2.0;
+        if (targetState != State.SHOOT) return false;
+        return Math.abs(motorL.getVelocity().getValueAsDouble() - currentTargetRPS) < 1.0;
     }
 
     public void setTargetState(State state) {
@@ -88,14 +85,4 @@ public class ShooterSubsystem extends SubsystemBase {
         return run(() -> setTargetState(state));
     }
 
-    // -------- MANUAL RPS NUDGE --------
-    public void nudgeManualRps(double deltaRps) {
-        manualRps += deltaRps;
-        // Clamp to non-negative; adjust max if needed
-        manualRps = Math.max(0.0, manualRps);
-    }
-
-    public Command commandNudgeManualRps(double deltaRps) {
-        return runOnce(() -> nudgeManualRps(deltaRps));
-    }
 }

@@ -36,6 +36,7 @@ public final class IOAllocation {
         public static final CanId kIndexerCANrange = new CanId(21, kGerald);
         public static final CanId kIntakeMotor = new CanId(22, kGerald);
         public static final CanId kExpansionMotor = new CanId(23, kGerald);
+        public static final CanId kExpansionEncoder = new CanId(24, kGerald);
     }
 
     public static final class RIO {

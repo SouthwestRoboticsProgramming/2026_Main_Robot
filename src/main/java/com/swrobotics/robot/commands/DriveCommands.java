@@ -151,8 +151,12 @@ public static Command shootOnTheMove(
 ) {
     PIDController turnPid = new PIDController(Constants.kSnapTurnKp.get(), 0, Constants.kSnapTurnKd.get()); 
     turnPid.enableContinuousInput(-Math.PI, Math.PI);
+    
+    // TUNE: Set how close (in radians) the robot needs to be to the target angle to shoot
+    turnPid.setTolerance(Math.toRadians(2.0)); 
 
     return Commands.run(() -> {
+        // 1. Drivebase Aiming
         Pose2d currentPose = drive.getEstimatedPose();
         Rotation2d targetAngle = AimCalc.getInstance().getDrivebaseAimAngle();
 
@@ -163,14 +167,34 @@ public static Command shootOnTheMove(
             .withVelocityY(translationY.get())
             .withRotationalRate(rotOutput));
 
-        shooter.setTargetState(ShooterSubsystem.State.SHOOT_AUTO);
-        hood.setMode(HoodSubsystem.HoodMode.AUTO_TRACK);
-        if (turnPid.atSetpoint() && shooter.isAtTargetRPS() && hood.isAtTarget()) {
+        // 2. Shooter Flywheel
+        shooter.setTargetState(ShooterSubsystem.State.SHOOT);
+
+        // 3. Hood & Manual Override Logic
+        // Only command AUTO_TRACK if the operator hasn't nudged the hood into MANUAL mode
+        if (hood.getMode() != HoodSubsystem.HoodMode.MANUAL) {
+            hood.setMode(HoodSubsystem.HoodMode.AUTO_TRACK);
+        }
+
+        // 4. Indexer Firing Logic
+        boolean aimed = turnPid.atSetpoint();
+        boolean spunUp = shooter.isAtTargetRPS();
+        boolean hoodReady = hood.isAtTarget();
+
+        if (aimed && spunUp && hoodReady) {
             indexer.setTargetState(IndexerSubsystem.State.FEED);
         } else {
             indexer.setTargetState(IndexerSubsystem.State.HOLD);
         }
-    }, drive, shooter, hood, indexer);
+    }, drive, shooter, hood, indexer)
+    .finallyDo(() -> {
+        // 5. Cleanup: Return everything to rest when the command ends
+        hood.setMode(HoodSubsystem.HoodMode.IDLE); // Drives back to 0
+        shooter.setTargetState(ShooterSubsystem.State.IDLE);
+        
+        // Assuming your Indexer has an IDLE or STOP state
+        indexer.setTargetState(IndexerSubsystem.State.IDLE); 
+    });
 }
 
     private static Pose2d getClosestPose(Pose2d currentPose, List<Pose2d> candidates) {

@@ -1,6 +1,7 @@
 package com.swrobotics.robot.subsystems.intake.expansion;
 
 import com.ctre.phoenix6.controls.PositionVoltage;
+import com.ctre.phoenix6.hardware.CANcoder;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
@@ -21,12 +22,14 @@ public class ExpansionSubsystem extends SubsystemBase {
     }
 
     private final TalonFX motor;
+    private final CANcoder encoder;
     private final PositionVoltage positionControl = new PositionVoltage(0).withEnableFOC(false);
     private State targetState;
 
     public ExpansionSubsystem() {
 
         motor = IOAllocation.CAN.kExpansionMotor.createTalonFX();
+        encoder = IOAllocation.CAN.kExpansionEncoder.createCANcoder();
         TalonFXConfigHelper config = new TalonFXConfigHelper();
         config.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
         config.MotorOutput.NeutralMode = NeutralModeValue.Coast;
