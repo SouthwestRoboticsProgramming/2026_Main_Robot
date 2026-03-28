@@ -3,6 +3,7 @@ package com.swrobotics.robot.subsystems.intake.indexer;
 import com.ctre.phoenix6.configs.CANrangeConfiguration;
 import com.ctre.phoenix6.controls.Follower;
 import com.ctre.phoenix6.controls.VelocityVoltage;
+import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.CANrange;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.hardware.TalonFXS;
@@ -37,7 +38,7 @@ public class IndexerSubsystem extends SubsystemBase {
     private final CANrange canrange;
 
     private final VelocityVoltage velocityControl = new VelocityVoltage(0).withEnableFOC(false);
-    private final Follower Kicker = new Follower(0, MotorAlignmentValue.Opposed); // Belt will follow the shooter feeder motor
+    private final VoltageOut voltageControl = new VoltageOut(0);
     private boolean ballAtTop = false;
     private State targetState;
 
@@ -61,7 +62,7 @@ public class IndexerSubsystem extends SubsystemBase {
         config2.MotorOutput.NeutralMode = NeutralModeValue.Coast;
         config2.CurrentLimits.StatorCurrentLimit = 60.0;
         config2.CurrentLimits.StatorCurrentLimitEnable = true; 
-        config2.Slot0.kP = 0.2;
+        config2.Slot0.kP = 0.3;
         config2.Slot0.kV = 0.13;
 
         TalonFXSConfigHelper config3 = new TalonFXSConfigHelper();
@@ -69,13 +70,11 @@ public class IndexerSubsystem extends SubsystemBase {
         config3.MotorOutput.NeutralMode = NeutralModeValue.Coast;
         config3.CurrentLimits.StatorCurrentLimit = 40.0;
         config3.CurrentLimits.StatorCurrentLimitEnable = true; 
-        config3.Slot0.kP = 0.1;
-        config3.Slot0.kV = 0.13;
+
 
         config.apply(floorMotor, beltMotor);
         config2.apply(shooterFeederMotor);
         config3.apply(kickerMotor);
-        kickerMotor.setControl(new Follower(shooterFeederMotor.getDeviceID(), MotorAlignmentValue.Opposed));
         
         // --- CANrange Detector Configuration ---
         CANrangeConfiguration rangeConfig = new CANrangeConfiguration();
@@ -94,32 +93,38 @@ public class IndexerSubsystem extends SubsystemBase {
         double floorRPS = 0.0;
         double beltRPS = 0.0; // Belt will follow the shooter feeder motor
         double feederRPS = 0.0; 
+        double kickerRPS = 0.0;
 
         switch (targetState) {
             case INTAKE:
                 floorRPS = 20.0;
-                beltRPS = 20.0;
-                feederRPS = 30.0;
+                beltRPS = 0.0;
+                feederRPS = 0.0;
+                kickerRPS = 6.0;
                 break;
             case IDLE:
                 floorRPS = Constants.kIndexerIdleVoltage.get();
                 beltRPS = Constants.kIndexerIdleVoltage.get();
                 feederRPS = Constants.kIndexerIdleVoltage.get();
+                kickerRPS = Constants.kIndexerIdleVoltage.get();
                 break;
             case HOLD:
                 floorRPS = 10.0;
                 beltRPS = 10.0;
                 feederRPS = 0.0;
+                kickerRPS = 0.0;
                 break;
             case FEED:
                 floorRPS = 20.0;
-                beltRPS = 20.0;
-                feederRPS = 20.0;
+                beltRPS = 40.0;
+                feederRPS = 40.0;
+                kickerRPS = 8.0;
                 break;
             case RINDEX:
                 floorRPS = -20.0;
                 beltRPS = -20.0;
                 feederRPS = -25.0;
+                kickerRPS = -10.0;
                 break;
         }
 
@@ -127,6 +132,7 @@ public class IndexerSubsystem extends SubsystemBase {
         floorMotor.setControl(velocityControl.withVelocity(floorRPS));
         beltMotor.setControl(velocityControl.withVelocity(beltRPS)); 
         shooterFeederMotor.setControl(velocityControl.withVelocity(feederRPS));
+        kickerMotor.setControl(voltageControl.withOutput(kickerRPS));
     }
 
     public void setTargetState(State targetState) {

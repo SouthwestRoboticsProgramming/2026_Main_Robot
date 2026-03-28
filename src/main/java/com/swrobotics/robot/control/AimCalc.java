@@ -114,6 +114,7 @@ public class AimCalc {
 
     public static double kConstantShooterRPS = 20.0;
 
+
     // Base flight time offset (seconds)
     public static double kBaseFlightTime = 0.4;
     public static double kFlightTimePerMeter = 0.10;
@@ -128,9 +129,6 @@ public class AimCalc {
     private double shooterRPS = kConstantShooterRPS;
     private double lastDistanceToHub = 0.0;
 
-    private AimCalc() {
-        // Constructor is now empty since we don't need to build a map!
-    }
 
     public void update(Pose2d robotPose, double fieldVx, double fieldVy) {
         // Alliance-relative hub position
@@ -138,20 +136,19 @@ public class AimCalc {
             DriverStation.getAlliance().orElse(DriverStation.Alliance.Blue)
         ).getTranslation();
 
-        // Shooter offset from robot center, rotated into field frame
+        // Shooter offset from robot center
         Translation2d shooterOffset = new Translation2d(
             Constants.kShooterOffsetX,
             Constants.kShooterOffsetY
         ).rotateBy(robotPose.getRotation());
 
         Translation2d shooterFieldPos = robotPose.getTranslation().plus(shooterOffset);
+        // Distance from shooter to hub (static / instantaneous)
+        double staticDist = shooterFieldPos.getDistance(hubTarget);
+        lastDistanceToHub = staticDist;
 
-        // Actual distance to hub
-        double actualDist = shooterFieldPos.getDistance(hubTarget);
-        lastDistanceToHub = actualDist;
-
-        // Estimate flight time based on actual distance
-        double shotTime = estimateFlightTime(actualDist);
+        // Estimate flight time based on distance
+        double shotTime = estimateFlightTime(staticDist);
 
         // Compensate for robot motion: virtual target
         Translation2d robotMotionDuringShot = new Translation2d(
@@ -183,9 +180,9 @@ public class AimCalc {
         double targetDegrees = (kHoodCurveA * (distance * distance)) 
                              + (kHoodCurveB * distance) 
                              + kHoodCurveC;
-
         return targetDegrees;
     }
+
 
     public Rotation2d getDrivebaseAimAngle() { return drivebaseAimAngle; }
     public Rotation2d getHoodAngle() { return hoodAngle; }

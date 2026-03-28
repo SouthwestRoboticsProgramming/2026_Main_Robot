@@ -46,8 +46,12 @@ public class HoodSubsystem extends SubsystemBase {
         config.CurrentLimits.StatorCurrentLimit = 20.0;
         config.CurrentLimits.StatorCurrentLimitEnable = true;
 
+<<<<<<< HEAD
         // Apply your configured gear ratio
         config.Feedback.SensorToMechanismRatio = kSensorToMechRatio;
+=======
+        config.Feedback.SensorToMechanismRatio = 24; // TUNE: set your gear ratio here
+>>>>>>> 11aed943826ef022f7018a6acb5636d129805d4c
 
         config.addTunable(Constants.kHoodPID);
         config.apply(motor);
