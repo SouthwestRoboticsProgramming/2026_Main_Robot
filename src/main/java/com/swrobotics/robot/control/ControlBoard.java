@@ -118,7 +118,7 @@ public final class ControlBoard extends SubsystemBase {
         driver.povUp().onFalse(Commands.runOnce(() -> robot.drive.resetRotation(new Rotation2d())));
         driver.povDown().toggleOnTrue(Commands.runOnce(() -> robot.drive.commandLockModules()));
 
-        /* --- MANUAl OVERRIDES --- */       
+        /* --- MANUAl OVERRIDES --- */
         operator.rightTrigger()
                 .whileTrue(robot.shooter.commandSetState(ShooterSubsystem.State.SHOOT)
                 .withTimeout(.75)
