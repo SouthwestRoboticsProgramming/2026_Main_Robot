@@ -176,7 +176,7 @@ public final class Constants {
             // These were tuned at MURA using red alliance speaker AprilTags
             2,
             0.00197,
-            999999,//0.002,
+            0.002,
             0.00117
     );
 
@@ -194,12 +194,12 @@ public final class Constants {
     );
 
     public static final LimelightCamera.MountingLocation kLimelightFrontLocation = new LimelightCamera.MountingLocation(
-        Units.inchesToMeters(-4.84), Units.inchesToMeters(10.213), Units.inchesToMeters(18.132),
-        0, 15, 180
+        Units.inchesToMeters(9.92), Units.inchesToMeters(4.75), Units.inchesToMeters(13.81),
+        0, 15, 0
     );
 
    /* --- Hood --- */ //TODO: Adjust constant values
-    public static final NTEntry<Boolean> kHoodInverted = new NTBoolean("Shooter/Hood/Inverted", false).setPersistent();
+    public static final NTEntry<Boolean> kHoodInverted = new NTBoolean("Shooter/Hood/Inverted", true).setPersistent();
     public static final NTEntry<Double> kHoodMaxAngle = new NTDouble("Shooter/Hood/Max Angle (Deg)", 40.0).setPersistent();
     public static final NTEntry<Double> kHoodMinAngle = new NTDouble("Shooter/Hood/Min Angle (Deg)", 22.7).setPersistent();
     public static final NTEntry<Double> kHoodCruiseVelocity = new NTDouble("Shooter/Hood/Cruise Velocity", 60.0).setPersistent();

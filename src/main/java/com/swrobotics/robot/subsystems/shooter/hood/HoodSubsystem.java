@@ -18,7 +18,7 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 public class HoodSubsystem extends SubsystemBase {
 
     public static final double kMinAngleRot = 22.73 / 360.0; 
-    public static final double kMaxAngleRot = 45.0 / 360.0;
+    public static final double kMaxAngleRot = 50.0 / 360.0;
     public static final double kHoodGearRatio = 24; 
     
     public static final double kGravityFeedforwardVolts = 0.5; 

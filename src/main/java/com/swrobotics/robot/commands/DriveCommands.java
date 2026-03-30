@@ -15,7 +15,6 @@ import com.swrobotics.robot.subsystems.swerve.SwerveDriveSubsystem;
 
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.util.Units;
@@ -167,14 +166,9 @@ public static Command shootOnTheMove(
             .withVelocityY(translationY.get())
             .withRotationalRate(rotOutput));
 
-        // 2. Shooter Flywheel
         shooter.setTargetState(ShooterSubsystem.State.SHOOT);
-
-        
         hood.setMode(HoodSubsystem.HoodState.AUTO_TRACK);
         
-
-        // 4. Indexer Firing Logic
         boolean aimed = turnPid.atSetpoint();
         boolean spunUp = shooter.isAtTargetRPS();
         boolean hoodReady = hood.isAtTarget();
@@ -187,7 +181,7 @@ public static Command shootOnTheMove(
     }, drive, shooter, hood, indexer)
     .finallyDo(() -> {
         // 5. Cleanup: Return everything to rest when the command ends
-        hood.setMode(HoodSubsystem.HoodState.HOMING); // Drives back to 0
+        hood.setMode(HoodSubsystem.HoodState.IDLE); // Drives back to 0
         shooter.setTargetState(ShooterSubsystem.State.IDLE);
         
         // Assuming your Indexer has an IDLE or STOP state
@@ -466,7 +460,6 @@ public static Command driveThroughBump(SwerveDriveSubsystem drive) {
     }
 
     public static Command driveToPose(SwerveDriveSubsystem drive, Pose2d currentPose) {
-        // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'driveToPose'");
     }
 }

@@ -102,11 +102,13 @@ public final class ControlBoard extends SubsystemBase {
                 .alongWith(robot.indexer.commandSetState(IndexerSubsystem.State.INTAKE)));
 
         driver.leftBumper().whileTrue(robot.indexer.commandSetState(IndexerSubsystem.State.RINDEX));
-
-        driver.rightTrigger().whileTrue(DriveCommands.shootOnTheMove(robot.drive, robot.shooter, robot.hood, robot.indexer,
-                        () -> -driver.getLeftY(),
-                        () -> -driver.getLeftX()
-                ).alongWith(robot.intake.commandSetState(IntakeSubsystem.State.INTAKE)).alongWith(robot.hood.setMode(HoodState.AUTO_TRACK)));
+        driver.rightTrigger().whileTrue(robot.hood.setMode(HoodState.AUTO_TRACK).alongWith(robot.shooter.commandSetState(ShooterSubsystem.State.SHOOT)
+                .withTimeout(.75)
+                .andThen(robot.indexer.commandSetState(IndexerSubsystem.State.FEED))));
+        // driver.rightTrigger().whileTrue(DriveCommands.shootOnTheMove(robot.drive, robot.shooter, robot.hood, robot.indexer,
+        //                 () -> -driver.getLeftY(),
+        //                 () -> -driver.getLeftX()
+        //         ));
 
         driver.x().toggleOnTrue(robot.expansion.commandSetState(ExpansionSubsystem.State.EXTENDED));
         driver.b().whileTrue(robot.hood.setMode(HoodState.HOMING));

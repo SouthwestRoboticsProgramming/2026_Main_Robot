@@ -32,7 +32,6 @@ public class IntakeSubsystem extends SubsystemBase {
         // Initialize the motor
         motor = IOAllocation.CAN.kIntakeMotor.createTalonFX();
         
-        // Configure the motor with appropriate settings for velocity control
         TalonFXConfigHelper config = new TalonFXConfigHelper();
         config.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
         config.MotorOutput.NeutralMode = NeutralModeValue.Coast;
