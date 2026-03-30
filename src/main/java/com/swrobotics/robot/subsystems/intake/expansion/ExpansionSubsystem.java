@@ -20,6 +20,7 @@ public class ExpansionSubsystem extends SubsystemBase {
     public enum State {
         RETRACTED,
         EXTENDED,
+        SHOOT
     }
 
     private final TalonFX motor;
@@ -59,7 +60,7 @@ public class ExpansionSubsystem extends SubsystemBase {
             break;
             case RETRACTED: targetRotations = 0;
             break;
-            
+            case SHOOT: targetRotations = 16.0;
         }
 
         motor.setControl(positionControl.withPosition(targetRotations));

@@ -117,8 +117,8 @@ public final class ControlBoard extends SubsystemBase {
         // driver.b().whileTrue(robot.hood.setMode(HoodState.HOMING));
         // driver.y().whileTrue(robot.hood.setMode(HoodState.PASSING));
         driver.a().onTrue(Telemetry.logSuccessfulShot());
-        driver.y().onTrue(robot.hood.manualNudge(3.0));
-        driver.b().onTrue(robot.hood.manualNudge(-3.0));
+        driver.y().onTrue(robot.hood.manualNudge(5.0));
+        driver.b().onTrue(robot.hood.manualNudge(-5.0));
         driver.povUp().onFalse(Commands.runOnce(() -> robot.drive.resetRotation(new Rotation2d())));
         driver.povDown().toggleOnTrue(Commands.runOnce(() -> robot.drive.commandLockModules()));
 

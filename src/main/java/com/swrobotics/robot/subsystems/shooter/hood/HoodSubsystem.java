@@ -57,7 +57,7 @@ public class HoodSubsystem extends SubsystemBase {
     public void periodic() {
         switch (state) {
             case HOMING:
-                motor.setControl(voltageControl.withOutput(2.0)); // Drive down
+                motor.setControl(voltageControl.withOutput(-2.0)); // Drive down
                 
                 double current = motor.getStatorCurrent().getValueAsDouble();
 
@@ -126,7 +126,7 @@ public class HoodSubsystem extends SubsystemBase {
     // Nudges the target rotations. Bind to D-Pad Up/Down.
     public Command manualNudge(double degrees) {
         return runOnce(() -> {
-            this.state = HoodState.MANUAL;
+            setMode(HoodState.MANUAL).execute(); 
             this.targetRotations += (degrees / 360.0);
         });
     }

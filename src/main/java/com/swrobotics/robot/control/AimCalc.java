@@ -27,25 +27,13 @@ public class AimCalc {
     private AimCalc() {
         // --- INITIAL SCORING MAP ---
         hoodAngleMap.put(0.96, 10.0);
-        hoodAngleMap.put(1.16, 12.0);
-        hoodAngleMap.put(1.58, 14.0);
-        hoodAngleMap.put(2.07, 18.5);
-        hoodAngleMap.put(2.37, 22.0);
-        hoodAngleMap.put(2.47, 23.0);
-        hoodAngleMap.put(2.70, 24.0);
-        hoodAngleMap.put(2.94, 25.0);
-        hoodAngleMap.put(3.48, 27.0);
-        hoodAngleMap.put(3.92, 32.0);
-        hoodAngleMap.put(4.35, 34.0);
-        hoodAngleMap.put(4.84, 38.0);
+        hoodAngleMap.put(0.1, 0.1);
 
         rpsMap.put(0.0, 20.0);
         rpsMap.put(40.0, 20.0);
 
         // --- PASSING MAP ---
-        passingHoodAngleMap.put(5.46, 38.0);
-        passingHoodAngleMap.put(6.62, 38.0);
-        passingHoodAngleMap.put(7.80, 38.0);
+        
         passingHoodAngleMap.put(17.16, 38.0);
     }
 
