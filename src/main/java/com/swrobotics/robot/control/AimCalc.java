@@ -26,7 +26,7 @@ public class AimCalc {
 
     private AimCalc() {
         // --- INITIAL SCORING MAP ---
-        hoodAngleMap.put(0.96, 10.0);
+        hoodAngleMap.put(0.96, 22.73);
         hoodAngleMap.put(0.1, 0.1);
 
         rpsMap.put(0.0, 20.0);

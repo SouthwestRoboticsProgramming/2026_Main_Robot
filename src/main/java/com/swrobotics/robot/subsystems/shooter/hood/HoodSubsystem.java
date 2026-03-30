@@ -17,11 +17,10 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class HoodSubsystem extends SubsystemBase {
 
-    public static final double kMinAngleRot = -30 / 360.0;
-    public static final double kMaxAngleRot = 0 / 360.0;
+    public static final double kMinAngleRot = 64 / 360.0;
+    public static final double kMaxAngleRot = 40 / 360.0;
     public static final double kHoodGearRatio = 24; 
     
-    public static final double kGravityFeedforwardVolts = 0.5; 
 
     private final TalonFX motor;
     private final PositionVoltage positionControl = new PositionVoltage(0).withEnableFOC(true);
@@ -44,10 +43,13 @@ public class HoodSubsystem extends SubsystemBase {
         // This MUST match your physical gear ratio so 1 "Rotation" = 1 Mechanism Rotation
         config.Feedback.SensorToMechanismRatio = kHoodGearRatio; 
         
-        config.CurrentLimits.StatorCurrentLimit = 30.0;
+        config.CurrentLimits.StatorCurrentLimit = 60.0;
         config.CurrentLimits.StatorCurrentLimitEnable = true;
 
-        config.addTunable(Constants.kHoodPID);
+        config.Slot0.kP = 8;
+        config.Slot0.kD = 0;
+        config.Slot0.kG = .75;
+
         config.apply(motor);
 
         homingTimer.start();
@@ -62,8 +64,7 @@ public class HoodSubsystem extends SubsystemBase {
                 double current = motor.getStatorCurrent().getValueAsDouble();
 
                 // Wait 0.5s to bypass inrush current, then look for true stall
-                if (homingTimer.hasElapsed(0.5) && current > 15.0) {
-                    // THE MAGIC TRICK: We tell the motor it is currently at 22.73 degrees!
+                if (homingTimer.hasElapsed(0.5) || current > 30.0) {
                     motor.setPosition(kMinAngleRot); 
                     state = HoodState.IDLE;
                 }
@@ -87,6 +88,7 @@ public class HoodSubsystem extends SubsystemBase {
 
             case MANUAL:
                 applyPositionControl();
+
                 break;
         }
         updateTelemetry();
@@ -98,7 +100,6 @@ public class HoodSubsystem extends SubsystemBase {
         
         motor.setControl(positionControl
             .withPosition(targetRotations)
-            .withFeedForward(kGravityFeedforwardVolts)
         );
     }
 
@@ -110,13 +111,11 @@ public class HoodSubsystem extends SubsystemBase {
     }
 
     public Command manualNudge(double degrees) {
-        return runOnce(() -> {
-            if (state != HoodState.MANUAL) {
-                targetRotations = motor.getPosition().getValueAsDouble();
-                state = HoodState.MANUAL;
-            }
-            targetRotations -= (degrees / 360.0);
-            targetRotations = MathUtil.clamp(targetRotations, kMinAngleRot, kMaxAngleRot);
+        return run(() -> {
+            
+            targetRotations = motor.getPosition().getValueAsDouble();           
+            targetRotations += (degrees / 360.0);
+            targetRotations= MathUtil.clamp(targetRotations, -800, 800);
         });
     }
 
