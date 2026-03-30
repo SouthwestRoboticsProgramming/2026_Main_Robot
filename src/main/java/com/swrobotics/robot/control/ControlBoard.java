@@ -22,11 +22,13 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.POVButton;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 
+import java.util.Set;
+
 import com.swrobotics.robot.subsystems.intake.indexer.IndexerSubsystem;
 import com.swrobotics.robot.subsystems.intake.IntakeSubsystem;
 import com.swrobotics.robot.subsystems.intake.expansion.ExpansionSubsystem;
 import com.swrobotics.robot.subsystems.shooter.ShooterSubsystem;
-//import com.swrobotics.robot.subsystems.shooter.hood.HoodSubsystem;
+import com.swrobotics.robot.subsystems.shooter.hood.HoodSubsystem;
 
 public final class ControlBoard extends SubsystemBase {
     /*
@@ -64,6 +66,7 @@ public final class ControlBoard extends SubsystemBase {
         driveControlFilter = new DriveAccelFilter(Constants.kDriveControlMaxAccel);
 
         configureControls();
+        configureOperatorControls();
         configureRumbles();
     }
 
@@ -119,7 +122,42 @@ public final class ControlBoard extends SubsystemBase {
         // driver.b().whileTrue(DriveCommands.driveThroughTrench(robot.drive));
         driver.y().whileTrue(robot.hood.commandNudgeAngleDegrees(5));
 
+        // Auto-aim: hold B to snap rotation toward hub while driving
+        driver.b().whileTrue(DriveCommands.driveFieldRelativeSnapToHub(
+                robot.drive,
+                () -> this.getDriveTranslation()
+        ));
 
+        // Auto warmup: spin shooter to WARM when near hub with a ball
+        new Trigger(() ->
+                DriverStation.isTeleopEnabled()
+                && robot.indexer.isBallAtTop()
+                && AimCalc.getInstance().getLastDistanceToHub() < Constants.kWarmupDistance.get()
+        ).whileTrue(robot.shooter.commandSetState(ShooterSubsystem.State.WARM));
+    }
+
+    private void configureOperatorControls() {
+        // Shooter warmup
+        operator.rightTrigger().whileTrue(robot.shooter.commandSetState(ShooterSubsystem.State.WARM));
+
+        // Rindex to clear jams
+        operator.leftTrigger().whileTrue(
+                robot.indexer.commandSetState(IndexerSubsystem.State.RINDEX)
+                .alongWith(robot.shooter.commandSetState(ShooterSubsystem.State.RINDEX)));
+
+        // Hood nudge
+        operator.povUp().onTrue(robot.hood.commandNudgeAngleDegrees(2.0));
+        operator.povDown().onTrue(robot.hood.commandNudgeAngleDegrees(-2.0));
+
+        // Hood mode controls
+        operator.a().onTrue(robot.hood.setMode(HoodSubsystem.HoodMode.HOMING));
+        operator.rightBumper().onTrue(robot.hood.setMode(HoodSubsystem.HoodMode.AUTO_TRACK));
+        operator.leftBumper().onTrue(robot.hood.setMode(HoodSubsystem.HoodMode.IDLE));
+
+        // Hood angle presets (tunable via NetworkTables — deferred so NT values are read at button press, not boot)
+        operator.x().onTrue(Commands.defer(() -> robot.hood.setManualPosition(Constants.kHoodPresetClose.get() / 360.0), Set.of(robot.hood)));
+        operator.y().onTrue(Commands.defer(() -> robot.hood.setManualPosition(Constants.kHoodPresetMid.get() / 360.0), Set.of(robot.hood)));
+        operator.b().onTrue(Commands.defer(() -> robot.hood.setManualPosition(Constants.kHoodPresetFar.get() / 360.0), Set.of(robot.hood)));
     }
 
     /**

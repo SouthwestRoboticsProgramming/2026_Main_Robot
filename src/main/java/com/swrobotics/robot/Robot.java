@@ -106,7 +106,9 @@ public final class Robot extends TimedRobot {
 
     // Override these so WPILib doesn't print unhelpful warnings
     @Override public void simulationPeriodic() {}
-    @Override public void disabledPeriodic() {}
+    @Override public void disabledPeriodic() {
+        robotContainer.preMatchCheck.update();
+    }
     @Override public void autonomousPeriodic() {}
     @Override public void teleopPeriodic() {}
     @Override public void testPeriodic() {}

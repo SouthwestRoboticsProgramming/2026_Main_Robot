@@ -12,7 +12,7 @@ import com.swrobotics.robot.subsystems.shooter.ShooterSubsystem;
 public class AutonomousCommands {
     
     public static Command getShootCommand(RobotContainer robot) {
-        return robot.shooter.commandSetState(ShooterSubsystem.State.SHOOT_MANUAL)
+        return robot.shooter.commandSetState(ShooterSubsystem.State.SHOOT)
                     .withTimeout(.75)
                     .andThen(robot.indexer.commandSetState(IndexerSubsystem.State.FEED)).withTimeout(5);
     }

@@ -12,6 +12,7 @@ import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.NamedCommands;
 import com.pathplanner.lib.commands.PathPlannerAuto;
 import com.swrobotics.robot.commands.AutonomousCommands;
+import com.swrobotics.robot.diagnostics.PreMatchCheck;
 import com.swrobotics.robot.control.AimCalc;
 import com.swrobotics.robot.control.ControlBoard;
 import com.swrobotics.robot.logging.FieldView;
@@ -48,6 +49,7 @@ public class RobotContainer {
     //public final ClimberSubsystem climber;
 
     public final ControlBoard controlboard;
+    public final PreMatchCheck preMatchCheck;
 
     public RobotContainer() {
         // Turn off joystick warnings in sim
@@ -64,6 +66,7 @@ public class RobotContainer {
 
         // ControlBoard must be initialized last
         controlboard = new ControlBoard(this);
+        preMatchCheck = new PreMatchCheck(this);
 
         // Register Named Commands for Auto
         NamedCommands.registerCommand("Shoot", AutonomousCommands.getShootCommand(this));

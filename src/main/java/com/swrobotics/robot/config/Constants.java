@@ -207,6 +207,14 @@ public final class Constants {
     public static final NTEntry<Double> kHoodAcceleration = new NTDouble("Shooter/Hood/Acceleration", 120.0).setPersistent();
     public static final NTSlot0Configs kHoodPID = new NTSlot0Configs("Shooter/Hood/PID", 6.0, 0.8, 0.0, 0.0, 0.1, 0.0);
     
+    /* --- Shooter Warmup --- */
+    public static final NTEntry<Double> kWarmupDistance = new NTDouble("Shooter/Warmup Distance (m)", 4.0).setPersistent();
+
+    /* --- Hood Presets --- */
+    public static final NTEntry<Double> kHoodPresetClose = new NTDouble("Shooter/Hood Preset/Close (deg)", 25.0).setPersistent();
+    public static final NTEntry<Double> kHoodPresetMid = new NTDouble("Shooter/Hood Preset/Mid (deg)", 30.0).setPersistent();
+    public static final NTEntry<Double> kHoodPresetFar = new NTDouble("Shooter/Hood Preset/Far (deg)", 37.0).setPersistent();
+
     /* --- Indexer --- */
     public static final NTEntry<Double> kIndexerIdleVoltage = new NTDouble("Intake/Indexer/Idle Voltage", 0.0).setPersistent();
 
