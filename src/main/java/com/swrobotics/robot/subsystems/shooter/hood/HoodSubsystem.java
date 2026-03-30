@@ -1,13 +1,13 @@
 package com.swrobotics.robot.subsystems.shooter.hood;
 
-import java.lang.Thread.State;
-
 import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.swrobotics.lib.ctre.TalonFXConfigHelper;
+import com.swrobotics.lib.net.NTDouble;
+import com.swrobotics.lib.net.NTEntry;
 import com.swrobotics.robot.config.Constants;
 import com.swrobotics.robot.config.IOAllocation;
 import com.swrobotics.robot.control.AimCalc;
@@ -19,11 +19,15 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class HoodSubsystem extends SubsystemBase {
     // --- HOOD CONFIGURATIONS ---
-    public static final double kSensorToMechRatio = 1.0; // TUNE: Enter your gear ratio here
-    public static final double kMaxAngleDeg = 45.0;      // TUNE: Maximum safe hood angle
-    public static final double kMinAngleDeg = 0.0;       // TUNE: Minimum safe hood angle
+    // Gear ratio: 16T->24T then 10T->160T = (24/16) * (160/10) = 24:1
+    public static final double kSensorToMechRatio = 24.0;
+    public static final double kMaxAngleDeg = 90.0;      // Physical hard limit (hood quarter turn)
+    public static final double kMinAngleDeg = 0.0;       // Home position (hard stop)
     public static final double kHomingVoltage = -2.0;    // TUNE: Voltage to drive hood down (- for down)
     public static final double kHomingCurrentLimit = 15.0; // TUNE: Stator current spike (Amps) to detect hard stop
+
+    // Tunable nudge step for manual adjustment (smaller = finer tuning)
+    private static final NTEntry<Double> kNudgeStepDeg = new NTDouble("Shooter/Hood/Nudge Step (deg)", 0.5).setPersistent();
 
     private final TalonFX motor;
     private final PositionVoltage positionControl = new PositionVoltage(0.0).withEnableFOC(true);
@@ -69,18 +73,25 @@ public class HoodSubsystem extends SubsystemBase {
         }
 
         // 2. Enforce Min/Max Limits constraints on ALL position modes
-        double maxRotations = kMaxAngleDeg / 360.0;
-        double minRotations = kMinAngleDeg / 360.0;
+        double maxRotations = Constants.kHoodMaxAngle.get() / 360.0;
+        double minRotations = Constants.kHoodMinAngle.get() / 360.0;
         targetRotations = Math.max(minRotations, Math.min(maxRotations, targetRotations));
 
         // 3. Command the Motor
         motor.setControl(positionControl.withPosition(targetRotations));
 
-        // 4. Telemetry
+        // 4. Feed actual angle back to AimCalc (for save-shot feature)
+        double actualRotations = motor.getPosition().getValueAsDouble();
+        double actualDeg = actualRotations * 360.0;
+        AimCalc.getInstance().setCurrentHoodAngleDeg(actualDeg);
+
+        // 5. Telemetry
         SmartDashboard.putString("Shooter/Hood Mode", mode.name());
         SmartDashboard.putBoolean("Shooter/Hood At Target", isAtTarget());
+        SmartDashboard.putNumber("Shooter/Hood Target (deg)", targetRotations * 360.0);
+        SmartDashboard.putNumber("Shooter/Hood Actual (deg)", actualDeg);
         SmartDashboard.putNumber("Shooter/Hood Target Rot", targetRotations);
-        SmartDashboard.putNumber("Shooter/Hood Actual Rot", motor.getPosition().getValueAsDouble());
+        SmartDashboard.putNumber("Shooter/Hood Actual Rot", actualRotations);
         SmartDashboard.putNumber("Shooter/Hood Current", motor.getStatorCurrent().getValueAsDouble());
     }
 
@@ -106,7 +117,7 @@ public class HoodSubsystem extends SubsystemBase {
         return Commands.runOnce(() -> mode = newMode, this);
     }
 
-    // ------------- MANUAL NUDGE (±2°) -------------
+    // ------------- MANUAL NUDGE -------------
     public void nudgeAngleDegrees(double deltaDeg) {
         double deltaRot = deltaDeg / 360.0;
         targetRotations += deltaRot;
@@ -115,5 +126,20 @@ public class HoodSubsystem extends SubsystemBase {
 
     public Command commandNudgeAngleDegrees(double deltaDeg) {
         return Commands.runOnce(() -> nudgeAngleDegrees(deltaDeg), this);
+    }
+
+    /** Nudge up by the tunable step size */
+    public Command commandNudgeUp() {
+        return Commands.runOnce(() -> nudgeAngleDegrees(kNudgeStepDeg.get()), this);
+    }
+
+    /** Nudge down by the tunable step size */
+    public Command commandNudgeDown() {
+        return Commands.runOnce(() -> nudgeAngleDegrees(-kNudgeStepDeg.get()), this);
+    }
+
+    /** Get the current hood angle in degrees (from motor encoder) */
+    public double getActualAngleDegrees() {
+        return motor.getPosition().getValueAsDouble() * 360.0;
     }
 }
