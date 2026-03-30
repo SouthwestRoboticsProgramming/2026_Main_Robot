@@ -54,7 +54,7 @@ public class ShooterSubsystem extends SubsystemBase {
                 break;
 
             case SHOOT:
-                currentTargetRPS = 20;
+                currentTargetRPS = AimCalc.getInstance().getShooterRPS();
                 break;
             case WARM:
                 currentTargetRPS = 10.0; // TUNE
