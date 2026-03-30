@@ -102,20 +102,6 @@ public class HoodSubsystem extends SubsystemBase {
         );
     }
 
-    /** * Bumps the hood up or down. 
-     */
-    public Command adjustManualPosition(double deltaRotations) {
-        return runOnce(() -> {
-            if (state != HoodState.MANUAL) {
-                targetRotations = motor.getPosition().getValueAsDouble();
-                state = HoodState.MANUAL;
-            }
-            
-            targetRotations -= deltaRotations;
-            targetRotations = MathUtil.clamp(targetRotations, kMinAngleRot, kMaxAngleRot);
-        });
-    }
-
     public Command setMode(HoodState newState) {
         return run(() -> {
             state = newState;
@@ -123,11 +109,14 @@ public class HoodSubsystem extends SubsystemBase {
         });
     }
 
-    // Nudges the target rotations. Bind to D-Pad Up/Down.
     public Command manualNudge(double degrees) {
         return runOnce(() -> {
-            setMode(HoodState.MANUAL).execute(); 
-            this.targetRotations += (degrees / 360.0);
+            if (state != HoodState.MANUAL) {
+                targetRotations = motor.getPosition().getValueAsDouble();
+                state = HoodState.MANUAL;
+            }
+            targetRotations += (degrees / 360.0);
+            targetRotations = MathUtil.clamp(targetRotations, kMinAngleRot, kMaxAngleRot);
         });
     }
 
