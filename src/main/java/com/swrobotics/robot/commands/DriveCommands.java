@@ -170,11 +170,9 @@ public static Command shootOnTheMove(
         // 2. Shooter Flywheel
         shooter.setTargetState(ShooterSubsystem.State.SHOOT);
 
-        // 3. Hood & Manual Override Logic
-        // Only command AUTO_TRACK if the operator hasn't nudged the hood into MANUAL mode
-        if (hood.getMode() != HoodSubsystem.HoodMode.MANUAL) {
-            hood.setMode(HoodSubsystem.HoodMode.AUTO_TRACK);
-        }
+        
+        hood.setMode(HoodSubsystem.HoodState.AUTO_TRACK);
+        
 
         // 4. Indexer Firing Logic
         boolean aimed = turnPid.atSetpoint();
@@ -189,7 +187,7 @@ public static Command shootOnTheMove(
     }, drive, shooter, hood, indexer)
     .finallyDo(() -> {
         // 5. Cleanup: Return everything to rest when the command ends
-        hood.setMode(HoodSubsystem.HoodMode.IDLE); // Drives back to 0
+        hood.setMode(HoodSubsystem.HoodState.HOMING); // Drives back to 0
         shooter.setTargetState(ShooterSubsystem.State.IDLE);
         
         // Assuming your Indexer has an IDLE or STOP state

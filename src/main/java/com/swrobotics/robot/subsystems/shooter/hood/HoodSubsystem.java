@@ -1,7 +1,5 @@
 package com.swrobotics.robot.subsystems.shooter.hood;
 
-import java.lang.Thread.State;
-
 import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
@@ -11,109 +9,142 @@ import com.swrobotics.lib.ctre.TalonFXConfigHelper;
 import com.swrobotics.robot.config.Constants;
 import com.swrobotics.robot.config.IOAllocation;
 import com.swrobotics.robot.control.AimCalc;
-
+import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class HoodSubsystem extends SubsystemBase {
-    // --- HOOD CONFIGURATIONS ---
-    public static final double kSensorToMechRatio = 1.0; // TUNE: Enter your gear ratio here
-    public static final double kMaxAngleDeg = 45.0;      // TUNE: Maximum safe hood angle
-    public static final double kMinAngleDeg = 0.0;       // TUNE: Minimum safe hood angle
-    public static final double kHomingVoltage = -2.0;    // TUNE: Voltage to drive hood down (- for down)
-    public static final double kHomingCurrentLimit = 15.0; // TUNE: Stator current spike (Amps) to detect hard stop
+
+    public static final double kMinAngleRot = 22.73 / 360.0; 
+    public static final double kMaxAngleRot = 45.0 / 360.0;
+    public static final double kHoodGearRatio = 24; 
+    
+    public static final double kGravityFeedforwardVolts = 0.5; 
 
     private final TalonFX motor;
-    private final PositionVoltage positionControl = new PositionVoltage(0.0).withEnableFOC(true);
-    private final VoltageOut voltageControl = new VoltageOut(0.0);
+    private final PositionVoltage positionControl = new PositionVoltage(0).withEnableFOC(true);
+    private final VoltageOut voltageControl = new VoltageOut(0);
 
-    public enum HoodMode { HOMING, IDLE, AUTO_TRACK, MANUAL }
-
-    // Start in HOMING mode so it zeroes itself on boot
-    private HoodMode mode = HoodMode.HOMING;
-    private double targetRotations = 0.0;
+    public enum HoodState { HOMING, IDLE, AUTO_TRACK, PASSING, MANUAL }
+    private HoodState state = HoodState.HOMING;
+    
+    private double targetRotations = kMinAngleRot;
+    private final Timer homingTimer = new Timer();
 
     public HoodSubsystem() {
         motor = IOAllocation.CAN.kHoodMotor.createTalonFX();
-
         TalonFXConfigHelper config = new TalonFXConfigHelper();
-        config.MotorOutput.Inverted = Constants.kHoodInverted.get()
-                ? InvertedValue.CounterClockwise_Positive
-                : InvertedValue.Clockwise_Positive;
+        
+        config.MotorOutput.Inverted = Constants.kHoodInverted.get() 
+            ? InvertedValue.CounterClockwise_Positive : InvertedValue.Clockwise_Positive;
         config.MotorOutput.NeutralMode = NeutralModeValue.Brake;
-        config.CurrentLimits.StatorCurrentLimit = 20.0;
+        
+        // This MUST match your physical gear ratio so 1 "Rotation" = 1 Mechanism Rotation
+        config.Feedback.SensorToMechanismRatio = kHoodGearRatio; 
+        
+        config.CurrentLimits.StatorCurrentLimit = 30.0;
         config.CurrentLimits.StatorCurrentLimitEnable = true;
-        config.Feedback.SensorToMechanismRatio = kSensorToMechRatio;
 
         config.addTunable(Constants.kHoodPID);
         config.apply(motor);
+
+        homingTimer.start();
     }
 
     @Override
     public void periodic() {
-        if (mode == HoodMode.HOMING) {
-            motor.setControl(voltageControl.withOutput(kHomingVoltage));
-            
-            if (motor.getStatorCurrent().getValueAsDouble() > kHomingCurrentLimit) {
-                motor.setPosition(0.0);
-                targetRotations = 0.0;
-                mode = HoodMode.IDLE;   
-            }
-            return;
-        } else if (mode == HoodMode.IDLE) {
-            targetRotations = 0.0;
-        } else if (mode == HoodMode.AUTO_TRACK) {
-            targetRotations = AimCalc.getInstance().getHoodAngle().getRotations();
+        switch (state) {
+            case HOMING:
+                motor.setControl(voltageControl.withOutput(-2.0)); // Drive down
+                
+                double current = motor.getStatorCurrent().getValueAsDouble();
+                double velocity = motor.getVelocity().getValueAsDouble();
+
+                // Wait 0.5s to bypass inrush current, then look for true stall
+                if (homingTimer.hasElapsed(0.5) && current > 15.0 && Math.abs(velocity) < 0.05) {
+                    // THE MAGIC TRICK: We tell the motor it is currently at 22.73 degrees!
+                    motor.setPosition(kMinAngleRot); 
+                    state = HoodState.IDLE;
+                }
+                break;
+
+            case IDLE:
+                // Safely rest at the physical bottom
+                targetRotations = kMinAngleRot;
+                applyPositionControl();
+                break;
+
+            case AUTO_TRACK:
+                targetRotations = AimCalc.getInstance().getHoodAngle(false).getRotations();
+                applyPositionControl();
+                break;
+
+            case PASSING:
+                targetRotations = AimCalc.getInstance().getHoodAngle(true).getRotations();
+                applyPositionControl();
+                break;
+
+            case MANUAL:
+                applyPositionControl();
+                break;
         }
+        updateTelemetry();
+    }
 
-        // 2. Enforce Min/Max Limits constraints on ALL position modes
-        double maxRotations = kMaxAngleDeg / 360.0;
-        double minRotations = kMinAngleDeg / 360.0;
-        targetRotations = Math.max(minRotations, Math.min(maxRotations, targetRotations));
+    private void applyPositionControl() {
+        // Clamp prevents the motor from ever trying to break past 45 deg or dig into the 22.73 hard stop
+        targetRotations = MathUtil.clamp(targetRotations, kMinAngleRot, kMaxAngleRot);
+        
+        motor.setControl(positionControl
+            .withPosition(targetRotations)
+            .withFeedForward(kGravityFeedforwardVolts)
+        );
+    }
 
-        // 3. Command the Motor
-        motor.setControl(positionControl.withPosition(targetRotations));
+    /** * Bumps the hood up or down. 
+     */
+    public Command adjustManualPosition(double deltaRotations) {
+        return runOnce(() -> {
+            if (state != HoodState.MANUAL) {
+                targetRotations = motor.getPosition().getValueAsDouble();
+                state = HoodState.MANUAL;
+            }
+            
+            targetRotations += deltaRotations;
+            targetRotations = MathUtil.clamp(targetRotations, kMinAngleRot, kMaxAngleRot);
+        });
+    }
 
-        // 4. Telemetry
-        SmartDashboard.putString("Shooter/Hood Mode", mode.name());
-        SmartDashboard.putBoolean("Shooter/Hood At Target", isAtTarget());
-        SmartDashboard.putNumber("Shooter/Hood Target Rot", targetRotations);
-        SmartDashboard.putNumber("Shooter/Hood Actual Rot", motor.getPosition().getValueAsDouble());
-        SmartDashboard.putNumber("Shooter/Hood Current", motor.getStatorCurrent().getValueAsDouble());
+    public Command setMode(HoodState newState) {
+        return run(() -> {
+            state = newState;
+            if (newState == HoodState.HOMING) homingTimer.restart();
+        });
+    }
+
+    // Nudges the target rotations. Bind to D-Pad Up/Down.
+    public Command manualNudge(double degrees) {
+        return runOnce(() -> {
+            this.state = HoodState.MANUAL;
+            this.targetRotations += (degrees / 360.0);
+        });
     }
 
     public boolean isAtTarget() {
-        
-        double toleranceRot = 0.5 / 360.0;
-        return Math.abs(motor.getPosition().getValueAsDouble() - targetRotations) < toleranceRot;
+        return Math.abs(motor.getPosition().getValueAsDouble() - targetRotations) < (0.5 / 360.0);
     }
 
-    public HoodMode getMode() {
-        return mode;
+    private void updateTelemetry() {
+        SmartDashboard.putString("Hood/State", state.name());
+        // Multiply by 360 to read out actual degrees on the dashboard for easy debugging
+        SmartDashboard.putNumber("Hood/Target Deg", targetRotations * 360.0);
+        SmartDashboard.putNumber("Hood/Actual Deg", motor.getPosition().getValueAsDouble() * 360.0);
+        SmartDashboard.putBoolean("Hood/At Target", isAtTarget());
     }
 
-    // Manual absolute set
-    public Command setManualPosition(double rotations) {
-        return Commands.runOnce(() -> {
-            targetRotations = rotations;
-            mode = HoodMode.MANUAL;
-        }, this);
-    }
-
-    public Command setMode(HoodMode newMode) {
-        return Commands.runOnce(() -> mode = newMode, this);
-    }
-
-    // ------------- MANUAL NUDGE (±2°) -------------
-    public void nudgeAngleDegrees(double deltaDeg) {
-        double deltaRot = deltaDeg / 360.0;
-        targetRotations += deltaRot;
-        mode = HoodMode.MANUAL;
-    }
-
-    public Command commandNudgeAngleDegrees(double deltaDeg) {
-        return Commands.runOnce(() -> nudgeAngleDegrees(deltaDeg), this);
+    public HoodState getState() {
+        return state;
     }
 }

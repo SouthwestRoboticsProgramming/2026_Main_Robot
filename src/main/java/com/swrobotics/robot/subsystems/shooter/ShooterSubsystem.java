@@ -15,7 +15,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class ShooterSubsystem extends SubsystemBase {
-    public enum State { IDLE, SHOOT, WARM, RINDEX }
+    public enum State { IDLE, SHOOT, WARM, RINDEX, MANUAL }
 
     private final TalonFX motorL;
     private final TalonFX motorR;
@@ -62,6 +62,9 @@ public class ShooterSubsystem extends SubsystemBase {
             case RINDEX:
                 currentTargetRPS = -10.0; // TUNE
                 break;
+            case MANUAL:
+                currentTargetRPS = manualRps;
+                break;
         }
 
         motorL.setControl(velocityControl.withVelocity(currentTargetRPS));
@@ -84,5 +87,12 @@ public class ShooterSubsystem extends SubsystemBase {
     public Command commandSetState(State state) {
         return run(() -> setTargetState(state));
     }
+
+    public Command manualNudgeRPS(double rpsDelta) {
+    return runOnce(() -> {
+        this.targetState = State.MANUAL; // Ensure you added a MANUAL state to your Enum
+        this.manualRps += rpsDelta;
+    });
+}
 
 }

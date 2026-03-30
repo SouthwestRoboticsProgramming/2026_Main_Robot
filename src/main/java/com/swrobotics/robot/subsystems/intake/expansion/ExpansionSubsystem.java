@@ -10,6 +10,7 @@ import com.swrobotics.lib.ctre.TalonFXConfigHelper;
 import com.swrobotics.robot.config.IOAllocation;
 import com.swrobotics.robot.config.Constants;
 
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -62,6 +63,7 @@ public class ExpansionSubsystem extends SubsystemBase {
         }
 
         motor.setControl(positionControl.withPosition(targetRotations));
+        update();
     }
 
     public void setTargetState(State targetState) {
@@ -72,6 +74,10 @@ public class ExpansionSubsystem extends SubsystemBase {
         return Commands.run(() -> setTargetState(targetState), this);
     }
 
+    private void update() {
+        SmartDashboard.putString("intake/Expansion/State", targetState.name());
+        
+    }
     
 
 

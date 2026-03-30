@@ -38,8 +38,8 @@ public final class VisionSubsystem extends SubsystemBase {
                         Constants.kLimelightConfig)
         );
 
-        ignoreUpdates = true;
-        setDefaultCommand(Commands.run(() -> ignoreUpdates = true, this));
+        ignoreUpdates = false;
+        setDefaultCommand(Commands.run(() -> ignoreUpdates = false, this));
     }
 
     public Command commandIgnoreUpdates() {
@@ -51,7 +51,6 @@ public final class VisionSubsystem extends SubsystemBase {
         Pose2d currentPose = drive.getEstimatedPose();
         ChassisSpeeds currentSpeeds = drive.getRobotRelativeSpeeds();
 
-        // Yaw and rate are pulled from the drivetrain (Gyro)
         double yaw = currentPose.getRotation().getDegrees();
         double yawRate = Math.toDegrees(currentSpeeds.omegaRadiansPerSecond);
         

@@ -9,6 +9,7 @@ import com.swrobotics.robot.commands.CharacterizeWheelsCommand;
 import com.swrobotics.robot.commands.DriveCommands;
 import com.swrobotics.robot.commands.RumblePatternCommands;
 import com.swrobotics.robot.config.Constants;
+import com.swrobotics.robot.logging.Telemetry;
 
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
@@ -27,6 +28,7 @@ import com.swrobotics.robot.subsystems.intake.IntakeSubsystem;
 import com.swrobotics.robot.subsystems.intake.expansion.ExpansionSubsystem;
 import com.swrobotics.robot.subsystems.shooter.ShooterSubsystem;
 //import com.swrobotics.robot.subsystems.shooter.hood.HoodSubsystem;
+import com.swrobotics.robot.subsystems.shooter.hood.HoodSubsystem.HoodState;
 
 public final class ControlBoard extends SubsystemBase {
     /*
@@ -35,15 +37,28 @@ public final class ControlBoard extends SubsystemBase {
      * Driver:
      * Left stick: drive translation
      * Right stick X: drive rotation
-     * Left trigger: intake
-     * Right trigger: shoot
-     * left bumber: rindex
-     * Y: Drive through bump
-     * B: Drive through trench
-     * X: Expand/Retract intake
-     * POVup: Reset gyro
      * 
+     * Left trigger: intake
+     * Left bumper: reverse indexer
+     * Right trigger: shoot on move
+     * 
+     * X Button: expansion
+     * y Button: Pass mode
+     * a Button: log successful shot (for tuning)
+     * b Button: hood homing
+     * 
+     * D-Pad Up: reset gyro
+     * D-Pad Down: Brake mode (lock swerve modules)
+     *
      * Operator:
+     * Right trigger: shoot (overrides shoot on move and for passing)
+     * 
+     * X Button: manual hood nudge up
+     * B Button: manual hood nudge down
+     * Y Button: manual shooter RPS nudge up
+     * A Button: manual shooter RPS nudge down
+     * 
+     * D-Pad Up: hood homing
      */
 
     
@@ -52,6 +67,7 @@ public final class ControlBoard extends SubsystemBase {
     private final RobotContainer robot;
     public final CommandXboxController driver;
     public final CommandXboxController operator;
+
 
     private final DriveAccelFilter driveControlFilter;
 
@@ -69,7 +85,7 @@ public final class ControlBoard extends SubsystemBase {
 
     private void configureControls() {
         // Gyro reset buttons
-        driver.povUp().onFalse(Commands.runOnce(() -> robot.drive.resetRotation(new Rotation2d())));
+        
         driver.back().onFalse(Commands.runOnce(() -> robot.drive.resetRotation(new Rotation2d()))); // Two buttons to reset gyro so the driver can't get confused
 
         robot.drive.setDefaultCommand(DriveCommands.driveFieldRelative(
@@ -82,45 +98,40 @@ public final class ControlBoard extends SubsystemBase {
         
         /* --- Intake/indexer --- */
 
-        driver.leftTrigger()
-                .whileTrue(robot.intake.commandSetState(IntakeSubsystem.State.INTAKE)
-                //.alongWith(robot.indexer.intakeUntilCommand()));
+        driver.leftTrigger().whileTrue(robot.intake.commandSetState(IntakeSubsystem.State.INTAKE)
                 .alongWith(robot.indexer.commandSetState(IndexerSubsystem.State.INTAKE)));
 
-        driver.leftBumper()
-                 .whileTrue(robot.indexer.commandSetState(IndexerSubsystem.State.RINDEX));
+        driver.leftBumper().whileTrue(robot.indexer.commandSetState(IndexerSubsystem.State.RINDEX));
 
+        driver.rightTrigger().whileTrue(DriveCommands.shootOnTheMove(robot.drive, robot.shooter, robot.hood, robot.indexer,
+                        () -> -driver.getLeftY(),
+                        () -> -driver.getLeftX()
+                ).alongWith(robot.intake.commandSetState(IntakeSubsystem.State.INTAKE)).alongWith(robot.hood.setMode(HoodState.AUTO_TRACK)));
 
-        /* --- Shooter --- */
-        
-        driver.rightTrigger()
+        driver.x().toggleOnTrue(robot.expansion.commandSetState(ExpansionSubsystem.State.EXTENDED));
+        driver.b().whileTrue(robot.hood.setMode(HoodState.HOMING));
+        driver.y().whileTrue(robot.hood.setMode(HoodState.PASSING));
+        driver.a().onTrue(Telemetry.logSuccessfulShot());
+
+        driver.povUp().onFalse(Commands.runOnce(() -> robot.drive.resetRotation(new Rotation2d())));
+        driver.povDown().toggleOnTrue(Commands.runOnce(() -> robot.drive.commandLockModules()));
+
+        /* --- MANUAl OVERRIDES --- */       
+        operator.rightTrigger()
                 .whileTrue(robot.shooter.commandSetState(ShooterSubsystem.State.SHOOT)
                 .withTimeout(.75)
                 .andThen(robot.indexer.commandSetState(IndexerSubsystem.State.FEED)));
-    
-//         driver.rightTrigger()
-//                 .whileTrue(robot.shooter.commandSetState(ShooterSubsystem.State.SHOOT)
-//                 .withTimeout(.75)
-//                 .andThen(robot.indexer.commandSetState(IndexerSubsystem.State.FEED)));
 
+        operator.x().onTrue(robot.hood.manualNudge(3.0));
+        operator.b().onTrue(robot.hood.manualNudge(-3.0));
+        operator.y().onTrue(robot.shooter.manualNudgeRPS(2.0));
+        operator.a().onTrue(robot.shooter.manualNudgeRPS(-2.0));
 
+        operator.povUp()
+                .whileTrue(robot.hood.setMode(HoodState.HOMING));
 
-        /* --- expansion --- */
-        driver.x().toggleOnTrue(robot.expansion.commandSetState(ExpansionSubsystem.State.EXTENDED));
-
-
-
-// driver.rightTrigger().whileTrue(DriveCommands.shootOnTheMove(robot.drive, robot.shooter, robot.hood, robot.indexer,
-//         () -> -driver.getLeftY(),
-//         () -> -driver.getLeftX()
-//     )
-// );
-        // driver.y().whileTrue(DriveCommands.driveThroughBump(robot.drive));
-        // driver.b().whileTrue(DriveCommands.driveThroughTrench(robot.drive));
-        driver.y().whileTrue(robot.hood.commandNudgeAngleDegrees(5));
-
-
-    }
+        
+}
 
     /**
      * @return translation input for the drive base, in meters/sec

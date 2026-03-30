@@ -34,7 +34,6 @@ public final class Robot extends TimedRobot {
 
     @Override
     public void robotPeriodic() {
-        Telemetry.periodic();
         Threads.setCurrentThreadPriority(true, 99);
         CommandScheduler.getInstance().run(); // Leave this alone
 

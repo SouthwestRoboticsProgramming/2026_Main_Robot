@@ -57,6 +57,6 @@ public final class RobotView {
         targetAimLigament.setAngle(AimCalc.getInstance().getDrivebaseAimAngle().getDegrees());
 
         // 3. Update the shooter hood angle
-        hoodLigament.setAngle(AimCalc.getInstance().getHoodAngle().getDegrees());
+        hoodLigament.setAngle(AimCalc.getInstance().getHoodAngle(false).getDegrees());
     }
 }

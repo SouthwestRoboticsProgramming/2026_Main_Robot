@@ -10,10 +10,13 @@ import com.ctre.phoenix6.swerve.SwerveDrivetrain;
 import com.ctre.phoenix6.swerve.SwerveModule;
 import com.ctre.phoenix6.swerve.SwerveModuleConstants;
 import com.ctre.phoenix6.swerve.SwerveRequest;
+import com.ctre.phoenix6.swerve.SwerveRequest.SwerveDriveBrake;
+
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.config.PIDConstants;
 import com.pathplanner.lib.controllers.PPHolonomicDriveController;
 import com.pathplanner.lib.util.PathPlannerLogging;
+
 import com.swrobotics.lib.field.FieldInfo;
 import com.swrobotics.lib.net.NTBoolean;
 import com.swrobotics.lib.net.NTEntry;
@@ -43,6 +46,7 @@ public final class SwerveDriveSubsystem extends SubsystemBase {
     private final StatusSignal<Angle> rawGyroAngleSignal;
     private SwerveDrivetrain.SwerveDriveState currentState;
     private Rotation2d rawGyroRotation;
+    private final SwerveDriveBrake brakeRequest = new SwerveDriveBrake();
 
     public SwerveDriveSubsystem() {
         int kModuleCount = Constants.kSwerveModuleInfos.length;
@@ -151,6 +155,10 @@ public final class SwerveDriveSubsystem extends SubsystemBase {
         drivetrain.addVisionMeasurement(robotPose, Utils.fpgaToCurrentTime(timestamp), stdDevs);
     }
 
+    public void lockModules() {
+        this.setControl(brakeRequest);
+    }
+
     public Rotation2d getRawGyroRotation() {
         return rawGyroRotation;
     }
@@ -173,6 +181,10 @@ public final class SwerveDriveSubsystem extends SubsystemBase {
         ).rotateBy(currentState.Pose.getRotation());
     }
 
+    public edu.wpi.first.wpilibj2.command.Command commandLockModules() {
+        return run(this::lockModules);
+    }
+
     @Override
     public void periodic() {
         if (RobotBase.isSimulation()) {
@@ -187,12 +199,7 @@ public final class SwerveDriveSubsystem extends SubsystemBase {
             CALIBRATE.set(false);
             calibrateModuleOffsets();
         }
-
-        // Field-relative velocity for AimCalc
-        Translation2d fieldVel = getFieldRelativeVelocity();
-
-        // Update AimCalc with pose and field-relative velocity
-        AimCalc.getInstance().update(currentState.Pose, fieldVel.getX(), fieldVel.getY());
+        AimCalc.getInstance().update(currentState.Pose, currentState.Speeds);
     }
 
     private void calibrateModuleOffsets() {
