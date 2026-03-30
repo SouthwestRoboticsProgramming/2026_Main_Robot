@@ -104,21 +104,25 @@ public final class ControlBoard extends SubsystemBase {
         driver.leftBumper().whileTrue(robot.indexer.commandSetState(IndexerSubsystem.State.RINDEX));
         driver.rightTrigger().whileTrue(robot.hood.setMode(HoodState.AUTO_TRACK).alongWith(robot.shooter.commandSetState(ShooterSubsystem.State.SHOOT)
                 .withTimeout(.75)
+        //.until(() -> robot.shooter.isAtTargetRPS()&& robot.hood.isAtTarget())
                 .andThen(robot.indexer.commandSetState(IndexerSubsystem.State.FEED))));
+        driver.rightTrigger().onFalse(robot.hood.setMode(HoodState.HOMING).withTimeout(.2).andThen(robot.hood.setMode(HoodState.IDLE)));
+
         // driver.rightTrigger().whileTrue(DriveCommands.shootOnTheMove(robot.drive, robot.shooter, robot.hood, robot.indexer,
         //                 () -> -driver.getLeftY(),
         //                 () -> -driver.getLeftX()
         //         ));
 
         driver.x().toggleOnTrue(robot.expansion.commandSetState(ExpansionSubsystem.State.EXTENDED));
-        driver.b().whileTrue(robot.hood.setMode(HoodState.HOMING));
-        driver.y().whileTrue(robot.hood.setMode(HoodState.PASSING));
+        // driver.b().whileTrue(robot.hood.setMode(HoodState.HOMING));
+        // driver.y().whileTrue(robot.hood.setMode(HoodState.PASSING));
         driver.a().onTrue(Telemetry.logSuccessfulShot());
-
+        driver.y().onTrue(robot.hood.manualNudge(3.0));
+        driver.b().onTrue(robot.hood.manualNudge(-3.0));
         driver.povUp().onFalse(Commands.runOnce(() -> robot.drive.resetRotation(new Rotation2d())));
         driver.povDown().toggleOnTrue(Commands.runOnce(() -> robot.drive.commandLockModules()));
 
-        /* --- MANUAl OVERRIDES --- */
+        /* --- MANUAl OVERRIDES --- */       
         operator.rightTrigger()
                 .whileTrue(robot.shooter.commandSetState(ShooterSubsystem.State.SHOOT)
                 .withTimeout(.75)

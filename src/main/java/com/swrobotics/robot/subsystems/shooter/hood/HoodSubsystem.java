@@ -17,8 +17,8 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class HoodSubsystem extends SubsystemBase {
 
-    public static final double kMinAngleRot = 22.73 / 360.0; 
-    public static final double kMaxAngleRot = 50.0 / 360.0;
+    public static final double kMinAngleRot = 0 / 360.0; 
+    public static final double kMaxAngleRot = 30 / 360.0;
     public static final double kHoodGearRatio = 24; 
     
     public static final double kGravityFeedforwardVolts = 0.5; 
@@ -38,7 +38,7 @@ public class HoodSubsystem extends SubsystemBase {
         TalonFXConfigHelper config = new TalonFXConfigHelper();
         
         config.MotorOutput.Inverted = Constants.kHoodInverted.get() 
-            ? InvertedValue.CounterClockwise_Positive : InvertedValue.Clockwise_Positive;
+            ? InvertedValue.Clockwise_Positive : InvertedValue.CounterClockwise_Positive;
         config.MotorOutput.NeutralMode = NeutralModeValue.Brake;
         
         // This MUST match your physical gear ratio so 1 "Rotation" = 1 Mechanism Rotation
@@ -57,13 +57,12 @@ public class HoodSubsystem extends SubsystemBase {
     public void periodic() {
         switch (state) {
             case HOMING:
-                motor.setControl(voltageControl.withOutput(-2.0)); // Drive down
+                motor.setControl(voltageControl.withOutput(2.0)); // Drive down
                 
                 double current = motor.getStatorCurrent().getValueAsDouble();
-                double velocity = motor.getVelocity().getValueAsDouble();
 
                 // Wait 0.5s to bypass inrush current, then look for true stall
-                if (homingTimer.hasElapsed(0.5) && current > 15.0 && Math.abs(velocity) < 0.05) {
+                if (homingTimer.hasElapsed(0.5) && current > 15.0) {
                     // THE MAGIC TRICK: We tell the motor it is currently at 22.73 degrees!
                     motor.setPosition(kMinAngleRot); 
                     state = HoodState.IDLE;
@@ -112,7 +111,7 @@ public class HoodSubsystem extends SubsystemBase {
                 state = HoodState.MANUAL;
             }
             
-            targetRotations += deltaRotations;
+            targetRotations -= deltaRotations;
             targetRotations = MathUtil.clamp(targetRotations, kMinAngleRot, kMaxAngleRot);
         });
     }
