@@ -104,6 +104,14 @@ public final class Robot extends TimedRobot {
         robotContainer.disabledInit();
     }
 
+    @Override
+    public void teleopInit() {
+        // Reset hood to a known state when entering teleop (e.g. after auto)
+        CommandScheduler.getInstance().schedule(
+                robotContainer.hood.setMode(
+                        com.swrobotics.robot.subsystems.shooter.hood.HoodSubsystem.HoodMode.IDLE));
+    }
+
     // Override these so WPILib doesn't print unhelpful warnings
     @Override public void simulationPeriodic() {}
     @Override public void disabledPeriodic() {

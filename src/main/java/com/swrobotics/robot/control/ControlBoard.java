@@ -96,15 +96,15 @@ public final class ControlBoard extends SubsystemBase {
 
         /* --- Shooter --- */
         
+        // Spin up flywheel, wait until at speed (2s safety timeout), then feed while keeping shooter spinning
         driver.rightTrigger()
                 .whileTrue(robot.shooter.commandSetState(ShooterSubsystem.State.SHOOT)
-                .withTimeout(.75)
-                .andThen(robot.indexer.commandSetState(IndexerSubsystem.State.FEED)));
-    
-//         driver.rightTrigger()
-//                 .whileTrue(robot.shooter.commandSetState(ShooterSubsystem.State.SHOOT)
-//                 .withTimeout(.75)
-//                 .andThen(robot.indexer.commandSetState(IndexerSubsystem.State.FEED)));
+                .until(() -> robot.shooter.isAtTargetRPS())
+                .withTimeout(2.0)
+                .andThen(
+                    robot.shooter.commandSetState(ShooterSubsystem.State.SHOOT)
+                    .alongWith(robot.indexer.commandSetState(IndexerSubsystem.State.FEED))
+                ));
 
 
 
