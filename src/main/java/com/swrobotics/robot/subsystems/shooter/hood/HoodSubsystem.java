@@ -17,8 +17,8 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class HoodSubsystem extends SubsystemBase {
 
-    public static final double kMinAngleRot = 0 / 360.0; 
-    public static final double kMaxAngleRot = 30 / 360.0;
+    public static final double kMinAngleRot = -30 / 360.0;
+    public static final double kMaxAngleRot = 0 / 360.0;
     public static final double kHoodGearRatio = 24; 
     
     public static final double kGravityFeedforwardVolts = 0.5; 
@@ -115,7 +115,7 @@ public class HoodSubsystem extends SubsystemBase {
                 targetRotations = motor.getPosition().getValueAsDouble();
                 state = HoodState.MANUAL;
             }
-            targetRotations += (degrees / 360.0);
+            targetRotations -= (degrees / 360.0);
             targetRotations = MathUtil.clamp(targetRotations, kMinAngleRot, kMaxAngleRot);
         });
     }
