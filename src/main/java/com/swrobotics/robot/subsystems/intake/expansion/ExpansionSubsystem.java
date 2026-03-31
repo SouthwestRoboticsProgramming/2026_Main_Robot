@@ -10,6 +10,7 @@ import com.swrobotics.lib.ctre.TalonFXConfigHelper;
 import com.swrobotics.robot.config.IOAllocation;
 import com.swrobotics.robot.config.Constants;
 
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -27,6 +28,7 @@ public class ExpansionSubsystem extends SubsystemBase {
     private final CANcoder encoder;
     private final PositionVoltage positionControl = new PositionVoltage(0).withEnableFOC(false);
     private State targetState;
+    private final double kOscillationSpeed = 5.0;
 
     public ExpansionSubsystem() {
 
@@ -60,7 +62,8 @@ public class ExpansionSubsystem extends SubsystemBase {
             break;
             case RETRACTED: targetRotations = 0;
             break;
-            case SHOOT: targetRotations = 16.0;
+            case SHOOT: targetRotations = 18.0 + (2.0 * Math.sin(Timer.getFPGATimestamp() * kOscillationSpeed));
+            break;
         }
 
         motor.setControl(positionControl.withPosition(targetRotations));

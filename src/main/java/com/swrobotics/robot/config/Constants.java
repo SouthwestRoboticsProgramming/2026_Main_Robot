@@ -198,14 +198,8 @@ public final class Constants {
         0, 15, 0
     );
 
-   /* --- Hood --- */ //TODO: Adjust constant values
+   
     public static final NTEntry<Boolean> kHoodInverted = new NTBoolean("Shooter/Hood/Inverted", false).setPersistent();
-    public static final NTEntry<Double> kHoodMaxAngle = new NTDouble("Shooter/Hood/Max Angle (Deg)", 40.0).setPersistent();
-    public static final NTEntry<Double> kHoodMinAngle = new NTDouble("Shooter/Hood/Min Angle (Deg)", 22.7).setPersistent();
-    public static final NTEntry<Double> kHoodCruiseVelocity = new NTDouble("Shooter/Hood/Cruise Velocity", 60.0).setPersistent();
-    public static final NTEntry<Double> kHoodAcceleration = new NTDouble("Shooter/Hood/Acceleration", 120.0).setPersistent();
-    public static final NTSlot0Configs kHoodPID = new NTSlot0Configs("Shooter/Hood/PID", 6.0, 0.8, 0.0, 0.0, 0.1, 0.0);
-
     /* --- Aim Calc --- */
     public static final NTEntry<Double> kBaseFlightTime = new NTDouble("Shooter/Aim/Base Flight Time (s)", 0.4).setPersistent();
     public static final NTEntry<Double> kFlightTimePerMeter = new NTDouble("Shooter/Aim/Flight Time Per Meter (s)", 0.10).setPersistent();

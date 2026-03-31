@@ -28,14 +28,6 @@ public final class RobotView {
             new MechanismLigament2d("Hub Target Aim", 1.25, 0, 4, new Color8Bit(Color.kGreen))
     );
 
-    // --- Side-Profile Shooter Visualization ---
-    // Root in the bottom left corner
-    private static final MechanismRoot2d shooterRoot = mechanism.getRoot("Shooter Side View", 0.5, 0.2);
-    
-    // Blue line representing the interpolated hood angle
-    private static final MechanismLigament2d hoodLigament = shooterRoot.append(
-            new MechanismLigament2d("Hood Angle", 0.6, 30, 8, new Color8Bit(Color.kBlue))
-    );
 
     /**
      * Publishes the Mechanism2d to SmartDashboard/AdvantageScope
@@ -56,7 +48,6 @@ public final class RobotView {
         // 2. Update the target vector calculated by AimCalc
         targetAimLigament.setAngle(AimCalc.getInstance().getDrivebaseAimAngle().getDegrees());
 
-        // 3. Update the shooter hood angle
-        hoodLigament.setAngle(AimCalc.getInstance().getHoodAngle(false).getDegrees());
+        
     }
 }

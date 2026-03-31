@@ -22,19 +22,30 @@ public class AimCalc {
 
     private Rotation2d driveAim = new Rotation2d();
     private double lastDist = 0.0;
-    private double lastVirtualDist = 0.0; // Storing the "compensated" distance
+    private double lastVirtualDist = 0.0;
 
     private AimCalc() {
-        // --- INITIAL SCORING MAP ---
-        hoodAngleMap.put(0.96, 22.73);
-        hoodAngleMap.put(0.1, 0.1);
+       hoodAngleMap.put(0.25, 44.0);
+        hoodAngleMap.put(0.50, 39.5);
+        hoodAngleMap.put(0.75, 34.0);
+        rpsMap.put(0.25, 40.0);
+        rpsMap.put(0.50, 40.0);
+        rpsMap.put(0.75, 40.0);
 
-        rpsMap.put(0.0, 20.0);
-        rpsMap.put(40.0, 20.0);
-
-        // --- PASSING MAP ---
+        // 2. Medium-Paced Longer Shots (60 RPS)
+        hoodAngleMap.put(1.50, 31.5);
+        hoodAngleMap.put(1.75, 29.0);
+        hoodAngleMap.put(2.00, 26.5);
+        hoodAngleMap.put(2.50, 23.5); 
+        rpsMap.put(1.50, 60.0);
+        rpsMap.put(1.75, 60.0);
+        rpsMap.put(2.00, 60.0);
+        rpsMap.put(2.50, 60.0);
         
-        passingHoodAngleMap.put(17.16, 38.0);
+        // 3. Fast-Paced Long Passing Shots (90 RPS)
+        passingHoodAngleMap.put(5.00, 32.0);
+        passingHoodAngleMap.put(7.50, 36.5);
+        passingHoodAngleMap.put(10.00, 41.0);
     }
 
     public void update(Pose2d robotPose, ChassisSpeeds fieldSpeeds) {

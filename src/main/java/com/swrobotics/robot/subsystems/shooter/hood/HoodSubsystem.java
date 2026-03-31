@@ -21,7 +21,6 @@ public class HoodSubsystem extends SubsystemBase {
     public static final double kMaxAngleRot = 40 / 360.0;
     public static final double kHoodGearRatio = 24; 
     
-
     private final TalonFX motor;
     private final PositionVoltage positionControl = new PositionVoltage(0).withEnableFOC(true);
     private final VoltageOut voltageControl = new VoltageOut(0);
@@ -63,9 +62,14 @@ public class HoodSubsystem extends SubsystemBase {
                 
                 double current = motor.getStatorCurrent().getValueAsDouble();
 
-                // Wait 0.5s to bypass inrush current, then look for true stall
-                if (homingTimer.hasElapsed(0.5) || current > 30.0) {
+
+                boolean bypassedInrush = homingTimer.hasElapsed(0.1);
+                boolean isStalled = current > 30.0;
+                boolean isTimedOut = homingTimer.hasElapsed(0.5);
+
+                if ((bypassedInrush && isStalled) || isTimedOut) {
                     motor.setPosition(kMinAngleRot); 
+                    targetRotations = kMinAngleRot; // Ensure target matches actual
                     state = HoodState.IDLE;
                 }
                 break;
@@ -88,34 +92,35 @@ public class HoodSubsystem extends SubsystemBase {
 
             case MANUAL:
                 applyPositionControl();
-
                 break;
         }
         updateTelemetry();
     }
 
     private void applyPositionControl() {
-        // Clamp prevents the motor from ever trying to break past 45 deg or dig into the 22.73 hard stop
-        targetRotations = MathUtil.clamp(targetRotations, kMinAngleRot, kMaxAngleRot);
+        double safeLowerBound = Math.min(kMinAngleRot, kMaxAngleRot);
+        double safeUpperBound = Math.max(kMinAngleRot, kMaxAngleRot);
         
-        motor.setControl(positionControl
-            .withPosition(targetRotations)
-        );
+        targetRotations = MathUtil.clamp(targetRotations, safeLowerBound, safeUpperBound);
+        
+        motor.setControl(positionControl.withPosition(targetRotations));
     }
 
     public Command setMode(HoodState newState) {
-        return run(() -> {
+        return runOnce(() -> { // Changed to runOnce so it triggers correctly on button press
             state = newState;
-            if (newState == HoodState.HOMING) homingTimer.restart();
+            if (newState == HoodState.HOMING) {
+                homingTimer.restart();
+            }
         });
     }
 
     public Command manualNudge(double degrees) {
-        return run(() -> {
-            
-            targetRotations = motor.getPosition().getValueAsDouble();           
+        // Changed to runOnce so one button click = exactly one nudge
+        return runOnce(() -> {
+            state = HoodState.MANUAL; 
             targetRotations += (degrees / 360.0);
-            targetRotations= MathUtil.clamp(targetRotations, -800, 800);
+            
         });
     }
 
@@ -125,10 +130,11 @@ public class HoodSubsystem extends SubsystemBase {
 
     private void updateTelemetry() {
         SmartDashboard.putString("Hood/State", state.name());
-        // Multiply by 360 to read out actual degrees on the dashboard for easy debugging
         SmartDashboard.putNumber("Hood/Target Deg", targetRotations * 360.0);
         SmartDashboard.putNumber("Hood/Actual Deg", motor.getPosition().getValueAsDouble() * 360.0);
         SmartDashboard.putBoolean("Hood/At Target", isAtTarget());
+        SmartDashboard.putNumber("Hood/Homing Timer", homingTimer.get());
+        SmartDashboard.putNumber("Hood/Stator Current", motor.getStatorCurrent().getValueAsDouble());
     }
 
     public HoodState getState() {

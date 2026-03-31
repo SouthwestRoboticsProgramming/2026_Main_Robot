@@ -15,7 +15,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class ShooterSubsystem extends SubsystemBase {
-    public enum State { IDLE, SHOOT, WARM, RINDEX, MANUAL }
+    public enum State { IDLE, SHOOT, WARM, RINDEX, AUTO }
 
     private final TalonFX motorL;
     private final TalonFX motorR;
@@ -57,13 +57,13 @@ public class ShooterSubsystem extends SubsystemBase {
                 currentTargetRPS = 20;
                 break;
             case WARM:
-                currentTargetRPS = 10.0; // TUNE
+                currentTargetRPS = 10.0;
                 break;
             case RINDEX:
-                currentTargetRPS = -10.0; // TUNE
+                currentTargetRPS = -10.0; 
                 break;
-            case MANUAL:
-                currentTargetRPS = manualRps;
+            case AUTO:
+                currentTargetRPS = AimCalc.getInstance().getShooterRPS()/3.0;
                 break;
         }
 
@@ -72,7 +72,6 @@ public class ShooterSubsystem extends SubsystemBase {
         SmartDashboard.putBoolean("Shooter/Flywheel At Target", isAtTargetRPS());
         SmartDashboard.putNumber("Shooter/Flywheel Target RPS", currentTargetRPS);
         SmartDashboard.putNumber("Shooter/Flywheel Actual RPS", motorL.getVelocity().getValueAsDouble());
-        SmartDashboard.putNumber("Shooter/ManualRPS", manualRps);
     }
 
     public boolean isAtTargetRPS() {
@@ -90,7 +89,7 @@ public class ShooterSubsystem extends SubsystemBase {
 
     public Command manualNudgeRPS(double rpsDelta) {
     return runOnce(() -> {
-        this.targetState = State.MANUAL; // Ensure you added a MANUAL state to your Enum
+        this.targetState = State.AUTO; // Ensure you added a MANUAL state to your Enum
         this.manualRps += rpsDelta;
     });
 }
