@@ -22,6 +22,7 @@ public class AimCalc {
 
     private Rotation2d driveAim = new Rotation2d();
     private double lastDist = 0.0;
+    private double passDist = 0.0;
     private double lastVirtualDist = 0.0;
 
     private AimCalc() {
@@ -46,13 +47,18 @@ public class AimCalc {
         passingHoodAngleMap.put(5.00, 32.0);
         passingHoodAngleMap.put(7.50, 36.5);
         passingHoodAngleMap.put(10.00, 41.0);
+        rpsMap.put(5.00, 90.0);
+        rpsMap.put(7.50, 90.0);
+        rpsMap.put(10.00, 90.0);
     }
 
     public void update(Pose2d robotPose, ChassisSpeeds fieldSpeeds) {
         Translation2d hub = FieldPositions.getAllianceHubPose(
             DriverStation.getAlliance().orElse(DriverStation.Alliance.Blue)
         ).getTranslation();
-
+        Translation2d pass = FieldPositions.getAlliancePassPose(
+            DriverStation.getAlliance().orElse(DriverStation.Alliance.Blue)
+        ).getTranslation();
         // 1. Where are we now?
         Translation2d shooterPos = robotPose.getTranslation().plus(
             new Translation2d(Constants.kShooterOffsetX, Constants.kShooterOffsetY)
@@ -60,6 +66,7 @@ public class AimCalc {
         );
 
         lastDist = shooterPos.getDistance(hub);
+        passDist = shooterPos.getDistance(pass);
 
 
         double tof = 0.4 + (0.1 * lastDist); 
@@ -77,7 +84,7 @@ public class AimCalc {
     public Rotation2d getHoodAngle(boolean passing) {
         // Use the virtual distance so we compensate for robot velocity!
         if (passing) {
-            double targetDegrees = passingHoodAngleMap.get(lastVirtualDist);
+            double targetDegrees = passingHoodAngleMap.get(passDist);
             targetDegrees = Math.max(kMinAngleDeg, Math.min(kMaxAngleDeg, targetDegrees));
             return Rotation2d.fromDegrees(targetDegrees);
         } else {
@@ -105,7 +112,11 @@ public class AimCalc {
 
     public Rotation2d getDrivebaseAimAngle() { return driveAim; }
     public double getLastDistance() { return lastDist; }
-    public double getShooterRPS() {
+    public double getShooterRPS(boolean passing) {
+        if (passing) {
+            return rpsMap.get(passDist);
+        }else{
         return rpsMap.get(lastVirtualDist);
+    }
     }
 }

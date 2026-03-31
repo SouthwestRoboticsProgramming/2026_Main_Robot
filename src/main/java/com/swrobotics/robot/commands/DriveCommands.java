@@ -180,7 +180,6 @@ public static Command shootOnTheMove(
         }
     }, drive, shooter, hood, indexer)
     .finallyDo(() -> {
-        // 5. Cleanup: Return everything to rest when the command ends
         hood.setMode(HoodSubsystem.HoodState.IDLE); // Drives back to 0
         shooter.setTargetState(ShooterSubsystem.State.IDLE);
         

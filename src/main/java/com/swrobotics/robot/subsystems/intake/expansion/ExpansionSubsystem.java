@@ -79,7 +79,7 @@ public class ExpansionSubsystem extends SubsystemBase {
     }
 
     private void update() {
-        SmartDashboard.putString("intake/Expansion/State", targetState.name());
+        SmartDashboard.putString("Intake/Expansion/State", targetState.name());
         
     }
     

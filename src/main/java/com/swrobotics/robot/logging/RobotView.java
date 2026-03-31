@@ -29,9 +29,6 @@ public final class RobotView {
     );
 
 
-    /**
-     * Publishes the Mechanism2d to SmartDashboard/AdvantageScope
-     */
     public static void publish() {
         SmartDashboard.putData("Robot View", mechanism);
     }
@@ -42,10 +39,9 @@ public final class RobotView {
      * * @param currentPose The current estimated pose of the robot.
      */
     public static void update(Pose2d currentPose) {
-        // 1. Update the robot's actual rotation
+
         currentHeadingLigament.setAngle(currentPose.getRotation().getDegrees());
 
-        // 2. Update the target vector calculated by AimCalc
         targetAimLigament.setAngle(AimCalc.getInstance().getDrivebaseAimAngle().getDegrees());
 
         

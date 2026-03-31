@@ -68,6 +68,7 @@ public class HoodSubsystem extends SubsystemBase {
                 boolean isTimedOut = homingTimer.hasElapsed(0.5);
 
                 if ((bypassedInrush && isStalled) || isTimedOut) {
+                    applyPositionControl();
                     motor.setPosition(kMinAngleRot); 
                     targetRotations = kMinAngleRot; // Ensure target matches actual
                     state = HoodState.IDLE;
@@ -76,18 +77,18 @@ public class HoodSubsystem extends SubsystemBase {
 
             case IDLE:
                 // Safely rest at the physical bottom
-                targetRotations = kMinAngleRot;
                 applyPositionControl();
+                targetRotations = kMinAngleRot;
                 break;
 
             case AUTO_TRACK:
-                targetRotations = AimCalc.getInstance().getHoodAngle(false).getRotations();
                 applyPositionControl();
+                targetRotations = AimCalc.getInstance().getHoodAngle(false).getRotations();
                 break;
 
             case PASSING:
-                targetRotations = AimCalc.getInstance().getHoodAngle(true).getRotations();
                 applyPositionControl();
+                targetRotations = AimCalc.getInstance().getHoodAngle(true).getRotations();
                 break;
 
             case MANUAL:

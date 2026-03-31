@@ -27,7 +27,7 @@ public final class Telemetry {
 
         double distance = aim.getLastDistance();
         double targetHoodDeg = aim.getHoodAngle(false).getDegrees();
-        double targetRps = aim.getShooterRPS();
+        double targetRps = aim.getShooterRPS(false);
 
         // Update visuals
         hoodLig.setAngle(targetHoodDeg);
@@ -45,7 +45,7 @@ public final class Telemetry {
             AimCalc aim = AimCalc.getInstance();
             double dist = aim.getLastDistance();
             double ang = aim.getHoodAngle(false).getDegrees();
-            double rps = aim.getShooterRPS();
+            double rps = aim.getShooterRPS(false);
 
             DataLogManager.log(String.format("SUCCESSFUL SHOT: Dist: %.2f, Angle: %.2f, RPS: %.2f", dist, ang, rps));
 
