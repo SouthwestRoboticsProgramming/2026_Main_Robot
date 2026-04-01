@@ -171,9 +171,8 @@ public static Command shootOnTheMove(
         
         boolean aimed = turnPid.atSetpoint();
         boolean spunUp = shooter.isAtTargetRPS();
-        boolean hoodReady = hood.isAtTarget();
 
-        if (aimed && spunUp && hoodReady) {
+        if (aimed && spunUp ) {
             indexer.setTargetState(IndexerSubsystem.State.FEED);
         } else {
             indexer.setTargetState(IndexerSubsystem.State.HOLD);

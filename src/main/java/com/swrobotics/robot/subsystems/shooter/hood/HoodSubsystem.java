@@ -16,11 +16,11 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class HoodSubsystem extends SubsystemBase {
+    // 26 degrees is bottom (hard stop), 50 degrees is top
+    public static final double kMinAngleRot = 26.0 / 360.0; 
+    public static final double kMaxAngleRot = 50.0 / 360.0;
+    public static final double kHoodGearRatio = 24.0; 
 
-    public static final double kMinAngleRot = 64 / 360.0;
-    public static final double kMaxAngleRot = 40 / 360.0;
-    public static final double kHoodGearRatio = 24; 
-    
     private final TalonFX motor;
     private final PositionVoltage positionControl = new PositionVoltage(0).withEnableFOC(true);
     private final VoltageOut voltageControl = new VoltageOut(0);
@@ -35,22 +35,20 @@ public class HoodSubsystem extends SubsystemBase {
         motor = IOAllocation.CAN.kHoodMotor.createTalonFX();
         TalonFXConfigHelper config = new TalonFXConfigHelper();
         
-        config.MotorOutput.Inverted = Constants.kHoodInverted.get() 
-            ? InvertedValue.Clockwise_Positive : InvertedValue.CounterClockwise_Positive;
+        // FIX 1: Set Clockwise to Positive as requested
+        config.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
         config.MotorOutput.NeutralMode = NeutralModeValue.Brake;
         
-        // This MUST match your physical gear ratio so 1 "Rotation" = 1 Mechanism Rotation
         config.Feedback.SensorToMechanismRatio = kHoodGearRatio; 
         
-        config.CurrentLimits.StatorCurrentLimit = 60.0;
+        config.CurrentLimits.StatorCurrentLimit = 50.0;
         config.CurrentLimits.StatorCurrentLimitEnable = true;
 
-        config.Slot0.kP = 8;
-        config.Slot0.kD = 0;
-        config.Slot0.kG = .75;
+        // PID Gains (Ensure kG is positive to lift UP against gravity)
+        config.Slot0.kP = 15.0; 
+        config.Slot0.kG = 1.75; 
 
         config.apply(motor);
-
         homingTimer.start();
     }
 
@@ -58,37 +56,33 @@ public class HoodSubsystem extends SubsystemBase {
     public void periodic() {
         switch (state) {
             case HOMING:
-                motor.setControl(voltageControl.withOutput(-2.0)); // Drive down
+                // FIX 2: Drive NEGATIVE to go DOWN
+                motor.setControl(voltageControl.withOutput(-2.0)); 
                 
                 double current = motor.getStatorCurrent().getValueAsDouble();
+                boolean bypassedInrush = homingTimer.hasElapsed(0.15);
+                boolean isStalled = current > 15.0; 
 
-
-                boolean bypassedInrush = homingTimer.hasElapsed(0.1);
-                boolean isStalled = current > 30.0;
-                boolean isTimedOut = homingTimer.hasElapsed(0.5);
-
-                if ((bypassedInrush && isStalled) || isTimedOut) {
-                    applyPositionControl();
-                    motor.setPosition(kMinAngleRot); 
-                    targetRotations = kMinAngleRot; // Ensure target matches actual
+                if (bypassedInrush && isStalled) {
+                    motor.setPosition(kMinAngleRot); // Declare this is 26 deg
+                    targetRotations = kMinAngleRot;
                     state = HoodState.IDLE;
                 }
                 break;
 
             case IDLE:
-                // Safely rest at the physical bottom
+                targetRotations = kMinAngleRot + (1.0 / 360.0); // Hold slightly off floor
                 applyPositionControl();
-                targetRotations = kMinAngleRot;
                 break;
 
             case AUTO_TRACK:
-                applyPositionControl();
                 targetRotations = AimCalc.getInstance().getHoodAngle(false).getRotations();
+                applyPositionControl();
                 break;
 
             case PASSING:
-                applyPositionControl();
                 targetRotations = AimCalc.getInstance().getHoodAngle(true).getRotations();
+                applyPositionControl();
                 break;
 
             case MANUAL:
@@ -99,46 +93,30 @@ public class HoodSubsystem extends SubsystemBase {
     }
 
     private void applyPositionControl() {
-        double safeLowerBound = Math.min(kMinAngleRot, kMaxAngleRot);
-        double safeUpperBound = Math.max(kMinAngleRot, kMaxAngleRot);
-        
-        targetRotations = MathUtil.clamp(targetRotations, safeLowerBound, safeUpperBound);
-        
+        // Constraints: 26 to 50 degrees
+        targetRotations = MathUtil.clamp(targetRotations, kMinAngleRot, kMaxAngleRot);
         motor.setControl(positionControl.withPosition(targetRotations));
     }
 
-    public Command setMode(HoodState newState) {
-        return runOnce(() -> { // Changed to runOnce so it triggers correctly on button press
-            state = newState;
-            if (newState == HoodState.HOMING) {
-                homingTimer.restart();
-            }
-        });
-    }
-
     public Command manualNudge(double degrees) {
-        // Changed to runOnce so one button click = exactly one nudge
         return runOnce(() -> {
-            state = HoodState.MANUAL; 
-            targetRotations += (degrees / 360.0);
-            
+            // FIX 3: Immediate feedback by pulling current position before adding nudge
+            this.state = HoodState.MANUAL;
+            double currentPos = motor.getPosition().getValueAsDouble();
+            this.targetRotations = currentPos + (degrees / 360.0);
         });
     }
 
-    public boolean isAtTarget() {
-        return Math.abs(motor.getPosition().getValueAsDouble() - targetRotations) < (0.5 / 360.0);
+    public Command setMode(HoodState newState) {
+        return runOnce(() -> {
+            this.state = newState;
+            if (newState == HoodState.HOMING) homingTimer.restart();
+        });
     }
 
     private void updateTelemetry() {
         SmartDashboard.putString("Hood/State", state.name());
-        SmartDashboard.putNumber("Hood/Target Deg", targetRotations * 360.0);
         SmartDashboard.putNumber("Hood/Actual Deg", motor.getPosition().getValueAsDouble() * 360.0);
-        SmartDashboard.putBoolean("Hood/At Target", isAtTarget());
-        SmartDashboard.putNumber("Hood/Homing Timer", homingTimer.get());
-        SmartDashboard.putNumber("Hood/Stator Current", motor.getStatorCurrent().getValueAsDouble());
-    }
-
-    public HoodState getState() {
-        return state;
+        SmartDashboard.putNumber("Hood/Target Deg", targetRotations * 360.0);
     }
 }

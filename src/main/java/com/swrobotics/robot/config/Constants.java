@@ -181,9 +181,9 @@ public final class Constants {
     );
 
     public static final LimelightCamera.MountingLocation kLimelightBackLocation = new LimelightCamera.MountingLocation(
-        Units.inchesToMeters(13), Units.inchesToMeters(-2.0), Units.inchesToMeters(9.25), //z x y? jonah lowkey weird
+        Units.inchesToMeters(9.7), Units.inchesToMeters(4.75), Units.inchesToMeters(13.81), //z x y? jonah lowkey weird
         // Degrees CCW
-        0, 0, 0
+        0, 15, 180
     );
 
     public static final LimelightCamera.MountingLocation kLimelightRightLocation = new LimelightCamera.MountingLocation(
@@ -194,7 +194,7 @@ public final class Constants {
     );
 
     public static final LimelightCamera.MountingLocation kLimelightFrontLocation = new LimelightCamera.MountingLocation(
-        Units.inchesToMeters(9.92), Units.inchesToMeters(4.75), Units.inchesToMeters(13.81),
+        Units.inchesToMeters(9.92), Units.inchesToMeters(0), Units.inchesToMeters(13.81),
         0, 15, 0
     );
 

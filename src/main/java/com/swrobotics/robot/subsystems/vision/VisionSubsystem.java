@@ -27,15 +27,15 @@ public final class VisionSubsystem extends SubsystemBase {
                 new LimelightCamera(
                         "limelight-f",
                         Constants.kLimelightFrontLocation,
-                        Constants.kLimelightConfig)
+                        Constants.kLimelightConfig),
                 // new LimelightCamera(
                 //         "limelight-r",
                 //         Constants.kLimelightRightLocation,
                 //         Constants.kLimelightConfig),
-                // new LimelightCamera(
-                //         "limelight-b",
-                //         Constants.kLimelightBackLocation,
-                //         Constants.kLimelightConfig)
+                new LimelightCamera(
+                        "limelight-b",
+                        Constants.kLimelightBackLocation,
+                        Constants.kLimelightConfig)
         );
 
         ignoreUpdates = false;
