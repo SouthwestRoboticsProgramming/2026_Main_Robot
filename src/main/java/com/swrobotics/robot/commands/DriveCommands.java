@@ -166,7 +166,7 @@ public static Command shootOnTheMove(
             .withVelocityY(translationY.get())
             .withRotationalRate(rotOutput));
 
-        shooter.setTargetState(ShooterSubsystem.State.SHOOT);
+        shooter.commandSetState(ShooterSubsystem.State.SHOOT);
         hood.setMode(HoodSubsystem.HoodState.AUTO_TRACK);
         
         boolean aimed = turnPid.atSetpoint();
@@ -180,7 +180,7 @@ public static Command shootOnTheMove(
     }, drive, shooter, hood, indexer)
     .finallyDo(() -> {
         hood.setMode(HoodSubsystem.HoodState.IDLE); // Drives back to 0
-        shooter.setTargetState(ShooterSubsystem.State.IDLE);
+        shooter.commandSetState(ShooterSubsystem.State.IDLE);
         
         // Assuming your Indexer has an IDLE or STOP state
         indexer.setTargetState(IndexerSubsystem.State.IDLE); 

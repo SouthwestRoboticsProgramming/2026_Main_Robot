@@ -49,14 +49,13 @@ public class HoodSubsystem extends SubsystemBase {
         config.Slot0.kG = 1.75; 
 
         config.apply(motor);
-        homingTimer.start();
     }
 
     @Override
     public void periodic() {
         switch (state) {
             case HOMING:
-                // FIX 2: Drive NEGATIVE to go DOWN
+                homingTimer.start();
                 motor.setControl(voltageControl.withOutput(-2.0)); 
                 
                 double current = motor.getStatorCurrent().getValueAsDouble();
@@ -119,4 +118,10 @@ public class HoodSubsystem extends SubsystemBase {
         SmartDashboard.putNumber("Hood/Actual Deg", motor.getPosition().getValueAsDouble() * 360.0);
         SmartDashboard.putNumber("Hood/Target Deg", targetRotations * 360.0);
     }
+
+    // Add this inside your HoodSubsystem class
+public double getMeasurementDegrees() {
+    // Converts the TalonFX rotations (0-1) to degrees (0-360)
+    return motor.getPosition().getValueAsDouble() * 360.0;
+}
 }

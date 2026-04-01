@@ -25,7 +25,6 @@ public final class Telemetry {
     public static void periodic() {
         AimCalc aim = AimCalc.getInstance();
 
-        double distance = aim.getLastDistance();
         double targetHoodDeg = aim.getHoodAngle(false).getDegrees();
         double targetRps = aim.getShooterRPS(false);
 
@@ -33,23 +32,9 @@ public final class Telemetry {
         hoodLig.setAngle(targetHoodDeg);
 
         // Logging to SmartDashboard (and automatically to DataLog)
-        SmartDashboard.putNumber("Shooter/Telemetry/Distance", distance);
         SmartDashboard.putNumber("Shooter/Telemetry/TargetHoodDeg", targetHoodDeg);
         SmartDashboard.putNumber("Shooter/Telemetry/TargetRPS", targetRps);
-        SmartDashboard.putBoolean("Shooter/Telemetry/InRange", aim.isInRange());
     }
 
    
-    public static Command logSuccessfulShot() {
-        return Commands.runOnce(() -> {
-            AimCalc aim = AimCalc.getInstance();
-            double dist = aim.getLastDistance();
-            double ang = aim.getHoodAngle(false).getDegrees();
-            double rps = aim.getShooterRPS(false);
-
-            DataLogManager.log(String.format("SUCCESSFUL SHOT: Dist: %.2f, Angle: %.2f, RPS: %.2f", dist, ang, rps));
-
-            aim.saveCurrentShot(dist, ang, rps);
-        }).ignoringDisable(true);
-    }
 }

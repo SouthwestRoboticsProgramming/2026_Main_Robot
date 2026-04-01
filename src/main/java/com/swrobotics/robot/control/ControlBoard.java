@@ -26,6 +26,7 @@ import edu.wpi.first.wpilibj2.command.button.Trigger;
 import com.swrobotics.robot.subsystems.intake.indexer.IndexerSubsystem;
 import com.swrobotics.robot.subsystems.intake.IntakeSubsystem;
 import com.swrobotics.robot.subsystems.intake.expansion.ExpansionSubsystem;
+import com.swrobotics.robot.subsystems.intake.expansion.ExpansionSubsystem.State;
 import com.swrobotics.robot.subsystems.shooter.ShooterSubsystem;
 //import com.swrobotics.robot.subsystems.shooter.hood.HoodSubsystem;
 import com.swrobotics.robot.subsystems.shooter.hood.HoodSubsystem.HoodState;
@@ -106,10 +107,15 @@ public final class ControlBoard extends SubsystemBase {
 
         driver.rightTrigger().whileTrue(robot.hood.setMode(HoodState.AUTO_TRACK)
                 .alongWith(robot.shooter.commandSetState(ShooterSubsystem.State.AUTO)
-                .withTimeout(.75)
-        //.until(() -> robot.shooter.isAtTargetRPS()&& robot.hood.isAtTarget())
+                .withTimeout(.5)
                 .andThen(robot.indexer.commandSetState(IndexerSubsystem.State.FEED)
                 .alongWith(robot.expansion.commandSetState(ExpansionSubsystem.State.SHOOT)))));
+        driver.rightBumper()
+                .whileTrue(robot.shooter.commandSetState(ShooterSubsystem.State.PASS)
+                .alongWith(robot.hood.setMode(HoodState.PASSING))
+                .withTimeout(.5)
+                .andThen(robot.indexer.commandSetState(IndexerSubsystem.State.FEED))
+                .alongWith(robot.expansion.commandSetState(State.SHOOT)));
 
         // driver.rightTrigger().whileTrue(DriveCommands.shootOnTheMove(robot.drive, robot.shooter, robot.hood, robot.indexer,
         //                 () -> -driver.getLeftY(),
@@ -130,12 +136,14 @@ public final class ControlBoard extends SubsystemBase {
                 .whileTrue(robot.shooter.commandSetState(ShooterSubsystem.State.PASS)
                 .alongWith(robot.hood.setMode(HoodState.PASSING))
                 .withTimeout(.75)
-                .andThen(robot.indexer.commandSetState(IndexerSubsystem.State.FEED)));
+                .andThen(robot.indexer.commandSetState(IndexerSubsystem.State.FEED))
+                .alongWith(robot.expansion.commandSetState(State.SHOOT)));
 
         operator.leftTrigger()
                 .whileTrue(robot.shooter.commandSetState(ShooterSubsystem.State.SHOOT)
                 .withTimeout(.75)
-                .andThen(robot.indexer.commandSetState(IndexerSubsystem.State.FEED)));
+                .andThen(robot.indexer.commandSetState(IndexerSubsystem.State.FEED))
+                .alongWith(robot.expansion.commandSetState(State.SHOOT)));
 
         operator.x().onTrue(robot.hood.manualNudge(3.0));
         operator.b().onTrue(robot.hood.manualNudge(-3.0));
@@ -144,17 +152,17 @@ public final class ControlBoard extends SubsystemBase {
 
         //testController.leftTrigger().whileTrue(robot.intake.commandSetState(IntakeSubsystem.State.INTAKE).alongWith(robot.indexer.commandSetState(IndexerSubsystem.State.INTAKE)));
         //testController.leftBumper().whileTrue(robot.indexer.commandSetState(IndexerSubsystem.State.RINDEX));
-        testController.rightTrigger().whileTrue(robot.hood.setMode(HoodState.AUTO_TRACK).alongWith(robot.shooter.commandSetState(ShooterSubsystem.State.AUTO)));
-        testController.rightBumper().whileTrue(robot.hood.setMode(HoodState.PASSING).alongWith(robot.shooter.commandSetState(ShooterSubsystem.State.PASS)));
+        testController.rightTrigger().whileTrue(robot.hood.setMode(HoodState.AUTO_TRACK).alongWith(robot.shooter.commandSetState(ShooterSubsystem.State.AUTO)).alongWith(robot.expansion.commandSetState(State.SHOOT)));
+        testController.rightBumper().whileTrue(robot.hood.setMode(HoodState.PASSING).alongWith(robot.shooter.commandSetState(ShooterSubsystem.State.PASS)).alongWith(robot.expansion.commandSetState(State.SHOOT)));
         
         //testController.y().whileTrue(DriveCommands.shootOnTheMove(robot.drive, robot.shooter, robot.hood, robot.indexer,() -> -driver.getLeftY(), () -> -driver.getLeftX()));
         //testController.x().toggleOnTrue(robot.expansion.commandSetState(ExpansionSubsystem.State.EXTENDED));
         //testController.b().toggleOnTrue(Commands.runOnce(() -> robot.drive.commandLockModules()));       
         
         
-        testController.povUp().onTrue(robot.hood.manualNudge(1.0)).onFalse(Commands.runOnce(() -> robot.hood.setMode(HoodState.IDLE)));
+        testController.povUp().onTrue(robot.hood.manualNudge(1.0));
         testController.povLeft().whileTrue(robot.hood.setMode(HoodState.HOMING));
-        testController.povDown().onTrue(robot.hood.manualNudge(-1.0)).onFalse(Commands.runOnce(() -> robot.hood.setMode(HoodState.IDLE)));
+        testController.povDown().onTrue(robot.hood.manualNudge(-1.0));
         //testController.povRight().onFalse(Commands.runOnce(() -> robot.drive.resetRotation(new Rotation2d())));
 }
 
@@ -169,9 +177,7 @@ public final class ControlBoard extends SubsystemBase {
             Constants.kDeadband
         );
 
-        // Apply an exponential curve to the driver's input. This allows the
-        // driver to have slower, more precise movement in the center of the
-        // stick, while still having high speed movement towards the edges.
+
         double rawMag = leftStick.getNorm();
         double powerMag = MathUtil.powerWithSign(rawMag, Constants.kDriveControlDrivePower);
 
