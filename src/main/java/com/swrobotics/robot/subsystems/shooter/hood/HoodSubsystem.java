@@ -46,7 +46,7 @@ public class HoodSubsystem extends SubsystemBase {
 
         // PID Gains (Ensure kG is positive to lift UP against gravity)
         config.Slot0.kP = 15.0; 
-        config.Slot0.kG = 1.75; 
+        config.Slot0.kG = 0; 
 
         config.apply(motor);
     }
@@ -59,7 +59,7 @@ public class HoodSubsystem extends SubsystemBase {
                 motor.setControl(voltageControl.withOutput(-2.0)); 
                 
                 double current = motor.getStatorCurrent().getValueAsDouble();
-                boolean bypassedInrush = homingTimer.hasElapsed(0.15);
+                boolean bypassedInrush = homingTimer.hasElapsed(0.75);
                 boolean isStalled = current > 15.0; 
 
                 if (bypassedInrush && isStalled) {
@@ -70,7 +70,7 @@ public class HoodSubsystem extends SubsystemBase {
                 break;
 
             case IDLE:
-                targetRotations = kMinAngleRot + (1.0 / 360.0); // Hold slightly off floor
+                targetRotations = kMinAngleRot;
                 applyPositionControl();
                 break;
 

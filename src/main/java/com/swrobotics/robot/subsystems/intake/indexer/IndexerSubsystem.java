@@ -54,7 +54,7 @@ public class IndexerSubsystem extends SubsystemBase {
         config.MotorOutput.NeutralMode = NeutralModeValue.Coast;
         config.CurrentLimits.StatorCurrentLimit = 60.0;
         config.CurrentLimits.StatorCurrentLimitEnable = true;
-        config.Slot0.kP = 0.2;
+        config.Slot0.kP = 0.3;
         config.Slot0.kV = 0.13;
 
         TalonFXConfigHelper config2 = new TalonFXConfigHelper();
