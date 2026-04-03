@@ -1,0 +1,68 @@
+{
+  "version": "2025.0",
+  "command": {
+    "type": "sequential",
+    "data": {
+      "commands": [
+        {
+          "type": "path",
+          "data": {
+            "pathName": "AutoWithCenturions1"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "Expand"
+          }
+        },
+        {
+          "type": "race",
+          "data": {
+            "commands": [
+              {
+                "type": "path",
+                "data": {
+                  "pathName": "autoWithCenturions2"
+                }
+              },
+              {
+                "type": "named",
+                "data": {
+                  "name": "Intake"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "autoWithcenturions3"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "autoWithcneturios4"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "AutoWithCneturions5"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "Shoot"
+          }
+        }
+      ]
+    }
+  },
+  "resetOdom": true,
+  "folder": "Risky",
+  "choreoAuto": false
+}

@@ -41,28 +41,30 @@ public class HoodSubsystem extends SubsystemBase {
         
         config.Feedback.SensorToMechanismRatio = kHoodGearRatio; 
         
-        config.CurrentLimits.StatorCurrentLimit = 50.0;
+        config.CurrentLimits.StatorCurrentLimit = 80.0;
         config.CurrentLimits.StatorCurrentLimitEnable = true;
 
         // PID Gains (Ensure kG is positive to lift UP against gravity)
-        config.Slot0.kP = 15.0; 
+        config.Slot0.kP = 6.0; 
         config.Slot0.kG = 0; 
 
         config.apply(motor);
+        setDefaultCommand(setMode(HoodState.IDLE));
+        homingTimer.start();
     }
 
     @Override
     public void periodic() {
         switch (state) {
             case HOMING:
-                homingTimer.start();
-                motor.setControl(voltageControl.withOutput(-2.0)); 
+                motor.setControl(voltageControl.withOutput(-3.0)); 
                 
                 double current = motor.getStatorCurrent().getValueAsDouble();
                 boolean bypassedInrush = homingTimer.hasElapsed(0.75);
-                boolean isStalled = current > 15.0; 
+                boolean isStalled = current > 20.0; 
 
                 if (bypassedInrush && isStalled) {
+
                     motor.setPosition(kMinAngleRot); // Declare this is 26 deg
                     targetRotations = kMinAngleRot;
                     state = HoodState.IDLE;
@@ -112,6 +114,7 @@ public class HoodSubsystem extends SubsystemBase {
             if (newState == HoodState.HOMING) homingTimer.restart();
         });
     }
+    
 
     private void updateTelemetry() {
         SmartDashboard.putString("Hood/State", state.name());

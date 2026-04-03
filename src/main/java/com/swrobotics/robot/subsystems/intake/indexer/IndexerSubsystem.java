@@ -55,7 +55,7 @@ public class IndexerSubsystem extends SubsystemBase {
         config.CurrentLimits.StatorCurrentLimit = 60.0;
         config.CurrentLimits.StatorCurrentLimitEnable = true;
         config.Slot0.kP = 0.3;
-        config.Slot0.kV = 0.13;
+        config.Slot0.kV = 0.5;
 
         TalonFXConfigHelper config2 = new TalonFXConfigHelper();
         config2.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
@@ -70,11 +70,17 @@ public class IndexerSubsystem extends SubsystemBase {
         config3.MotorOutput.NeutralMode = NeutralModeValue.Coast;
         config3.CurrentLimits.StatorCurrentLimit = 40.0;
         config3.CurrentLimits.StatorCurrentLimitEnable = true; 
+        TalonFXConfigHelper config4 = new TalonFXConfigHelper();
+        config4.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
+        config4.MotorOutput.NeutralMode = NeutralModeValue.Coast;
+        config4.CurrentLimits.StatorCurrentLimit = 80.0;
+        config4.CurrentLimits.StatorCurrentLimitEnable = true; 
+        
 
-
-        config.apply(floorMotor, beltMotor);
+        config.apply(beltMotor);
         config2.apply(shooterFeederMotor);
         config3.apply(kickerMotor);
+        config4.apply(floorMotor);
         
         // --- CANrange Detector Configuration ---
         CANrangeConfiguration rangeConfig = new CANrangeConfiguration();
@@ -97,10 +103,10 @@ public class IndexerSubsystem extends SubsystemBase {
 
         switch (targetState) {
             case INTAKE:
-                floorRPS = 20.0;
+                floorRPS = 10.0;
                 beltRPS = 0.0;
                 feederRPS = 0.0;
-                kickerRPS = 6.0;
+                kickerRPS = 0.0;
                 break;
             case IDLE:
                 floorRPS = Constants.kIndexerIdleVoltage.get();
@@ -115,13 +121,13 @@ public class IndexerSubsystem extends SubsystemBase {
                 kickerRPS = 0.0;
                 break;
             case FEED:
-                floorRPS = 20.0;
+                floorRPS = 12.0;
                 beltRPS = 40.0;
                 feederRPS = 40.0;
-                kickerRPS = 8.0;
+                kickerRPS = 4.0;
                 break;
             case RINDEX:
-                floorRPS = -20.0;
+                floorRPS = -12.0;
                 beltRPS = -20.0;
                 feederRPS = -25.0;
                 kickerRPS = -10.0;
@@ -129,7 +135,7 @@ public class IndexerSubsystem extends SubsystemBase {
         }
 
         // Apply calculated velocities
-        floorMotor.setControl(velocityControl.withVelocity(floorRPS));
+        floorMotor.setControl(voltageControl.withOutput(floorRPS));
         beltMotor.setControl(velocityControl.withVelocity(beltRPS)); 
         shooterFeederMotor.setControl(velocityControl.withVelocity(feederRPS));
         kickerMotor.setControl(voltageControl.withOutput(kickerRPS));

@@ -116,7 +116,7 @@ public final class LimelightCamera {
             xyStdDev = baseStdDev * config.xyStdDevCoeffMT2;
         } else {
             xyStdDev = baseStdDev * config.xyStdDevCoeffMT1;
-
+        }
         double thetaStdDev = 999999999.0;
 
         updatesOut.add(new Update(
@@ -125,5 +125,4 @@ public final class LimelightCamera {
                 VecBuilder.fill(xyStdDev, xyStdDev, thetaStdDev)
         ));
     }
-}
 }

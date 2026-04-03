@@ -34,13 +34,19 @@ public class AimCalc {
     private AimCalc() {
         // RPS Mapping based on distance (meters)
         rpsMap.put(0.0, 40.0);
+        rpsMap.put(.5, 40.0);
         rpsMap.put(1.0, 40.0);
+        rpsMap.put(1.5, 60.0);
         rpsMap.put(2.0, 60.0);
+        rpsMap.put(2.5, 60.0);
+        rpsMap.put(3.0, 60.0);
         rpsMap.put(5.0, 90.0);
+        rpsMap.put(7.5, 90.0);
         rpsMap.put(10.0, 90.0);
+        rpsMap.put(18.0, 90.0);
 
         // Pre-calculate angles based on physics
-        double[] testDistances = {0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 4.0, 5.0, 7.5, 10.0};
+        double[] testDistances = {0.0, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0 };
         for (double d : testDistances) {
             hoodAngleMap.put(d, calculateLaunchAngle(d, rpsMap.get(d)));
         }

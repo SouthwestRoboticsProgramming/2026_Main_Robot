@@ -1,7 +1,6 @@
 package com.swrobotics.robot;
 
 import com.swrobotics.lib.net.NTEntry;
-import com.swrobotics.robot.logging.Telemetry;
 
 import edu.wpi.first.wpilibj.*;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -29,7 +28,6 @@ public final class Robot extends TimedRobot {
     public void robotInit() {
         // Create a RobotContainer to manage our subsystems and our buttons
         robotContainer = new RobotContainer();
-        Telemetry.init();
     }
 
     @Override

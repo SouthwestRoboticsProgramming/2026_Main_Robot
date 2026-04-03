@@ -21,14 +21,16 @@ public class ExpansionSubsystem extends SubsystemBase {
     public enum State {
         RETRACTED,
         EXTENDED,
-        SHOOT
+        SHOOT,
+        LIFTED,
+        REHOME
     }
 
     private final TalonFX motor;
     private final CANcoder encoder;
     private final PositionVoltage positionControl = new PositionVoltage(0).withEnableFOC(false);
     private State targetState;
-    private final double kOscillationSpeed = 5.0;
+    private final double kOscillationSpeed = 10.0;
 
     public ExpansionSubsystem() {
 
@@ -49,7 +51,7 @@ public class ExpansionSubsystem extends SubsystemBase {
         motor.setPosition(0);
         targetState = State.RETRACTED;
 
-        setDefaultCommand(commandSetState(State.RETRACTED));
+        setDefaultCommand(commandSetState(State.LIFTED));
     }
 
     @Override
@@ -59,10 +61,15 @@ public class ExpansionSubsystem extends SubsystemBase {
 
         switch (targetState) {
             case EXTENDED: targetRotations = 28.0;
+            setDefaultCommand(commandSetState(State.LIFTED));
             break;
             case RETRACTED: targetRotations = 0;
             break;
-            case SHOOT: targetRotations = 18.0 + (2.0 * Math.sin(Timer.getFPGATimestamp() * kOscillationSpeed));
+            case SHOOT: targetRotations = 22.0 + (6.0 * Math.sin(Timer.getFPGATimestamp() * kOscillationSpeed));
+            break;
+            case LIFTED: targetRotations = 10.0;
+            break;
+            case REHOME: motor.setPosition(0);
             break;
         }
 

@@ -47,8 +47,8 @@ public class ShooterSubsystem extends SubsystemBase {
             case SHOOT: wheelRps = 60; break;
             case WARM: wheelRps = 30; break;
             case RINDEX: wheelRps = -20; break;
-            case AUTO: wheelRps = AimCalc.getInstance().getShooterRPS(false); break;
-            case PASS: wheelRps = AimCalc.getInstance().getShooterRPS(true); break;
+            case AUTO: wheelRps = AimCalc.getInstance().getShooterRPS(false)/3; break;
+            case PASS: wheelRps = AimCalc.getInstance().getShooterRPS(true)/3; break;
         }
 
         // Apply 3:1 ratio (Motor needs to spin 1/3 speed of wheel output)

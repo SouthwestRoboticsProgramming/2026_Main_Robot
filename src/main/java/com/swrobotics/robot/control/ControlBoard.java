@@ -9,7 +9,6 @@ import com.swrobotics.robot.commands.CharacterizeWheelsCommand;
 import com.swrobotics.robot.commands.DriveCommands;
 import com.swrobotics.robot.commands.RumblePatternCommands;
 import com.swrobotics.robot.config.Constants;
-import com.swrobotics.robot.logging.Telemetry;
 
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
@@ -108,14 +107,12 @@ public final class ControlBoard extends SubsystemBase {
         driver.rightTrigger().whileTrue(robot.hood.setMode(HoodState.AUTO_TRACK)
                 .alongWith(robot.shooter.commandSetState(ShooterSubsystem.State.AUTO)
                 .withTimeout(.5)
-                .andThen(robot.indexer.commandSetState(IndexerSubsystem.State.FEED)
-                .alongWith(robot.expansion.commandSetState(ExpansionSubsystem.State.SHOOT)))));
+                .andThen(robot.indexer.commandSetState(IndexerSubsystem.State.FEED))));
         driver.rightBumper()
                 .whileTrue(robot.shooter.commandSetState(ShooterSubsystem.State.PASS)
                 .alongWith(robot.hood.setMode(HoodState.PASSING))
                 .withTimeout(.5)
-                .andThen(robot.indexer.commandSetState(IndexerSubsystem.State.FEED))
-                .alongWith(robot.expansion.commandSetState(State.SHOOT)));
+                .andThen(robot.indexer.commandSetState(IndexerSubsystem.State.FEED)));
 
         // driver.rightTrigger().whileTrue(DriveCommands.shootOnTheMove(robot.drive, robot.shooter, robot.hood, robot.indexer,
         //                 () -> -driver.getLeftY(),
@@ -130,20 +127,19 @@ public final class ControlBoard extends SubsystemBase {
         // driver.b().onTrue(robot.hood.manualNudge(-1.0)).onFalse(Commands.runOnce(() -> robot.hood.setMode(HoodState.IDLE)));
         driver.povUp().onFalse(Commands.runOnce(() -> robot.drive.resetRotation(new Rotation2d())));
         driver.povDown().toggleOnTrue(Commands.runOnce(() -> robot.drive.commandLockModules()));
+        driver.povLeft().whileTrue(robot.expansion.commandSetState(ExpansionSubsystem.State.REHOME));
 
         /* --- MANUAl OVERRIDES --- */       
         operator.rightTrigger()
                 .whileTrue(robot.shooter.commandSetState(ShooterSubsystem.State.PASS)
                 .alongWith(robot.hood.setMode(HoodState.PASSING))
                 .withTimeout(.75)
-                .andThen(robot.indexer.commandSetState(IndexerSubsystem.State.FEED))
-                .alongWith(robot.expansion.commandSetState(State.SHOOT)));
+                .andThen(robot.indexer.commandSetState(IndexerSubsystem.State.FEED)));
 
         operator.leftTrigger()
                 .whileTrue(robot.shooter.commandSetState(ShooterSubsystem.State.SHOOT)
                 .withTimeout(.75)
-                .andThen(robot.indexer.commandSetState(IndexerSubsystem.State.FEED))
-                .alongWith(robot.expansion.commandSetState(State.SHOOT)));
+                .andThen(robot.indexer.commandSetState(IndexerSubsystem.State.FEED)));
 
         operator.x().onTrue(robot.hood.manualNudge(3.0));
         operator.b().onTrue(robot.hood.manualNudge(-3.0));
