@@ -17,8 +17,8 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class HoodSubsystem extends SubsystemBase {
     // 26 degrees is bottom (hard stop), 50 degrees is top
-    public static final double kMinAngleRot = 26.0 / 360.0; 
-    public static final double kMaxAngleRot = 50.0 / 360.0;
+    public static final double kMinAngleRot = 23.0 / 360.0; 
+    public static final double kMaxAngleRot = 48.0 / 360.0;
     public static final double kHoodGearRatio = 24.0; 
 
     private final TalonFX motor;
@@ -41,15 +41,14 @@ public class HoodSubsystem extends SubsystemBase {
         
         config.Feedback.SensorToMechanismRatio = kHoodGearRatio; 
         
-        config.CurrentLimits.StatorCurrentLimit = 80.0;
-        config.CurrentLimits.StatorCurrentLimitEnable = true;
+        // config.CurrentLimits.StatorCurrentLimit = 80.0;
+        // config.CurrentLimits.StatorCurrentLimitEnable = true;
 
         // PID Gains (Ensure kG is positive to lift UP against gravity)
-        config.Slot0.kP = 6.0; 
-        config.Slot0.kG = 0; 
+        config.Slot0.kP = 50.0; 
+        config.Slot0.kG = 0;
 
         config.apply(motor);
-        setDefaultCommand(setMode(HoodState.IDLE));
         homingTimer.start();
     }
 
@@ -72,12 +71,13 @@ public class HoodSubsystem extends SubsystemBase {
                 break;
 
             case IDLE:
-                targetRotations = kMinAngleRot;
+                targetRotations = kMinAngleRot;       
+                setDefaultCommand(setMode(HoodState.IDLE));
                 applyPositionControl();
                 break;
 
             case AUTO_TRACK:
-                targetRotations = AimCalc.getInstance().getHoodAngle(false).getRotations();
+                targetRotations = AimCalc.getInstance().getHoodAngle(false).getRotations(); // Subtract 26 degrees to convert to rotation units
                 applyPositionControl();
                 break;
 
@@ -109,17 +109,20 @@ public class HoodSubsystem extends SubsystemBase {
     }
 
     public Command setMode(HoodState newState) {
-        return runOnce(() -> {
+        return run(
+            () -> {
             this.state = newState;
-            if (newState == HoodState.HOMING) homingTimer.restart();
-        });
+            if (newState == HoodState.HOMING) 
+            homingTimer.restart();
+        }
+        );
     }
     
 
     private void updateTelemetry() {
         SmartDashboard.putString("Hood/State", state.name());
         SmartDashboard.putNumber("Hood/Actual Deg", motor.getPosition().getValueAsDouble() * 360.0);
-        SmartDashboard.putNumber("Hood/Target Deg", targetRotations * 360.0);
+        SmartDashboard.putNumber("Hood/Target Deg", targetRotations * 360.0 );
     }
 
     // Add this inside your HoodSubsystem class

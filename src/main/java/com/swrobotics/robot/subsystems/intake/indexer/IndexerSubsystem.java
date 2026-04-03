@@ -26,7 +26,6 @@ public class IndexerSubsystem extends SubsystemBase {
     public enum State {
         IDLE,
         INTAKE,
-        HOLD,
         FEED,
         RINDEX 
     }
@@ -55,7 +54,7 @@ public class IndexerSubsystem extends SubsystemBase {
         config.CurrentLimits.StatorCurrentLimit = 60.0;
         config.CurrentLimits.StatorCurrentLimitEnable = true;
         config.Slot0.kP = 0.3;
-        config.Slot0.kV = 0.5;
+        config.Slot0.kV = 0.13;
 
         TalonFXConfigHelper config2 = new TalonFXConfigHelper();
         config2.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
@@ -103,7 +102,7 @@ public class IndexerSubsystem extends SubsystemBase {
 
         switch (targetState) {
             case INTAKE:
-                floorRPS = 10.0;
+                floorRPS = 0.0;
                 beltRPS = 0.0;
                 feederRPS = 0.0;
                 kickerRPS = 0.0;
@@ -114,20 +113,14 @@ public class IndexerSubsystem extends SubsystemBase {
                 feederRPS = Constants.kIndexerIdleVoltage.get();
                 kickerRPS = Constants.kIndexerIdleVoltage.get();
                 break;
-            case HOLD:
-                floorRPS = 10.0;
-                beltRPS = 10.0;
-                feederRPS = 0.0;
-                kickerRPS = 0.0;
-                break;
             case FEED:
-                floorRPS = 12.0;
-                beltRPS = 40.0;
-                feederRPS = 40.0;
+                floorRPS = 6.0;
+                beltRPS = 20.0;
+                feederRPS = 20.0;
                 kickerRPS = 4.0;
                 break;
             case RINDEX:
-                floorRPS = -12.0;
+                floorRPS = -6.0;
                 beltRPS = -20.0;
                 feederRPS = -25.0;
                 kickerRPS = -10.0;

@@ -15,7 +15,6 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class ShooterSubsystem extends SubsystemBase {
     public enum State { IDLE, SHOOT, WARM, RINDEX, AUTO, PASS }
-    public static final double kGearRatio = 3.0; // 3:1 Motor to Wheel
 
     private final TalonFX motorL;
     private final TalonFX motorR;
@@ -31,12 +30,14 @@ public class ShooterSubsystem extends SubsystemBase {
         TalonFXConfigHelper config = new TalonFXConfigHelper();
         config.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
         config.MotorOutput.NeutralMode = NeutralModeValue.Coast;
+        config.CurrentLimits.StatorCurrentLimit = 80;
+        config.CurrentLimits.StatorCurrentLimitEnable = true;
         config.Slot0.kP = 0.2;
         config.Slot0.kV = 0.13;
 
         config.apply(motorL, motorR);
         motorR.setControl(new Follower(motorL.getDeviceID(), MotorAlignmentValue.Opposed));
-        setDefaultCommand(commandSetState(State.IDLE));
+        setDefaultCommand(commandSetState(State.WARM));
     }
 
     @Override
@@ -44,15 +45,15 @@ public class ShooterSubsystem extends SubsystemBase {
         double wheelRps = 0;
         switch (targetState) {
             case IDLE: wheelRps = 0; break;
-            case SHOOT: wheelRps = 60; break;
-            case WARM: wheelRps = 30; break;
-            case RINDEX: wheelRps = -20; break;
+            case SHOOT: wheelRps = 20; break;
+            case WARM: wheelRps = 7.5; break;
+            case RINDEX: wheelRps = -10; break;
             case AUTO: wheelRps = AimCalc.getInstance().getShooterRPS(false)/3; break;
             case PASS: wheelRps = AimCalc.getInstance().getShooterRPS(true)/3; break;
         }
 
         // Apply 3:1 ratio (Motor needs to spin 1/3 speed of wheel output)
-        currentMotorTargetRPS = wheelRps / kGearRatio;
+        currentMotorTargetRPS = wheelRps ;
         motorL.setControl(velocityControl.withVelocity(currentMotorTargetRPS));
 
         SmartDashboard.putNumber("Shooter/Wheel Target RPS", wheelRps);

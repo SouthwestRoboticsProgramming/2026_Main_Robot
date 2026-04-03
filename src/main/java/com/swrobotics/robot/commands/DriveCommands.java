@@ -175,7 +175,7 @@ public static Command shootOnTheMove(
         if (aimed && spunUp ) {
             indexer.setTargetState(IndexerSubsystem.State.FEED);
         } else {
-            indexer.setTargetState(IndexerSubsystem.State.HOLD);
+            indexer.setTargetState(IndexerSubsystem.State.IDLE);
         }
     }, drive, shooter, hood, indexer)
     .finallyDo(() -> {

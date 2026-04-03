@@ -23,7 +23,7 @@ public class ExpansionSubsystem extends SubsystemBase {
         EXTENDED,
         SHOOT,
         LIFTED,
-        REHOME
+        CHANGEDOWN
     }
 
     private final TalonFX motor;
@@ -38,13 +38,13 @@ public class ExpansionSubsystem extends SubsystemBase {
         encoder = IOAllocation.CAN.kExpansionEncoder.createCANcoder();
         TalonFXConfigHelper config = new TalonFXConfigHelper();
         config.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
-        config.MotorOutput.NeutralMode = NeutralModeValue.Coast;
+        config.MotorOutput.NeutralMode = NeutralModeValue.Brake;
         config.CurrentLimits.SupplyCurrentLimit = 80;
         config.CurrentLimits.SupplyCurrentLimitEnable = true;
-        config.Slot0.kP = .2;
+        config.Slot0.kP = 4;
         config.Slot0.kI = 0;
         config.Slot0.kD = 0.00;
-        config.Slot0.kG = 0.1;
+        config.Slot0.kG = -0.4;
 
         config.apply(motor);
         
@@ -57,7 +57,9 @@ public class ExpansionSubsystem extends SubsystemBase {
     @Override
     public void periodic() {
         double targetRotations;
+        double targetVoltage;
         targetRotations = 0;
+        targetVoltage = 0;
 
         switch (targetState) {
             case EXTENDED: targetRotations = 28.0;
@@ -69,7 +71,8 @@ public class ExpansionSubsystem extends SubsystemBase {
             break;
             case LIFTED: targetRotations = 10.0;
             break;
-            case REHOME: motor.setPosition(0);
+            case CHANGEDOWN:
+                targetVoltage = -2.0;
             break;
         }
 
