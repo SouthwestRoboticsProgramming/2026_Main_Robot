@@ -52,7 +52,6 @@ public class ShooterSubsystem extends SubsystemBase {
             case PASS: wheelRps = AimCalc.getInstance().getShooterRPS(true)/3; break;
         }
 
-        // Apply 3:1 ratio (Motor needs to spin 1/3 speed of wheel output)
         currentMotorTargetRPS = wheelRps ;
         motorL.setControl(velocityControl.withVelocity(currentMotorTargetRPS));
 
@@ -61,7 +60,6 @@ public class ShooterSubsystem extends SubsystemBase {
     }
 
     public boolean isAtTargetRPS() {
-        // FIXED BUG: Changed || to &&. Now correctly checks if we are in a shooting state.
         if (targetState != State.SHOOT && targetState != State.AUTO && targetState != State.PASS) return false;
         return Math.abs(motorL.getVelocity().getValueAsDouble() - currentMotorTargetRPS) < 1.0;
     }

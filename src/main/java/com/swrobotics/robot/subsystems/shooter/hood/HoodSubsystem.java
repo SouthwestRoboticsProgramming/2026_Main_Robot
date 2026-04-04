@@ -35,7 +35,6 @@ public class HoodSubsystem extends SubsystemBase {
         motor = IOAllocation.CAN.kHoodMotor.createTalonFX();
         TalonFXConfigHelper config = new TalonFXConfigHelper();
         
-        // FIX 1: Set Clockwise to Positive as requested
         config.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
         config.MotorOutput.NeutralMode = NeutralModeValue.Brake;
         
@@ -44,7 +43,7 @@ public class HoodSubsystem extends SubsystemBase {
         // config.CurrentLimits.StatorCurrentLimit = 80.0;
         // config.CurrentLimits.StatorCurrentLimitEnable = true;
 
-        // PID Gains (Ensure kG is positive to lift UP against gravity)
+
         config.Slot0.kP = 50.0; 
         config.Slot0.kG = 0;
 
@@ -64,7 +63,7 @@ public class HoodSubsystem extends SubsystemBase {
 
                 if (bypassedInrush && isStalled) {
 
-                    motor.setPosition(kMinAngleRot); // Declare this is 26 deg
+                    motor.setPosition(kMinAngleRot); 
                     targetRotations = kMinAngleRot;
                     state = HoodState.IDLE;
                 }
@@ -77,12 +76,12 @@ public class HoodSubsystem extends SubsystemBase {
                 break;
 
             case AUTO_TRACK:
-                targetRotations = AimCalc.getInstance().getHoodAngle(false).getRotations(); // Subtract 26 degrees to convert to rotation units
+                targetRotations = AimCalc.getInstance().getHoodAngle(false).getRotations(); 
                 applyPositionControl();
                 break;
 
             case PASSING:
-                targetRotations = AimCalc.getInstance().getHoodAngle(true).getRotations();
+                targetRotations = AimCalc.getInstance().getHoodAngle(true).getRotations(); ;
                 applyPositionControl();
                 break;
 
@@ -123,6 +122,7 @@ public class HoodSubsystem extends SubsystemBase {
         SmartDashboard.putString("Hood/State", state.name());
         SmartDashboard.putNumber("Hood/Actual Deg", motor.getPosition().getValueAsDouble() * 360.0);
         SmartDashboard.putNumber("Hood/Target Deg", targetRotations * 360.0 );
+        SmartDashboard.putNumber("Hood/lastVirtualDist", AimCalc.getInstance().getLastVirtualDistance() );
     }
 
     // Add this inside your HoodSubsystem class
