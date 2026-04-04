@@ -39,14 +39,31 @@ public class AimCalc {
         rpsMap.put(1.0, 40.0);
         rpsMap.put(1.25, 40.0);
         rpsMap.put(1.5, 40.0); 
-        rpsMap.put(1.75, 60.0);
+        rpsMap.put(1.75, 40.0);
         rpsMap.put(2.0, 60.0);
         rpsMap.put(2.25, 60.0);
         rpsMap.put(2.5, 60.0);
-        rpsMap.put(2.51, 60.0); 
+        rpsMap.put(2.51, 60.0);
+        rpsMap.put(2.75, 60.0);
+        rpsMap.put(3.0, 60.0);
+        rpsMap.put(3.25, 60.0);
+        rpsMap.put(3.5, 60.0);
+        rpsMap.put(3.75, 60.0);
+        rpsMap.put(4.0, 60.0);
+        rpsMap.put(4.25, 60.0);
+        rpsMap.put(4.5, 60.0);
+        rpsMap.put(5.75, 60.0);
+        rpsMap.put(5.0, 60.0);
+        rpsMap.put(5.25, 60.0);
+        rpsMap.put(5.5, 60.0);
+        rpsMap.put(5.75, 90.0);
+        rpsMap.put(5.0, 90.0);
+        rpsMap.put(6.25, 90.0);
+        rpsMap.put(6.5, 90.0);
+
         rpsMap.put(16.5, 60.0);
 
-        double[] testDistances = {0.75, 1.0, 1.25, 1.5, 1.75, 2.0, 2.25,  2.5, 2.51, 16.5};
+        double[] testDistances = {0.75, 1.0, 1.25, 1.5, 1.75, 2.0, 2.25,  2.5, 2.51, 2.75, 3.0, 3.25, 3.5, 3.75, 4.0, 4.25, 4.5, 5.75, 5.0, 5.25, 5.5, 5.75, 6.0, 6.25, 16.5};
         for (double d : testDistances) {
             hoodAngleMap.put(d, calculateLaunchAngle(d, rpsMap.get(d)));
         }
@@ -56,7 +73,7 @@ public class AimCalc {
         double vWheel = wheelRps * Math.PI * kWheelDiameterMeters;
         double vBall = (vWheel / 2.0) * kShooterEfficiency; 
         
-        double x = 3; //distance + kTargetDepthOffset;
+        double x = distance + kTargetDepthOffset;
         double y = kHubHeightMeters - kShooterHeightMeters; 
         double g = 9.81;
         double v2 = vBall * vBall;
@@ -77,7 +94,7 @@ public class AimCalc {
 
         if (discriminant < 0.0) return kMaxAngleDeg; 
 
-        double launchAngleRad = Math.atan((v2 + Math.sqrt(discriminant)) / (g * x));
+        double launchAngleRad = Math.atan((v2 - Math.sqrt(discriminant)) / (g * x));
         double launchAngleDeg = Math.toDegrees(launchAngleRad);
 
         double physicalHoodAngle = 90.0 - launchAngleDeg; 

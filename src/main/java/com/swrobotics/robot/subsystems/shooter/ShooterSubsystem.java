@@ -55,7 +55,7 @@ public class ShooterSubsystem extends SubsystemBase {
         currentMotorTargetRPS = wheelRps ;
         motorL.setControl(velocityControl.withVelocity(currentMotorTargetRPS));
 
-        SmartDashboard.putNumber("Shooter/Wheel Target RPS", wheelRps);
+        SmartDashboard.putNumber("Shooter/Wheel Target RPS", wheelRps * 3);
         SmartDashboard.putBoolean("Shooter/At Speed", isAtTargetRPS());
     }
 
