@@ -112,8 +112,7 @@ public final class ControlBoard extends SubsystemBase {
         driver.rightBumper()
                 .whileTrue(robot.shooter.commandSetState(ShooterSubsystem.State.PASS)
                 .alongWith(robot.hood.setMode(HoodState.PASSING))
-                .alongWith(robot.indexer.commandSetState(IndexerSubsystem.State.RINDEX).withTimeout(.2))
-                .withTimeout(1.5)
+                .withTimeout(1.0)
                 .andThen(robot.indexer.commandSetState(IndexerSubsystem.State.FEED)));
 
         // driver.rightTrigger().whileTrue(DriveCommands.shootOnTheMove(robot.drive, robot.shooter, robot.hood, robot.indexer,

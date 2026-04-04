@@ -114,9 +114,9 @@ public class IndexerSubsystem extends SubsystemBase {
                 kickerRPS = Constants.kIndexerIdleVoltage.get();
                 break;
             case FEED:
-                floorRPS = 6.0;
+                floorRPS = 10.0;
                 beltRPS = 20.0;
-                feederRPS = 20.0;
+                feederRPS = 48.0;
                 kickerRPS = 4.0;
                 break;
             case RINDEX:

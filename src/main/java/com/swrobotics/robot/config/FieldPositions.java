@@ -10,7 +10,7 @@ public class FieldPositions {
     //notation: LDS = Left Driver Station, LC = Left left center, RC = Right Center, RDS = Right Driver Station. 
     // -------------------- Hub --------------------
 public static final Pose2d kBlueHubPose = new Pose2d(4.687, 4.105, new Rotation2d(0));
-public static final Pose2d kRedHubPose  = new Pose2d(4.105,11.853,  new Rotation2d(0));
+public static final Pose2d kRedHubPose  = new Pose2d(11.853, 4.105, new Rotation2d(0));
 
     // -------------------- Pass -------------------
 public static final Pose2d kBluePassPose = new Pose2d(4.2,0, new Rotation2d(0));
