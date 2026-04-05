@@ -4,81 +4,91 @@ import com.swrobotics.lib.utils.MathUtil;
 import com.swrobotics.robot.config.Constants;
 import com.swrobotics.robot.config.FieldPositions;
 import edu.wpi.first.math.geometry.*;
-import edu.wpi.first.math.interpolation.InterpolatingDoubleTreeMap;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.DriverStation;
 
-public class AimCalc {    
-    private static final InterpolatingDoubleTreeMap hoodAngleMap = new InterpolatingDoubleTreeMap();
-    
-    
+public class AimCalc {
 
-    // --- HOOD GEOMETRY ---
-    // 23 degrees: Hood is retracted. Ball pops UP more (67 deg launch). Best for close shots.
-    // 48 degrees: Hood is pushed down. Ball shoots FLATTER (42 deg launch). Best for far shots.
+    private static final double kHubHeightMetersOffset = 0.43;
     private static final double kMinAngleDeg = 23.0;
     private static final double kMaxAngleDeg = 48.0;
 
     // Trajectory Constants 
     private static final double kShooterHeightMeters = Units.inchesToMeters(20); 
     private static final double kHubHeightMeters = 1.257;     
-    private static final double kTargetDepthOffset = 0.15;  
+    private static final double kTargetDepthOffset = 0.25;  
     private static final double kWheelDiameterMeters = Units.inchesToMeters(4.0); 
-    private static final double kShooterEfficiency = 0.85;  
+    private static final double kShooterEfficiency = 0.85; 
+    
+    // Max achievable wheel RPS (assuming 1:3 step-up from Kraken/Falcon)
+    private static final double kMaxWheelRPS = 150.0; 
+
     private static final AimCalc instance = new AimCalc();
     public static AimCalc getInstance() { return instance; }
-    private final InterpolatingDoubleTreeMap rpsMap = new InterpolatingDoubleTreeMap();
+
     private Rotation2d driveAim = new Rotation2d();
     private double lastDist = 0.0;
     private double lastVirtualDist = 0.0;
 
-    private AimCalc() {
-        rpsMap.put(0.0, 40.0);   
-        rpsMap.put(4.0, 60.0);
-        rpsMap.put(4.01, 60.0);
-        rpsMap.put(8.0, 60.0);
+    // Dynamically calculated optimal states
+    private Rotation2d targetHoodAngle = Rotation2d.fromDegrees(kMaxAngleDeg);
+    private double targetWheelRPS = 0.0;
 
-        rpsMap.put(16.5, 90.0);
+    private AimCalc() {}
 
-        double[] testDistances = {0.0, 0.25, 0.5, 0.51, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0, 2.01, 2.25, 2.5, 2.75, 3.0, 3.25, 3.5, 3.75, 3.751, 4.0, 4.25, 4.5, 4.51, 4.75, 5.0, 5.25, 5.5, 5.75, 5.751, 6.0, 6.25, 16.5};
-        for (double d : testDistances) {
-            hoodAngleMap.put(d, calculateLaunchAngle(d, rpsMap.get(d)));
-        }
-    }
-
-   private double calculateLaunchAngle(double distance, double wheelRps) {
-        double vWheel = wheelRps * Math.PI * kWheelDiameterMeters;
-        double vBall = (vWheel / 2.0) * kShooterEfficiency; 
-        
+    private void calculateOptimalTrajectory(double distance) {
         double x = distance + kTargetDepthOffset;
-        double y = kHubHeightMeters - kShooterHeightMeters; 
+        double y = kHubHeightMeters - kShooterHeightMeters + kHubHeightMetersOffset; 
         double g = 9.81;
-        double v2 = vBall * vBall;
 
-        double maxLaunchAngleRad = Math.toRadians(90.0 - kMinAngleDeg);
+        // 1. Start by attempting the shot at maximum possible velocity to minimize Time of Flight
+        double vWheelMax = kMaxWheelRPS * Math.PI * kWheelDiameterMeters;
+        double vBallMax = (vWheelMax / 2.0) * kShooterEfficiency;
         
-        double yAtMinHoodAngle = (x * Math.tan(maxLaunchAngleRad)) 
-                               - ((g * x * x) / (2 * v2 * Math.pow(Math.cos(maxLaunchAngleRad), 2)));
+        // Solve the ballistic trajectory quadratic for tan(theta)
+        double a = (g * x * x) / (2 * vBallMax * vBallMax);
+        double b = -x;
+        double c = y + a;
 
-                               System.out.println(x);
-                               System.out.println(y);
-                               System.out.println(v2);
-        if (yAtMinHoodAngle >= y) {
-            return kMinAngleDeg;
+        double discriminant = (b * b) - (4 * a * c);
+        double launchAngleRad;
+        double requiredVBall = vBallMax;
+
+        if (discriminant >= 0) {
+            // Pick the smaller tan(theta) root for the lowest/fastest arc
+            double u = (-b - Math.sqrt(discriminant)) / (2 * a);
+            launchAngleRad = Math.atan(u);
+        } else {
+            // Fallback if max velocity somehow can't reach (out of range)
+            launchAngleRad = Math.toRadians(45.0); 
         }
 
-        double discriminant = Math.pow(v2, 2) - g * (g * x * x + 2 * y * v2);
+        // 2. Map theoretical launch angle to physical hood angle
+        // Lower launch angle = higher physical hood angle
+        double hoodAngleDeg = 90.0 - Math.toDegrees(launchAngleRad);
 
-        if (discriminant < 0.0) return kMaxAngleDeg; 
+        // 3. Clamp and throttle RPS if angle exceeds mechanical limits
+        if (hoodAngleDeg > kMaxAngleDeg) {
+            hoodAngleDeg = kMaxAngleDeg;
+            double clampedLaunchRad = Math.toRadians(90.0 - kMaxAngleDeg);
+            
+            // Recalculate the lower RPM needed since we are forced to shoot at a steeper arc
+            double vBallSq = (g * x * x) / (2 * Math.pow(Math.cos(clampedLaunchRad), 2) * (x * Math.tan(clampedLaunchRad) - y));
+            if (vBallSq > 0) requiredVBall = Math.sqrt(vBallSq);
 
-        double launchAngleRad = Math.atan((v2 + Math.sqrt(discriminant)) / (g * x));
-        double launchAngleDeg = Math.toDegrees(launchAngleRad);
+        } else if (hoodAngleDeg < kMinAngleDeg) {
+            hoodAngleDeg = kMinAngleDeg;
+            double clampedLaunchRad = Math.toRadians(90.0 - kMinAngleDeg);
+            
+            double vBallSq = (g * x * x) / (2 * Math.pow(Math.cos(clampedLaunchRad), 2) * (x * Math.tan(clampedLaunchRad) - y));
+            if (vBallSq > 0) requiredVBall = Math.sqrt(vBallSq);
+        }
 
-        double physicalHoodAngle = 90.0 - launchAngleDeg; 
-
-        return MathUtil.clamp(physicalHoodAngle, kMinAngleDeg, kMaxAngleDeg);
-        
+        // Convert the required ball velocity back to Wheel RPS
+        double requiredVWheel = (requiredVBall / kShooterEfficiency) * 2.0;
+        this.targetWheelRPS = MathUtil.clamp(requiredVWheel / (Math.PI * kWheelDiameterMeters), 0, kMaxWheelRPS);
+        this.targetHoodAngle = Rotation2d.fromDegrees(MathUtil.clamp(hoodAngleDeg, kMinAngleDeg, kMaxAngleDeg));
     }
     
     public void update(Pose2d robotPose, ChassisSpeeds fieldSpeeds) {
@@ -92,27 +102,29 @@ public class AimCalc {
         );
 
         lastDist = shooterPos.getDistance(hub);
-        double tof = 0.4 + (0.1 * lastDist); 
         
+        // Iterative approximation for moving target ToF
+        double estimatedToF = lastDist / 18.0; 
         Translation2d virtualTarget = hub.minus(new Translation2d(
-            fieldSpeeds.vxMetersPerSecond * tof,
-            fieldSpeeds.vyMetersPerSecond * tof
+            fieldSpeeds.vxMetersPerSecond * estimatedToF,
+            fieldSpeeds.vyMetersPerSecond * estimatedToF
         ));
         
         lastVirtualDist = virtualTarget.getDistance(shooterPos);
         driveAim = virtualTarget.minus(shooterPos).getAngle();
+
+        // Calculate synchronized hood and RPS
+        calculateOptimalTrajectory(lastVirtualDist);
     }
 
     public Rotation2d getHoodAngle(boolean passing) {
-        Double targetDegrees = passing ? kMaxAngleDeg :hoodAngleMap.get(lastDist);
-        return Rotation2d.fromDegrees(Math.max(kMinAngleDeg, Math.min(kMaxAngleDeg, targetDegrees)));
+        return passing ? Rotation2d.fromDegrees(kMaxAngleDeg) : targetHoodAngle;
     }
 
     public double getShooterRPS(boolean passing) {
-        return passing ? 90.0 : rpsMap.get(lastVirtualDist);
+        return passing ? targetWheelRPS + 10.0 : targetWheelRPS;
     }
 
     public Rotation2d getDrivebaseAimAngle() { return driveAim; }
     public double getLastVirtualDistance() { return lastDist; }
-
 }

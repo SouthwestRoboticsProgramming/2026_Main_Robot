@@ -70,6 +70,7 @@ public final class ControlBoard extends SubsystemBase {
 
 
     private final DriveAccelFilter driveControlFilter;
+    public enum RoboState { SCORE, PASS, NULL }
 
     public ControlBoard(RobotContainer robot) {
         this.robot = robot;
@@ -105,14 +106,14 @@ public final class ControlBoard extends SubsystemBase {
 
         driver.rightTrigger().whileTrue(robot.hood.setMode(HoodState.AUTO_TRACK)
                 .alongWith(robot.shooter.commandSetState(ShooterSubsystem.State.AUTO)
-                .withTimeout(1)
+                .withTimeout(.75)
                 .andThen(robot.indexer.commandSetState(IndexerSubsystem.State.FEED))
                 .alongWith(robot.expansion.commandSetState(ExpansionSubsystem.State.SHOOT))));
                 
         driver.rightBumper()
                 .whileTrue(robot.shooter.commandSetState(ShooterSubsystem.State.PASS)
                 .alongWith(robot.hood.setMode(HoodState.PASSING))
-                .withTimeout(1.0)
+                .withTimeout(.75)
                 .andThen(robot.indexer.commandSetState(IndexerSubsystem.State.FEED)));
 
         // driver.rightTrigger().whileTrue(DriveCommands.shootOnTheMove(robot.drive, robot.shooter, robot.hood, robot.indexer,
@@ -133,10 +134,10 @@ public final class ControlBoard extends SubsystemBase {
         operator.rightTrigger()
                 .whileTrue(robot.shooter.commandSetState(ShooterSubsystem.State.PASS)
                 .alongWith(robot.hood.setMode(HoodState.PASSING))
-                .withTimeout(1.5)
+                .withTimeout(.75)
                 .andThen(robot.indexer.commandSetState(IndexerSubsystem.State.FEED)));
 
-        operator.leftTrigger()
+        operator.rightTrigger()
                 .whileTrue(robot.shooter.commandSetState(ShooterSubsystem.State.SHOOT)
                 .withTimeout(.75)
                 .andThen(robot.indexer.commandSetState(IndexerSubsystem.State.FEED)));

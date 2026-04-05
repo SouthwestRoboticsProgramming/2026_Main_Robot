@@ -28,7 +28,7 @@ public class ExpansionSubsystem extends SubsystemBase {
     private final TalonFX motor;
     private final PositionVoltage positionControl = new PositionVoltage(0).withEnableFOC(false);
     private State targetState;
-    private final double kOscillationSpeed = 10.0;
+    private final double kOscillationSpeed = 7.5;
 
     public ExpansionSubsystem() {
 
@@ -38,10 +38,10 @@ public class ExpansionSubsystem extends SubsystemBase {
         config.MotorOutput.NeutralMode = NeutralModeValue.Coast;
         config.CurrentLimits.SupplyCurrentLimit = 80;
         config.CurrentLimits.SupplyCurrentLimitEnable = true;
-        config.Slot0.kP = 1.5;
+        config.Slot0.kP = .5;
         config.Slot0.kI = 0;
         config.Slot0.kD = 0.00;
-        config.Slot0.kG = ;
+        config.Slot0.kG = 0;
 
         config.apply(motor);
         
@@ -57,16 +57,16 @@ public class ExpansionSubsystem extends SubsystemBase {
         targetRotations = 0;
 
         switch (targetState) {
-            case EXTENDED: targetRotations = 28.0;
+            case EXTENDED: targetRotations = 26.0;
             setDefaultCommand(commandSetState(State.LIFTED));
             break;
             case RETRACTED: targetRotations = 0;
             break;
-            case SHOOT: targetRotations = 16.0 - (6.0 * Math.sin(Timer.getFPGATimestamp() * kOscillationSpeed));
+            case SHOOT: targetRotations = 12.0 - (6.0 * Math.sin(Timer.getFPGATimestamp() * kOscillationSpeed));
             
             setDefaultCommand(commandSetState(State.EXTENDED));
             break;
-            case LIFTED: targetRotations = 10.0;
+            case LIFTED: targetRotations = 8.0;
             break;
         }
 

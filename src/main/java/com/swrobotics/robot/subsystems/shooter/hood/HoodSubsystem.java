@@ -6,7 +6,6 @@ import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.swrobotics.lib.ctre.TalonFXConfigHelper;
-import com.swrobotics.robot.config.Constants;
 import com.swrobotics.robot.config.IOAllocation;
 import com.swrobotics.robot.control.AimCalc;
 import edu.wpi.first.math.MathUtil;
@@ -16,7 +15,6 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class HoodSubsystem extends SubsystemBase {
-    // 26 degrees is bottom (hard stop), 50 degrees is top
     public static final double kMinAngleRot = 23.0 / 360.0; 
     public static final double kMaxAngleRot = 48.0 / 360.0;
     public static final double kHoodGearRatio = 24.0; 
@@ -40,11 +38,13 @@ public class HoodSubsystem extends SubsystemBase {
         
         config.Feedback.SensorToMechanismRatio = kHoodGearRatio; 
         
-        // config.CurrentLimits.StatorCurrentLimit = 80.0;
-        // config.CurrentLimits.StatorCurrentLimitEnable = true;
+        // Current limits to protect the 24:1 geartrain against fast snap-to-position forces
+        config.CurrentLimits.StatorCurrentLimit = 40.0;
+        config.CurrentLimits.StatorCurrentLimitEnable = true;
 
-
-        config.Slot0.kP = 50.0; 
+        // kD added to dampen the highly aggressive kP, preventing oscillation on fast tracking
+        config.Slot0.kP = 60.0; 
+        config.Slot0.kD = 3.5;
         config.Slot0.kG = 0;
 
         config.apply(motor);
@@ -62,7 +62,6 @@ public class HoodSubsystem extends SubsystemBase {
                 boolean isStalled = current > 20.0; 
 
                 if (bypassedInrush && isStalled) {
-
                     motor.setPosition(kMinAngleRot); 
                     targetRotations = kMinAngleRot;
                     state = HoodState.IDLE;
@@ -81,7 +80,7 @@ public class HoodSubsystem extends SubsystemBase {
                 break;
 
             case PASSING:
-                targetRotations = AimCalc.getInstance().getHoodAngle(true).getRotations(); ;
+                targetRotations = AimCalc.getInstance().getHoodAngle(true).getRotations(); 
                 applyPositionControl();
                 break;
 
@@ -93,14 +92,12 @@ public class HoodSubsystem extends SubsystemBase {
     }
 
     private void applyPositionControl() {
-        // Constraints: 26 to 50 degrees
         targetRotations = MathUtil.clamp(targetRotations, kMinAngleRot, kMaxAngleRot);
         motor.setControl(positionControl.withPosition(targetRotations));
     }
 
     public Command manualNudge(double degrees) {
         return runOnce(() -> {
-            // FIX 3: Immediate feedback by pulling current position before adding nudge
             this.state = HoodState.MANUAL;
             double currentPos = motor.getPosition().getValueAsDouble();
             this.targetRotations = currentPos + (degrees / 360.0);
@@ -108,26 +105,25 @@ public class HoodSubsystem extends SubsystemBase {
     }
 
     public Command setMode(HoodState newState) {
-        return run(
-            () -> {
+        return run(() -> {
             this.state = newState;
-            if (newState == HoodState.HOMING) 
-            homingTimer.restart();
-        }
-        );
+            if (newState == HoodState.HOMING) homingTimer.restart();
+        });
+    }
+
+    public boolean isAtTarget() {
+        return Math.abs(motor.getPosition().getValueAsDouble() - targetRotations) < (0.5 / 360.0);
     }
     
-
     private void updateTelemetry() {
         SmartDashboard.putString("Hood/State", state.name());
-        SmartDashboard.putNumber("Hood/Actual Deg", motor.getPosition().getValueAsDouble() * 360.0);
-        SmartDashboard.putNumber("Hood/Target Deg", targetRotations * 360.0 );
-        SmartDashboard.putNumber("Hood/lastVirtualDist", AimCalc.getInstance().getLastVirtualDistance() );
+        SmartDashboard.putNumber("Hood/Actual Deg", getMeasurementDegrees());
+        SmartDashboard.putNumber("Hood/Target Deg", targetRotations * 360.0);
+        SmartDashboard.putBoolean("Hood/At Target", isAtTarget());
+        SmartDashboard.putNumber("Hood/lastVirtualDist", AimCalc.getInstance().getLastVirtualDistance());
     }
 
-    // Add this inside your HoodSubsystem class
-public double getMeasurementDegrees() {
-    // Converts the TalonFX rotations (0-1) to degrees (0-360)
-    return motor.getPosition().getValueAsDouble() * 360.0;
-}
+    public double getMeasurementDegrees() {
+        return motor.getPosition().getValueAsDouble() * 360.0;
+    }
 }

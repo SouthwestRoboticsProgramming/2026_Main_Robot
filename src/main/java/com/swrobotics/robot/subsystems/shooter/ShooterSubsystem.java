@@ -18,7 +18,8 @@ public class ShooterSubsystem extends SubsystemBase {
 
     private final TalonFX motorL;
     private final TalonFX motorR;
-    private final VelocityVoltage velocityControl = new VelocityVoltage(0).withEnableFOC(true);
+    // Updated frequency to 50Hz for faster PID loop response during ball contact
+    private final VelocityVoltage velocityControl = new VelocityVoltage(0).withEnableFOC(true).withUpdateFreqHz(50);
 
     private State targetState = State.IDLE;
     private double currentMotorTargetRPS = 0.0;
@@ -30,10 +31,14 @@ public class ShooterSubsystem extends SubsystemBase {
         TalonFXConfigHelper config = new TalonFXConfigHelper();
         config.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
         config.MotorOutput.NeutralMode = NeutralModeValue.Coast;
-        config.CurrentLimits.StatorCurrentLimit = 80;
+        config.CurrentLimits.StatorCurrentLimit = 120;
         config.CurrentLimits.StatorCurrentLimitEnable = true;
-        config.Slot0.kP = 0.2;
+        
+        config.Slot0.kS = 0.1;
         config.Slot0.kV = 0.13;
+        config.Slot0.kA = 0.005;
+        config.Slot0.kP = 0.5; 
+        config.Slot0.kD = 0.01;
 
         config.apply(motorL, motorR);
         motorR.setControl(new Follower(motorL.getDeviceID(), MotorAlignmentValue.Opposed));
@@ -48,20 +53,22 @@ public class ShooterSubsystem extends SubsystemBase {
             case SHOOT: wheelRps = 20; break;
             case WARM: wheelRps = 7.5; break;
             case RINDEX: wheelRps = -10; break;
-            case AUTO: wheelRps = AimCalc.getInstance().getShooterRPS(false)/3; break;
-            case PASS: wheelRps = AimCalc.getInstance().getShooterRPS(true)/3; break;
+            case AUTO: wheelRps = AimCalc.getInstance().getShooterRPS(false) / 3.0; break;
+            case PASS: wheelRps = AimCalc.getInstance().getShooterRPS(true) / 3.0; break;
         }
 
-        currentMotorTargetRPS = wheelRps ;
+        currentMotorTargetRPS = wheelRps;
         motorL.setControl(velocityControl.withVelocity(currentMotorTargetRPS));
 
-        SmartDashboard.putNumber("Shooter/Wheel Target RPS", wheelRps * 3);
+        SmartDashboard.putNumber("Shooter/Wheel Target RPS", wheelRps * 3.0);
+        SmartDashboard.putNumber("Shooter/Wheel Actual RPS", motorL.getVelocity().getValueAsDouble() * 3.0);
         SmartDashboard.putBoolean("Shooter/At Speed", isAtTargetRPS());
     }
 
     public boolean isAtTargetRPS() {
         if (targetState != State.SHOOT && targetState != State.AUTO && targetState != State.PASS) return false;
-        return Math.abs(motorL.getVelocity().getValueAsDouble() - currentMotorTargetRPS) < 1.0;
+        // Opened tolerance slightly to 1.5 RPS to prevent feeder hesitation on consecutive shots
+        return Math.abs(motorL.getVelocity().getValueAsDouble() - currentMotorTargetRPS) < 1.5;
     }
 
     public Command commandSetState(State state) { return run(() -> this.targetState = state); }
