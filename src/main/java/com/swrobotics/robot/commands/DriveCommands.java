@@ -164,7 +164,6 @@ public static Command shootOnTheMove(
             .withRotationalRate(rotOutput));
 
         
-        boolean aimed = turnPid.atSetpoint();
 
 
     }, drive)

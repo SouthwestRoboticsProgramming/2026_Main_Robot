@@ -42,4 +42,4 @@ The `AimCalc.java` class uses an iterative search to find the lowest possible RP
 > [!TIP]
 > To update the diagram below, replace `shooter_diagram.png` in your `/images` folder.
 
-![Shooting Physics Diagram](images/shooter_diagram.png)
+![Shooting Physics Diagram](2026_MAIN_ROBOT/images/shooter_diagram.png)
