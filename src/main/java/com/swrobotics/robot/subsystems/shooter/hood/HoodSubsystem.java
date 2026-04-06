@@ -24,7 +24,7 @@ public class HoodSubsystem extends SubsystemBase {
     private final VoltageOut voltageControl = new VoltageOut(0);
 
     public enum HoodState { HOMING, IDLE, AUTO_TRACK, PASSING, MANUAL }
-    private HoodState state = HoodState.HOMING;
+    private HoodState state = HoodState.AUTO_TRACK;
     
     private double targetRotations = kMinAngleRot;
     private final Timer homingTimer = new Timer();

@@ -92,7 +92,7 @@ public final class ControlBoard extends SubsystemBase {
         driver.rightTrigger().whileTrue(DriveCommands.shootOnTheMove(robot.drive,
                 () -> -driver.getLeftY(),
                 () -> -driver.getLeftX()
-        ).withTimeout(.5).alongWith(robot.indexer.commandSetState(IndexerSubsystem.State.FEED)
+        ).withTimeout(.5).andThen(robot.indexer.commandSetState(IndexerSubsystem.State.FEED)
         .alongWith(robot.expansion.commandShoot())));
 
         driver.rightBumper()

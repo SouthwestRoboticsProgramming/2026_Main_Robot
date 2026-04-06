@@ -32,7 +32,7 @@ public class AutonomousCommands {
     }
 
     public static Command getRetractCommand(RobotContainer robot) {
-        return robot.expansion.commandSetState(ExpansionSubsystem.State.LIFTED).withTimeout(.3);
+        return robot.expansion.commandSetState(ExpansionSubsystem.State.STOWED).withTimeout(.3);
     }
 
     public static Command getShootPath(RobotContainer robot) {

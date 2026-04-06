@@ -13,16 +13,15 @@ public class AimCalc {
     private static final double kHubHeightMetersOffset = 0.43;
     private static final double kMinAngleDeg = 23.0;
     private static final double kMaxAngleDeg = 48.0;
-
-    // Trajectory Constants 
+ 
     private static final double kShooterHeightMeters = Units.inchesToMeters(20); 
-    private static final double kHubHeightMeters = 1.257;     
+    private static final double kHubHeightMeters = 1.257;      
     private static final double kTargetDepthOffset = 0.25;  
     private static final double kWheelDiameterMeters = Units.inchesToMeters(4.0); 
     private static final double kShooterEfficiency = 0.85; 
     
-    // Max achievable wheel RPS (assuming 1:3 step-up from Kraken/Falcon)
-    private static final double kMaxWheelRPS = 150.0; 
+    private static final double kMaxWheelRPS = 150.0;
+    private static final double kRPSStep = 5.0; 
 
     private static final AimCalc instance = new AimCalc();
     public static AimCalc getInstance() { return instance; }
@@ -30,8 +29,8 @@ public class AimCalc {
     private Rotation2d driveAim = new Rotation2d();
     private double lastDist = 0.0;
     private double lastVirtualDist = 0.0;
+    private double lastToF = 0.0; 
 
-    // Dynamically calculated optimal states
     private Rotation2d targetHoodAngle = Rotation2d.fromDegrees(kMaxAngleDeg);
     private double targetWheelRPS = 0.0;
 
@@ -42,53 +41,73 @@ public class AimCalc {
         double y = kHubHeightMeters - kShooterHeightMeters + kHubHeightMetersOffset; 
         double g = 9.81;
 
-        // 1. Start by attempting the shot at maximum possible velocity to minimize Time of Flight
-        double vWheelMax = kMaxWheelRPS * Math.PI * kWheelDiameterMeters;
-        double vBallMax = (vWheelMax / 2.0) * kShooterEfficiency;
+        boolean foundGear = false;
+
+        for (double rps = 30.0; rps <= kMaxWheelRPS; rps += kRPSStep) {
+            double vWheel = rps * Math.PI * kWheelDiameterMeters;
+            double vBall = (vWheel / 2.0) * kShooterEfficiency;
+
+            double k = (g * x * x) / (2 * vBall * vBall);
+            double discriminant = (x * x) - (4 * k * (y + k));
+
+            if (discriminant >= 0) {
+                double tanTheta = (x + Math.sqrt(discriminant)) / (2 * k);
+                double thetaRad = Math.atan(tanTheta);
+                double hoodDeg = 90.0 - Math.toDegrees(thetaRad);
+
+                // If this gear produces a valid hood angle, we lock it in and stop searching.
+                if (hoodDeg >= kMinAngleDeg && hoodDeg <= kMaxAngleDeg) {
+                    this.targetWheelRPS = rps;
+                    this.targetHoodAngle = Rotation2d.fromDegrees(hoodDeg);
+                    updateToF(x, rps, hoodDeg);
+                    foundGear = true;
+                    break;
+                }
+            }
+        }
+
+        // Fallback: If no gear perfectly matched (either too close or too far)
+        if (!foundGear) {
+            double rpsForMinAngle = calculateExactRPS(x, y, kMinAngleDeg);
+            double rpsForMaxAngle = calculateExactRPS(x, y, kMaxAngleDeg);
+
+            // If a very low RPS works for the minimum angle, we are extremely close to the hub.
+            if (rpsForMinAngle > 0 && rpsForMinAngle < 80.0) {
+                this.targetWheelRPS = MathUtil.clamp(rpsForMinAngle, 0, kMaxWheelRPS);
+                this.targetHoodAngle = Rotation2d.fromDegrees(kMinAngleDeg);
+                updateToF(x, this.targetWheelRPS, kMinAngleDeg);
+            } else {
+                // Otherwise, we are too far. Default to max angle and max out the RPS.
+                this.targetWheelRPS = rpsForMaxAngle > 0 ? MathUtil.clamp(rpsForMaxAngle, 0, kMaxWheelRPS) : kMaxWheelRPS;
+                this.targetHoodAngle = Rotation2d.fromDegrees(kMaxAngleDeg);
+                updateToF(x, this.targetWheelRPS, kMaxAngleDeg);
+            }
+        }
+    }
+
+    private double calculateExactRPS(double x, double y, double hoodAngleDeg) {
+        double launchRad = Math.toRadians(90.0 - hoodAngleDeg);
+        double cosSq = Math.pow(Math.cos(launchRad), 2);
+        double tan = Math.tan(launchRad);
         
-        // Solve the ballistic trajectory quadratic for tan(theta)
-        double a = (g * x * x) / (2 * vBallMax * vBallMax);
-        double b = -x;
-        double c = y + a;
-
-        double discriminant = (b * b) - (4 * a * c);
-        double launchAngleRad;
-        double requiredVBall = vBallMax;
-
-        if (discriminant >= 0) {
-            // Pick the smaller tan(theta) root for the lowest/fastest arc
-            double u = (-b - Math.sqrt(discriminant)) / (2 * a);
-            launchAngleRad = Math.atan(u);
-        } else {
-            // Fallback if max velocity somehow can't reach (out of range)
-            launchAngleRad = Math.toRadians(45.0); 
-        }
-
-        // 2. Map theoretical launch angle to physical hood angle
-        // Lower launch angle = higher physical hood angle
-        double hoodAngleDeg = 90.0 - Math.toDegrees(launchAngleRad);
-
-        // 3. Clamp and throttle RPS if angle exceeds mechanical limits
-        if (hoodAngleDeg > kMaxAngleDeg) {
-            hoodAngleDeg = kMaxAngleDeg;
-            double clampedLaunchRad = Math.toRadians(90.0 - kMaxAngleDeg);
-            
-            // Recalculate the lower RPM needed since we are forced to shoot at a steeper arc
-            double vBallSq = (g * x * x) / (2 * Math.pow(Math.cos(clampedLaunchRad), 2) * (x * Math.tan(clampedLaunchRad) - y));
-            if (vBallSq > 0) requiredVBall = Math.sqrt(vBallSq);
-
-        } else if (hoodAngleDeg < kMinAngleDeg) {
-            hoodAngleDeg = kMinAngleDeg;
-            double clampedLaunchRad = Math.toRadians(90.0 - kMinAngleDeg);
-            
-            double vBallSq = (g * x * x) / (2 * Math.pow(Math.cos(clampedLaunchRad), 2) * (x * Math.tan(clampedLaunchRad) - y));
-            if (vBallSq > 0) requiredVBall = Math.sqrt(vBallSq);
-        }
-
-        // Convert the required ball velocity back to Wheel RPS
+        double vBallSq = (9.81 * x * x) / (2 * cosSq * (x * tan - y));
+        if (vBallSq <= 0) return -1;
+        
+        double requiredVBall = Math.sqrt(vBallSq);
         double requiredVWheel = (requiredVBall / kShooterEfficiency) * 2.0;
-        this.targetWheelRPS = MathUtil.clamp(requiredVWheel / (Math.PI * kWheelDiameterMeters), 0, kMaxWheelRPS);
-        this.targetHoodAngle = Rotation2d.fromDegrees(MathUtil.clamp(hoodAngleDeg, kMinAngleDeg, kMaxAngleDeg));
+        return requiredVWheel / (Math.PI * kWheelDiameterMeters);
+    }
+
+    private void updateToF(double x, double rps, double hoodAngleDeg) {
+        double vWheel = rps * Math.PI * kWheelDiameterMeters;
+        double vBall = (vWheel / 2.0) * kShooterEfficiency;
+        double launchRad = Math.toRadians(90.0 - hoodAngleDeg);
+        
+        if (vBall > 0) {
+            this.lastToF = x / (vBall * Math.cos(launchRad));
+        } else {
+            this.lastToF = x / 18.0; 
+        }
     }
     
     public void update(Pose2d robotPose, ChassisSpeeds fieldSpeeds) {
@@ -103,8 +122,7 @@ public class AimCalc {
 
         lastDist = shooterPos.getDistance(hub);
         
-        // Iterative approximation for moving target ToF
-        double estimatedToF = lastDist / 18.0; 
+        double estimatedToF = (lastToF > 0) ? lastToF : (lastDist / 18.0); 
         Translation2d virtualTarget = hub.minus(new Translation2d(
             fieldSpeeds.vxMetersPerSecond * estimatedToF,
             fieldSpeeds.vyMetersPerSecond * estimatedToF
@@ -113,7 +131,6 @@ public class AimCalc {
         lastVirtualDist = virtualTarget.getDistance(shooterPos);
         driveAim = virtualTarget.minus(shooterPos).getAngle();
 
-        // Calculate synchronized hood and RPS
         calculateOptimalTrajectory(lastVirtualDist);
     }
 
@@ -126,5 +143,6 @@ public class AimCalc {
     }
 
     public Rotation2d getDrivebaseAimAngle() { return driveAim; }
-    public double getLastVirtualDistance() { return lastDist; }
+    
+    public double getLastVirtualDistance() { return lastVirtualDist; } 
 }
