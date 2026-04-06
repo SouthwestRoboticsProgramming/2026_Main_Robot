@@ -2,7 +2,6 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/Team-2129-blueviolet?style=for-the-badge&logo=target" />
-  <img src="https://img.shields.io/badge/Robot-Swerve-8A2BE2?style=for-the-badge" />
   <img src="https://img.shields.io/badge/Main_Language-Java-purple?style=for-the-badge&logo=java" />
 </p>
 
@@ -10,25 +9,18 @@
 
 ## 💜 Project Overview
 
-Welcome to the official repository for **Ultraviolet's 2026 FRC Robot**. This season marked our transition to Swerve drive and advanced automation.
+Welcome to the official repository for **Ultraviolet's 2026 FRC Robot**. 
 
 ### ⚙️ Robot Features
-* **Swerve Drive:** Our first year running high-agility powertrain software.
-* **Roller & Belt Indexer:** Smooth, jam-free game piece handling.
-* **Pivoting Drop-down Intake:** High-speed ground acquisition.
+* **Swerve Drive:** Our 4th year running swerve
+* **Roller & Belt Indexer:** 
+* **Pivoting Drop-down Intake:** 
 * **Auto-Hood Shooter:** Dynamic math-based aiming for long-range accuracy.
 
 > [!IMPORTANT]
 > ### 🔍 Technical Deep Dive
 > For the "Heavy Stuff"—including the custom physics and unique math behind our shooter—please visit the **[SHOOTER_README.md](./SHOOTER_README.md)**.
 
----
-
-## ⚡ Programming & Electrical
-<kbd> <br> <b>Software:</b> Java / WPILib / SwerveLib <br> </kbd>
-<kbd> <br> <b>Electrical:</b> CANivore / Kraken X60s / PDH <br> </kbd>
-
----
 
 ## 🎙️ A Message from Auggie
 `Main Programmer & Electrical`
