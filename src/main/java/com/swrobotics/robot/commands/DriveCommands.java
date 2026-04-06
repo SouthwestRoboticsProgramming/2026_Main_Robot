@@ -142,9 +142,6 @@ public final class DriveCommands {
 
 public static Command shootOnTheMove(
         SwerveDriveSubsystem drive,
-        ShooterSubsystem shooter,
-        HoodSubsystem hood,
-        IndexerSubsystem indexer,
         Supplier<Double> translationX,
         Supplier<Double> translationY
 ) {
@@ -166,24 +163,13 @@ public static Command shootOnTheMove(
             .withVelocityY(translationY.get())
             .withRotationalRate(rotOutput));
 
-        shooter.commandSetState(ShooterSubsystem.State.SHOOT);
-        hood.setMode(HoodSubsystem.HoodState.AUTO_TRACK);
         
         boolean aimed = turnPid.atSetpoint();
-        boolean spunUp = shooter.isAtTargetRPS();
 
-        if (aimed && spunUp ) {
-            indexer.setTargetState(IndexerSubsystem.State.FEED);
-        } else {
-            indexer.setTargetState(IndexerSubsystem.State.IDLE);
-        }
-    }, drive, shooter, hood, indexer)
+
+    }, drive)
     .finallyDo(() -> {
-        hood.setMode(HoodSubsystem.HoodState.IDLE); // Drives back to 0
-        shooter.commandSetState(ShooterSubsystem.State.IDLE);
-        
-        // Assuming your Indexer has an IDLE or STOP state
-        indexer.setTargetState(IndexerSubsystem.State.IDLE); 
+
     });
 }
 

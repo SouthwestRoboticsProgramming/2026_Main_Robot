@@ -1,15 +1,11 @@
 package com.swrobotics.robot.subsystems.intake.expansion;
 
-import com.ctre.phoenix6.controls.PositionVoltage;
-import com.ctre.phoenix6.hardware.CANcoder;
+import com.ctre.phoenix6.configs.TalonFXConfiguration;
+import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
-
-import com.swrobotics.lib.ctre.TalonFXConfigHelper;
 import com.swrobotics.robot.config.IOAllocation;
-import com.swrobotics.robot.config.Constants;
-
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -19,76 +15,84 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 public class ExpansionSubsystem extends SubsystemBase {
 
     public enum State {
-        RETRACTED,
-        EXTENDED,
-        SHOOT,
-        LIFTED
+        RETRACTED(0.0),
+        STOWED(6.0),
+        EXTENDED(26.0), 
+        SHOOT(0.0); 
+
+        public final double position;
+        State(double position) { this.position = position; }
     }
 
     private final TalonFX motor;
-    private final PositionVoltage positionControl = new PositionVoltage(0).withEnableFOC(false);
-    private State targetState;
+    private final MotionMagicVoltage request = new MotionMagicVoltage(0);
+    
+    private State targetState = State.RETRACTED;
     private final double kOscillationSpeed = 7.5;
+    private final double kOscillationAmp = 4.0;
+    private final double kOscillationCenter = 10.0;
 
     public ExpansionSubsystem() {
-
         motor = IOAllocation.CAN.kExpansionMotor.createTalonFX();
-        TalonFXConfigHelper config = new TalonFXConfigHelper();
-        config.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
-        config.MotorOutput.NeutralMode = NeutralModeValue.Coast;
-        config.CurrentLimits.SupplyCurrentLimit = 80;
-        config.CurrentLimits.SupplyCurrentLimitEnable = true;
-        config.Slot0.kP = .5;
-        config.Slot0.kI = 0;
-        config.Slot0.kD = 0.00;
-        config.Slot0.kG = 0;
 
-        config.apply(motor);
+        TalonFXConfiguration config = new TalonFXConfiguration();
         
-        motor.setPosition(0);
-        targetState = State.RETRACTED;
+        // Motor Physicals
+        config.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
+        config.MotorOutput.NeutralMode = NeutralModeValue.Brake; // Brake is safer for pivots
+        
+        // Current Limits to protect the Kraken and chain
+        config.CurrentLimits.SupplyCurrentLimit = 60; 
+        config.CurrentLimits.SupplyCurrentLimitEnable = true;
 
-        setDefaultCommand(commandSetState(State.LIFTED));
+        // PID + Motion Magic Gains
+        config.Slot0.kP = 2.0; 
+        config.Slot0.kI = 0;
+        config.Slot0.kD = 0.1;
+        config.MotionMagic.MotionMagicCruiseVelocity = 50; // rotations per sec
+        config.MotionMagic.MotionMagicAcceleration = 100;   // rotations per sec^2
+        config.MotionMagic.MotionMagicJerk = 400;           // Smooths out starts/stops
+
+        config.SoftwareLimitSwitch.ForwardSoftLimitThreshold = 30.0;
+        config.SoftwareLimitSwitch.ForwardSoftLimitEnable = true;
+        config.SoftwareLimitSwitch.ReverseSoftLimitThreshold = -2.0;
+        config.SoftwareLimitSwitch.ReverseSoftLimitEnable = true;
+
+        motor.getConfigurator().apply(config);
+        motor.setPosition(0);
+
+        this.setDefaultCommand(run(() -> setTargetState(State.STOWED)));
     }
 
     @Override
     public void periodic() {
         double targetRotations;
-        targetRotations = 0;
 
-        switch (targetState) {
-            case EXTENDED: targetRotations = 26.0;
-            setDefaultCommand(commandSetState(State.LIFTED));
-            break;
-            case RETRACTED: targetRotations = 0;
-            break;
-            case SHOOT: targetRotations = 12.0 - (6.0 * Math.sin(Timer.getFPGATimestamp() * kOscillationSpeed));
-            
-            setDefaultCommand(commandSetState(State.EXTENDED));
-            break;
-            case LIFTED: targetRotations = 8.0;
-            break;
+        if (targetState == State.SHOOT) {
+            targetRotations = kOscillationCenter + (kOscillationAmp * Math.sin(Timer.getFPGATimestamp() * kOscillationSpeed));
+        } else {
+            targetRotations = targetState.position;
         }
 
-        motor.setControl(positionControl.withPosition(targetRotations));
-        update();
+        // Apply control
+        motor.setControl(request.withPosition(targetRotations));
+
+        // Telemetry
+        SmartDashboard.putString("Expansion/State", targetState.name());
+        SmartDashboard.putNumber("Expansion/Motor Rotations", motor.getPosition().getValueAsDouble());
+        SmartDashboard.putNumber("Expansion/Target Rotations", targetRotations);
     }
 
-    public void setTargetState(State targetState) {
-        this.targetState = targetState;
+    public void setTargetState(State state) {
+        this.targetState = state;
     }
 
-    public Command commandSetState(State targetState) {
-        return Commands.run(() -> setTargetState(targetState), this);
-    }
-
-    private void update() {
-        SmartDashboard.putString("Intake/Expansion/State", targetState.name());
-        
+    public Command commandSetState(State state) {
+        return run(() -> setTargetState(state)).withName("SetExpansion:" + state.name());
     }
     
-
-
-    
-
+    public Command commandShoot() {
+        return Commands.run(() -> setTargetState(State.SHOOT), this)
+                .finallyDo((interrupted) -> setTargetState(State.EXTENDED));
+    }
 }

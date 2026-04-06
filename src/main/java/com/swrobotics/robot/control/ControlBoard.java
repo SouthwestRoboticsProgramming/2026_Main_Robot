@@ -36,28 +36,13 @@ public final class ControlBoard extends SubsystemBase {
      *
      * Driver:
      * Left stick: drive translation
-     * Right stick X: drive rotation
-     * 
-     * Left trigger: intake
-     * Left bumper: reverse indexer
-     * Right trigger: shoot on move
-     * 
-     * X Button: expansion
-     * y Button: Pass mode
-     * a Button: log successful shot (for tuning)
-     * b Button: hood homing
-     * 
-     * D-Pad Up: reset gyro
-     * D-Pad Down: Brake mode (lock swerve modules)
-     *
-     * Operator:
-     * Right trigger: Pass 
-     * Left trigger: Shoot
-     * 
-     * X Button: manual hood nudge up
-     * B Button: manual hood nudge down
-     * 
-     * D-Pad Up: hood homing
+     * Right stick X: Drive rotation
+     * Left trigger: Intake
+     * Left bumper: Indexer reverse
+     * Right trigger: Feed
+     * Right bumper: pass
+     * X: Extend expansion
+
      */
 
     
@@ -70,7 +55,8 @@ public final class ControlBoard extends SubsystemBase {
 
 
     private final DriveAccelFilter driveControlFilter;
-    public enum RoboState { SCORE, PASS, NULL }
+    public enum RoboState { AUTO, PASS, NULL }
+    private RoboState TargetRoboState = RoboState.NULL;
 
     public ControlBoard(RobotContainer robot) {
         this.robot = robot;
@@ -101,34 +87,26 @@ public final class ControlBoard extends SubsystemBase {
         /* --- Intake/indexer --- */
 
         driver.leftTrigger().whileTrue(robot.intake.commandSetState(IntakeSubsystem.State.INTAKE));
-
         driver.leftBumper().whileTrue(robot.indexer.commandSetState(IndexerSubsystem.State.RINDEX));
 
-        driver.rightTrigger().whileTrue(robot.hood.setMode(HoodState.AUTO_TRACK)
-                .alongWith(robot.shooter.commandSetState(ShooterSubsystem.State.AUTO)
-                .withTimeout(.75)
-                .andThen(robot.indexer.commandSetState(IndexerSubsystem.State.FEED))
-                .alongWith(robot.expansion.commandSetState(ExpansionSubsystem.State.SHOOT))));
-                
-        driver.rightBumper()
-                .whileTrue(robot.shooter.commandSetState(ShooterSubsystem.State.PASS)
-                .alongWith(robot.hood.setMode(HoodState.PASSING))
-                .withTimeout(.75)
-                .andThen(robot.indexer.commandSetState(IndexerSubsystem.State.FEED)));
+        driver.rightTrigger().whileTrue(DriveCommands.shootOnTheMove(robot.drive,
+                () -> -driver.getLeftY(),
+                () -> -driver.getLeftX()
+        ).withTimeout(.5).alongWith(robot.indexer.commandSetState(IndexerSubsystem.State.FEED)
+        .alongWith(robot.expansion.commandShoot())));
 
-        // driver.rightTrigger().whileTrue(DriveCommands.shootOnTheMove(robot.drive, robot.shooter, robot.hood, robot.indexer,
-        //                 () -> -driver.getLeftY(),
-        //                 () -> -driver.getLeftX()
-        //         ));
+        driver.rightBumper()
+                .whileTrue(commandSetRoboState(ControlBoard.RoboState.PASS)
+                .withTimeout(.75)
+                .andThen(robot.indexer.commandSetState(IndexerSubsystem.State.FEED)
+                .alongWith(robot.expansion.commandShoot())));
+                
+        driver.a().toggleOnTrue(commandSetRoboState(ControlBoard.RoboState.AUTO));
+
+
 
         driver.x().toggleOnTrue(robot.expansion.commandSetState(ExpansionSubsystem.State.EXTENDED));
-        // driver.b().whileTrue(robot.hood.setMode(HoodState.HOMING));
-        // driver.y().whileTrue(robot.hood.setMode(HoodState.PASSING));
-        // driver.a().onTrue(Telemetry.logSuccessfulShot());
-        // driver.y().onTrue(robot.hood.manualNudge(1.0)).onFalse(Commands.runOnce(() -> robot.hood.setMode(HoodState.IDLE)));
-        // driver.b().onTrue(robot.hood.manualNudge(-1.0)).onFalse(Commands.runOnce(() -> robot.hood.setMode(HoodState.IDLE)));
         driver.povUp().onFalse(Commands.runOnce(() -> robot.drive.resetRotation(new Rotation2d())));
-        driver.povDown().toggleOnTrue(Commands.runOnce(() -> robot.drive.commandLockModules()));
 
         /* --- MANUAl OVERRIDES --- */       
         operator.rightTrigger()
@@ -141,11 +119,8 @@ public final class ControlBoard extends SubsystemBase {
                 .whileTrue(robot.shooter.commandSetState(ShooterSubsystem.State.SHOOT)
                 .withTimeout(.75)
                 .andThen(robot.indexer.commandSetState(IndexerSubsystem.State.FEED)));
-
-        operator.x().onTrue(robot.hood.manualNudge(3.0));
-        operator.b().onTrue(robot.hood.manualNudge(-3.0));
-        operator.povUp()
-                .whileTrue(robot.hood.setMode(HoodState.HOMING));
+                
+        operator.povUp().whileTrue(robot.hood.setMode(HoodState.HOMING));
 
         //testController.leftTrigger().whileTrue(robot.intake.commandSetState(IntakeSubsystem.State.INTAKE).alongWith(robot.indexer.commandSetState(IndexerSubsystem.State.INTAKE)));
         //testController.leftBumper().whileTrue(robot.indexer.commandSetState(IndexerSubsystem.State.RINDEX));
@@ -156,11 +131,6 @@ public final class ControlBoard extends SubsystemBase {
         //testController.x().toggleOnTrue(robot.expansion.commandSetState(ExpansionSubsystem.State.EXTENDED));
         //testController.b().toggleOnTrue(Commands.runOnce(() -> robot.drive.commandLockModules()));       
         
-        
-        testController.povUp().onTrue(robot.hood.manualNudge(1.0));
-        testController.povLeft().whileTrue(robot.hood.setMode(HoodState.HOMING));
-        testController.povDown().onTrue(robot.hood.manualNudge(-1.0));
-        //testController.povRight().onFalse(Commands.runOnce(() -> robot.drive.resetRotation(new Rotation2d())));
 }
 
     /**
@@ -269,5 +239,23 @@ public final class ControlBoard extends SubsystemBase {
 
     @Override
     public void periodic() {
+
+        switch(TargetRoboState){
+            case AUTO:
+                robot.hood.setMode(HoodState.AUTO_TRACK);
+                robot.shooter.commandSetState(ShooterSubsystem.State.AUTO);
+                break;
+            case PASS:
+                robot.hood.setMode(HoodState.PASSING);
+                robot.shooter.commandSetState(ShooterSubsystem.State.PASS);
+                break;
+            case NULL:
+                robot.hood.setMode(HoodState.IDLE);
+                robot.shooter.commandSetState(ShooterSubsystem.State.IDLE);
+                break;
+        }
     }
+public Command commandSetRoboState(RoboState state){
+        return Commands.run(() -> TargetRoboState = state, this);
+}
 }

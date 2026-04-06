@@ -112,12 +112,15 @@ public final class LimelightCamera {
         double baseStdDev = MathUtil.square(est.avgTagDist) / est.tagCount;
 
         double xyStdDev;
+        double thetaStdDev;
         if (useMegaTag2) {
             xyStdDev = baseStdDev * config.xyStdDevCoeffMT2;
+            thetaStdDev = 999999999999999.0;
         } else {
             xyStdDev = baseStdDev * config.xyStdDevCoeffMT1;
+            thetaStdDev = baseStdDev * config.thetaStdDevCoeffMT1;
         }
-        double thetaStdDev = 999999999.0;
+        
 
         updatesOut.add(new Update(
                 est.pose,

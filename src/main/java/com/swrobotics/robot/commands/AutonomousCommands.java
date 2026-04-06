@@ -13,12 +13,12 @@ public class AutonomousCommands {
     
     public static Command getShootCommand(RobotContainer robot) {
         // Spin up flywheel, wait until at speed (2s safety timeout), then feed while keeping shooter spinning
-        return robot.shooter.commandSetState(ShooterSubsystem.State.SHOOT)
+        return robot.shooter.commandSetState(ShooterSubsystem.State.AUTO)
                     .withTimeout(.75)
                     .andThen(
-                        robot.shooter.commandSetState(ShooterSubsystem.State.SHOOT)
+                        robot.shooter.commandSetState(ShooterSubsystem.State.AUTO)
                         .alongWith(robot.indexer.commandSetState(IndexerSubsystem.State.FEED))
-                        .withTimeout(10)
+                        .withTimeout(5)
                     );
     }
 
