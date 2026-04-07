@@ -38,11 +38,9 @@ public class HoodSubsystem extends SubsystemBase {
         
         config.Feedback.SensorToMechanismRatio = kHoodGearRatio; 
         
-        // Current limits to protect the 24:1 geartrain against fast snap-to-position forces
         config.CurrentLimits.StatorCurrentLimit = 40.0;
         config.CurrentLimits.StatorCurrentLimitEnable = true;
 
-        // kD added to dampen the highly aggressive kP, preventing oscillation on fast tracking
         config.Slot0.kP = 60.0; 
         config.Slot0.kD = 3.5;
         config.Slot0.kG = 0;
@@ -53,6 +51,9 @@ public class HoodSubsystem extends SubsystemBase {
 
     @Override
     public void periodic() {
+        // Feed the current mode state directly to AimCalc so it can resolve targets & trajectories
+        AimCalc.getInstance().setPassingMode(state == HoodState.PASSING);
+
         switch (state) {
             case HOMING:
                 motor.setControl(voltageControl.withOutput(-3.0)); 
@@ -75,12 +76,9 @@ public class HoodSubsystem extends SubsystemBase {
                 break;
 
             case AUTO_TRACK:
-                targetRotations = AimCalc.getInstance().getHoodAngle(false).getRotations(); 
-                applyPositionControl();
-                break;
-
             case PASSING:
-                targetRotations = AimCalc.getInstance().getHoodAngle(true).getRotations(); 
+                // Both Auto Track and Passing now pull natively from AimCalc's state engine
+                targetRotations = AimCalc.getInstance().getHoodAngle().getRotations(); 
                 applyPositionControl();
                 break;
 

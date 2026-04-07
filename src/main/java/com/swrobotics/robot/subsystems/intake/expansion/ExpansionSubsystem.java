@@ -1,7 +1,10 @@
 package com.swrobotics.robot.subsystems.intake.expansion;
 
+import java.beans.Encoder;
+
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.MotionMagicVoltage;
+import com.ctre.phoenix6.hardware.CANcoder;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
@@ -25,6 +28,7 @@ public class ExpansionSubsystem extends SubsystemBase {
     }
 
     private final TalonFX motor;
+    private final CANcoder encoder;
     private final MotionMagicVoltage request = new MotionMagicVoltage(0);
     
     private State targetState = State.RETRACTED;
@@ -34,18 +38,16 @@ public class ExpansionSubsystem extends SubsystemBase {
 
     public ExpansionSubsystem() {
         motor = IOAllocation.CAN.kExpansionMotor.createTalonFX();
+        encoder = IOAllocation.CAN.kExpansionEncoder.createCANcoder();
 
         TalonFXConfiguration config = new TalonFXConfiguration();
         
-        // Motor Physicals
         config.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
-        config.MotorOutput.NeutralMode = NeutralModeValue.Brake; // Brake is safer for pivots
-        
-        // Current Limits to protect the Kraken and chain
+        config.MotorOutput.NeutralMode = NeutralModeValue.Brake;
+
         config.CurrentLimits.SupplyCurrentLimit = 60; 
         config.CurrentLimits.SupplyCurrentLimitEnable = true;
 
-        // PID + Motion Magic Gains
         config.Slot0.kP = 2.0; 
         config.Slot0.kI = 0;
         config.Slot0.kD = 0.1;

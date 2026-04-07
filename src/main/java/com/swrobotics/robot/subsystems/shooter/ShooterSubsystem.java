@@ -53,8 +53,8 @@ public class ShooterSubsystem extends SubsystemBase {
             case SHOOT: wheelRps = 20; break;
             case WARM: wheelRps = 7.5; break;
             case RINDEX: wheelRps = -10; break;
-            case AUTO: wheelRps = AimCalc.getInstance().getShooterRPS(false) / 3.0; break;
-            case PASS: wheelRps = AimCalc.getInstance().getShooterRPS(true) / 3.0; break;
+            case AUTO: wheelRps = AimCalc.getInstance().getShooterRPS() / 3.0; break;
+            case PASS: wheelRps = AimCalc.getInstance().getShooterRPS() / 3.0; break;
         }
 
         currentMotorTargetRPS = wheelRps;
