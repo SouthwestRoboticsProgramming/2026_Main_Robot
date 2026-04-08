@@ -3,57 +3,32 @@
   "waypoints": [
     {
       "anchor": {
-        "x": 6.0,
-        "y": 5.8
+        "x": 7.7,
+        "y": 7.0
       },
       "prevControl": null,
       "nextControl": {
-        "x": 5.81605611671854,
-        "y": 4.952694784246996
+        "x": 7.831508952209605,
+        "y": 5.829644553919546
       },
       "isLocked": false,
       "linkedName": null
     },
     {
       "anchor": {
-        "x": 6.293205128205127,
-        "y": 2.1357264957264963
+        "x": 6.15,
+        "y": 5.0
       },
       "prevControl": {
-        "x": 5.26742000299908,
-        "y": 2.0885371471212433
-      },
-      "nextControl": {
-        "x": 7.246668028495783,
-        "y": 2.17958879405623
-      },
-      "isLocked": false,
-      "linkedName": null
-    },
-    {
-      "anchor": {
-        "x": 7.0,
-        "y": 5.8
-      },
-      "prevControl": {
-        "x": 6.93475098640062,
-        "y": 5.558665033150378
+        "x": 8.52732193732194,
+        "y": 3.824259259259259
       },
       "nextControl": null,
       "isLocked": false,
       "linkedName": null
     }
   ],
-  "rotationTargets": [
-    {
-      "waypointRelativePos": 0.9,
-      "rotationDegrees": 90.0
-    },
-    {
-      "waypointRelativePos": 1.2537313432835904,
-      "rotationDegrees": -95.0
-    }
-  ],
+  "rotationTargets": [],
   "constraintZones": [],
   "pointTowardsZones": [],
   "eventMarkers": [],
@@ -67,13 +42,13 @@
   },
   "goalEndState": {
     "velocity": 0,
-    "rotation": -90.0
+    "rotation": -19.440034828176117
   },
   "reversed": false,
   "folder": "citrus auto copies",
   "idealStartingState": {
     "velocity": 0,
-    "rotation": 90.0
+    "rotation": 110.0
   },
   "useDefaultConstraints": true
 }

@@ -3,25 +3,25 @@
   "waypoints": [
     {
       "anchor": {
-        "x": 2.0,
-        "y": 6.0
+        "x": 6.15,
+        "y": 5.0
       },
       "prevControl": null,
       "nextControl": {
-        "x": 2.275014245014245,
-        "y": 5.985954415954415
+        "x": 1.4373076923076926,
+        "y": 5.520826210826211
       },
       "isLocked": false,
       "linkedName": null
     },
     {
       "anchor": {
-        "x": 6.0,
-        "y": 5.8
+        "x": 3.0373076923076927,
+        "y": 5.52082621082621
       },
       "prevControl": {
-        "x": 5.750064270132359,
-        "y": 5.8056684156101745
+        "x": 3.3439976695737075,
+        "y": 5.500282656937162
       },
       "nextControl": null,
       "isLocked": false,
@@ -42,13 +42,13 @@
   },
   "goalEndState": {
     "velocity": 0,
-    "rotation": 85.0
+    "rotation": -45.0
   },
   "reversed": false,
   "folder": "citrus auto copies",
   "idealStartingState": {
     "velocity": 0,
-    "rotation": -40.0
+    "rotation": -9.338198846039882
   },
   "useDefaultConstraints": true
 }

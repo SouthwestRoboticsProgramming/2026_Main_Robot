@@ -7,7 +7,7 @@ import java.util.List;
 import com.swrobotics.robot.logging.RobotView;
 import com.swrobotics.robot.subsystems.swerve.SwerveDriveSubsystem;
 import com.swrobotics.robot.subsystems.vision.VisionSubsystem;
-
+import com.fasterxml.jackson.databind.util.Named;
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.NamedCommands;
 import com.pathplanner.lib.commands.PathPlannerAuto;
@@ -70,6 +70,11 @@ public class RobotContainer {
         NamedCommands.registerCommand("Intake", AutonomousCommands.getIntakeCommand(this));
         NamedCommands.registerCommand("Expand", AutonomousCommands.getExpandCommand(this));
         NamedCommands.registerCommand("Retract", AutonomousCommands.getRetractCommand(this));
+        NamedCommands.registerCommand("GoUnderTrench", AutonomousCommands.getGoUnderTrench(this));
+        NamedCommands.registerCommand("GoOverBump", AutonomousCommands.getGoOverBump(this));
+        NamedCommands.registerCommand("Aim", AutonomousCommands.Aim(this.drive,
+        () -> -controlboard.driver.getLeftY(),
+        () -> -controlboard.driver.getLeftX()));
 
         // Create a chooser to select the autonomous
         List<AutoEntry> autos = buildPathPlannerAutos();

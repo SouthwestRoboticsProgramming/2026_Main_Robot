@@ -24,7 +24,7 @@ public class HoodSubsystem extends SubsystemBase {
     private final VoltageOut voltageControl = new VoltageOut(0);
 
     public enum HoodState { HOMING, IDLE, AUTO_TRACK, PASSING, MANUAL }
-    private HoodState state = HoodState.AUTO_TRACK;
+    private HoodState state = HoodState.PASSING;
     
     private double targetRotations = kMinAngleRot;
     private final Timer homingTimer = new Timer();
@@ -77,7 +77,6 @@ public class HoodSubsystem extends SubsystemBase {
 
             case AUTO_TRACK:
             case PASSING:
-                // Both Auto Track and Passing now pull natively from AimCalc's state engine
                 targetRotations = AimCalc.getInstance().getHoodAngle().getRotations(); 
                 applyPositionControl();
                 break;

@@ -16,21 +16,19 @@ public class AimCalc {
 
     private static final double kShooterHeightMeters = Units.inchesToMeters(20); 
     private static final double kHubTargetHeightMeters = 1.257;      
-    private static final double kTargetDepthOffset = 0.25;  
+    private static final double kTargetDepthOffset = 0;  
     private static final double kWheelDiameterMeters = Units.inchesToMeters(4.0); 
     private static final double kShooterEfficiency = 0.85; 
     
     private static final double kMaxWheelRPS = 150.0;
     private static final double kRPSStep = 5.0; 
 
-    // Passing Constraints
     private static final double kHubObstacleHeightMeters = Units.inchesToMeters(72.0);
-    private static final double kHubObstacleRadiusMeters = Units.inchesToMeters(41.0 / 2.0);
-    private static final double kPassTargetHeightMeters = Units.inchesToMeters(10.0); // Height of receiving robot
+    private static final double kHubObstacleRadiusMeters = Units.inchesToMeters(41.0 );
     
     // TUNE THESE: The coordinates of the corner in front of the HP station
-    private static final Translation2d kBlueHumanPlayerCorner = new Translation2d(15.5, 0.5);
-    private static final Translation2d kRedHumanPlayerCorner = new Translation2d(1.0, 7.5);
+    private static final Translation2d kBlueHumanPlayerCorner = new Translation2d(1.6, 1.45);
+    private static final Translation2d kRedHumanPlayerCorner = new Translation2d(15, 6.6);
 
     private static final AimCalc instance = new AimCalc();
     public static AimCalc getInstance() { return instance; }
@@ -97,7 +95,7 @@ public class AimCalc {
 
     private void calculatePassingTrajectory(Translation2d shooterPos, Translation2d targetPos, Translation2d hubPos) {
         double xTarget = shooterPos.getDistance(targetPos);
-        double yTarget = kPassTargetHeightMeters - kShooterHeightMeters; 
+        double yTarget =  - kShooterHeightMeters; 
 
         Translation2d shootToTarget = targetPos.minus(shooterPos);
         Translation2d shootToHub = hubPos.minus(shooterPos);
@@ -116,8 +114,6 @@ public class AimCalc {
         
         boolean foundPass = false;
 
-        // Iterate from flattest (Max Deg) to steepest lob (Min Deg)
-        // Note: launchRad = 90 - hoodDeg, so lower hoodDeg = higher launch arc
         for (double hoodDeg = kMaxAngleDeg; hoodDeg >= kMinAngleDeg; hoodDeg -= 1.0) {
             double launchRad = Math.toRadians(90.0 - hoodDeg);
             double cosSq = Math.pow(Math.cos(launchRad), 2);
@@ -152,7 +148,7 @@ public class AimCalc {
             }
         }
         
-        // Fallback if no safe path clears the 72" height
+
         if (!foundPass) {
             this.targetWheelRPS = kMaxWheelRPS;
             this.targetHoodAngle = Rotation2d.fromDegrees(kMinAngleDeg); // Max lob as panic

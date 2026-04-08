@@ -7,7 +7,7 @@
         {
           "type": "path",
           "data": {
-            "pathName": "CitrusGoMid"
+            "pathName": "Citrus1"
           }
         },
         {
@@ -29,7 +29,7 @@
               {
                 "type": "path",
                 "data": {
-                  "pathName": "CitrusIntake1"
+                  "pathName": "Citrus2"
                 }
               }
             ]
@@ -38,7 +38,13 @@
         {
           "type": "path",
           "data": {
-            "pathName": "CitrusShoot1"
+            "pathName": "Citrus3"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "Aim"
           }
         },
         {
@@ -50,19 +56,51 @@
         {
           "type": "path",
           "data": {
-            "pathName": "CitrusGoMid2"
-          }
-        },
-        {
-          "type": "path",
-          "data": {
-            "pathName": "CitrusIntake2"
+            "pathName": "Citrus4"
           }
         },
         {
           "type": "sequential",
           "data": {
-            "commands": []
+            "commands": [
+              {
+                "type": "race",
+                "data": {
+                  "commands": [
+                    {
+                      "type": "named",
+                      "data": {
+                        "name": "Intake"
+                      }
+                    },
+                    {
+                      "type": "path",
+                      "data": {
+                        "pathName": "Citrus5"
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "type": "path",
+                "data": {
+                  "pathName": "citrus6"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "Aim"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "Shoot"
           }
         }
       ]

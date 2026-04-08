@@ -42,7 +42,7 @@ public class ShooterSubsystem extends SubsystemBase {
 
         config.apply(motorL, motorR);
         motorR.setControl(new Follower(motorL.getDeviceID(), MotorAlignmentValue.Opposed));
-        setDefaultCommand(commandSetState(State.AUTO));
+        setDefaultCommand(commandSetState(State.PASS));
     }
 
     @Override
@@ -50,17 +50,19 @@ public class ShooterSubsystem extends SubsystemBase {
         double wheelRps = 0;
         switch (targetState) {
             case IDLE: wheelRps = 0; break;
-            case SHOOT: wheelRps = 20; break;
-            case WARM: wheelRps = 7.5; break;
-            case RINDEX: wheelRps = -10; break;
-            case AUTO: wheelRps = AimCalc.getInstance().getShooterRPS() / 3.0; break;
-            case PASS: wheelRps = AimCalc.getInstance().getShooterRPS() / 3.0; break;
+            case SHOOT: wheelRps = 60; break;
+            case WARM: wheelRps = 20; break;
+            case RINDEX: wheelRps = -30; break;
+            case AUTO: wheelRps = AimCalc.getInstance().getShooterRPS(); break;
+            case PASS: wheelRps = AimCalc.getInstance().getShooterRPS(); break;
         }
 
-        currentMotorTargetRPS = wheelRps;
+        currentMotorTargetRPS  = wheelRps / 3.0;
         motorL.setControl(velocityControl.withVelocity(currentMotorTargetRPS));
 
-        SmartDashboard.putNumber("Shooter/Wheel Target RPS", wheelRps * 3.0);
+        SmartDashboard.putNumber("Shooter/Wheel Target RPS", wheelRps);
+        SmartDashboard.putNumber("Shooter/Motor Target RPS", currentMotorTargetRPS);
+        SmartDashboard.putNumber("Shooter/Motor Velocity RPS", motorL.getVelocity().getValueAsDouble());
         SmartDashboard.putNumber("Shooter/Wheel Actual RPS", motorL.getVelocity().getValueAsDouble() * 3.0);
         SmartDashboard.putBoolean("Shooter/At Speed", isAtTargetRPS());
     }

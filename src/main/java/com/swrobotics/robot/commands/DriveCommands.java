@@ -140,6 +140,7 @@ public final class DriveCommands {
 
 
 
+
 public static Command shootOnTheMove(
         SwerveDriveSubsystem drive,
         Supplier<Double> translationX,
@@ -243,7 +244,7 @@ public static Command shootOnTheMove(
     }, Set.of(drive));
 }
 
-public static Command driveThroughBump(SwerveDriveSubsystem drive) {
+public static Command driveOverBump(SwerveDriveSubsystem drive) {
     return Commands.defer(() -> {
         Alliance alliance = DriverStation.getAlliance().orElse(Alliance.Red);
         Pose2d currentPose = drive.getEstimatedPose();
@@ -346,7 +347,7 @@ public static Command driveThroughBump(SwerveDriveSubsystem drive) {
                 );
             }
 
-            double maxDriveSpeed = 10;//Constants.kSnapMaxSpeed.get();
+            double maxDriveSpeed = 20;//Constants.kSnapMaxSpeed.get();
             double driveSpeed = Math.hypot(xOutput, yOutput);
             if (driveSpeed > maxDriveSpeed) {
                 double scale = maxDriveSpeed / driveSpeed;
@@ -354,7 +355,7 @@ public static Command driveThroughBump(SwerveDriveSubsystem drive) {
                 yOutput *= scale;
             }
 
-            double maxTurnSpeed = Units.rotationsToRadians(Constants.kSnapMaxTurnSpeed.get());
+            double maxTurnSpeed = Units.rotationsToRadians(7);//Units.rotationsToRadians(Constants.kSnapMaxTurnSpeed.get());
             rotOutput = MathUtil.clamp(rotOutput, -maxTurnSpeed, maxTurnSpeed);
 
             drive.setControl(new SwerveRequest.FieldCentric()
