@@ -118,6 +118,8 @@ public class HoodSubsystem extends SubsystemBase {
         SmartDashboard.putNumber("Hood/Target Deg", targetRotations * 360.0);
         SmartDashboard.putBoolean("Hood/At Target", isAtTarget());
         SmartDashboard.putNumber("Hood/lastVirtualDist", AimCalc.getInstance().getLastVirtualDistance());
+        SmartDashboard.putNumber("Hood/Turret-targetdegrees", AimCalc.getInstance().getTurretAimAngle().getDegrees());
+        
     }
 
     public double getMeasurementDegrees() {

@@ -1,5 +1,7 @@
 package com.swrobotics.robot.logging;
 
+import com.swrobotics.robot.subsystems.shooter.hood.HoodSubsystem;
+
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
 import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d;
@@ -8,7 +10,6 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj.util.Color8Bit;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
-import com.swrobotics.robot.subsystems.shooter.hood.HoodSubsystem;
 
 public class RobotView extends TimedRobot {
     // Visualization objects

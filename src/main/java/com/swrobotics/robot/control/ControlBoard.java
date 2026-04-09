@@ -27,7 +27,7 @@ import com.swrobotics.robot.subsystems.intake.IntakeSubsystem;
 import com.swrobotics.robot.subsystems.intake.expansion.ExpansionSubsystem;
 import com.swrobotics.robot.subsystems.intake.expansion.ExpansionSubsystem.State;
 import com.swrobotics.robot.subsystems.shooter.ShooterSubsystem;
-//import com.swrobotics.robot.subsystems.shooter.hood.HoodSubsystem;
+import com.swrobotics.robot.subsystems.shooter.hood.HoodSubsystem;
 import com.swrobotics.robot.subsystems.shooter.hood.HoodSubsystem.HoodState;
 
 public final class ControlBoard extends SubsystemBase {

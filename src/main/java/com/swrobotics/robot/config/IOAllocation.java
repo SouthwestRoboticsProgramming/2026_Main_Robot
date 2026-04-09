@@ -28,6 +28,8 @@ public final class IOAllocation {
         public static final CanId kShooterL = new CanId(14, kGerald);
         public static final CanId kShooterR = new CanId(15, kGerald);
         public static final CanId kHoodMotor = new CanId(16, kGerald);
+        public static final CanId kTurretMotor = new CanId(25, kGerald);
+        public static final CanId kTurretCANcoder = new CanId(26, kGerald);
 
         public static final CanId kIndexerFloor = new CanId(17, kGerald);
         public static final CanId kIndexerShooter = new CanId(18, kGerald);
