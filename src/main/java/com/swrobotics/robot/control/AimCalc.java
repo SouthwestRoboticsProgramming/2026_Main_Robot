@@ -28,8 +28,11 @@ public class AimCalc {
     private static final double kHubObstacleRadiusMeters = Units.inchesToMeters(41.0);
     
     // TUNE THESE: The coordinates of the corner in front of the HP station
-    private static final Translation2d kBlueHumanPlayerCorner = new Translation2d(1.6, 1.45);
-    private static final Translation2d kRedHumanPlayerCorner = new Translation2d(15, 6.6);
+    private static final Translation2d kBlueHumanPlayerRightCorner = new Translation2d(1.6, 1.45);
+    private static final Translation2d kBlueHumanPlayerLeftCorner = new Translation2d(1.6, 6.6);
+    
+    private static final Translation2d kRedHumanPlayerLeftCorner = new Translation2d(15, 1.45);
+    private static final Translation2d kRedHumanPlayerRightCorner = new Translation2d(15, 6.6);
 
     // TUNE THESE: Turret physical soft limits to prevent infinite spinning/wire damage
     private static final double kTurretMinAngleDeg = -270.0; 
@@ -184,7 +187,6 @@ public class AimCalc {
 
         double currentDeg = currentAngle.getDegrees();
 
-        // The turret might have a range > 360. Check which equivalent angle is closest.
         double[] possibleAngles = {
             normalizedTarget - 360.0,
             normalizedTarget,
@@ -205,16 +207,13 @@ public class AimCalc {
             }
         }
 
-        // Fallback constraint just in case all angles are somehow out of bounds
         if (minError == Double.MAX_VALUE) {
             bestAngle = MathUtil.clamp(normalizedTarget, kTurretMinAngleDeg, kTurretMaxAngleDeg);
         }
 
         return Rotation2d.fromDegrees(bestAngle);
     }
-    
-    // Overloaded to maintain backwards compatibility if currentTurretAngle isn't wired yet.
-    // NOTE: Call the other update method to get wrap logic working correctly.
+
     public void update(Pose2d robotPose, ChassisSpeeds fieldSpeeds) {
         update(robotPose, fieldSpeeds, new Rotation2d());
     }
@@ -224,7 +223,7 @@ public class AimCalc {
         Translation2d hub = FieldPositions.getAllianceHubPose(alliance).getTranslation();
         
         Translation2d target = passingMode ? 
-            (alliance == DriverStation.Alliance.Blue ? kBlueHumanPlayerCorner : kRedHumanPlayerCorner) 
+            (alliance == DriverStation.Alliance.Blue ? kBlueHumanPlayerRightCorner : kRedHumanPlayerRightCorner) 
             : hub;
         
         Translation2d shooterPos = robotPose.getTranslation().plus(

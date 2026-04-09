@@ -42,7 +42,7 @@ public class ShooterSubsystem extends SubsystemBase {
 
         config.apply(motorL, motorR);
         motorR.setControl(new Follower(motorL.getDeviceID(), MotorAlignmentValue.Opposed));
-        setDefaultCommand(commandSetState(State.PASS));
+        setDefaultCommand(commandSetState(State.IDLE));
     }
 
     @Override
