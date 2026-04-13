@@ -90,19 +90,14 @@ public final class ControlBoard extends SubsystemBase {
         driver.leftBumper().whileTrue(robot.indexer.commandSetState(IndexerSubsystem.State.RINDEX));
 
         driver.rightTrigger().whileTrue(robot.shooter.commandSetState(ShooterSubsystem.State.AUTO)
-                .alongWith(robot.hood.setMode(HoodSubsystem.HoodState.AUTO_TRACK))
-                .withTimeout(.5)
-                .andThen(robot.indexer.commandSetState(IndexerSubsystem.State.FEED)
-                        .alongWith(robot.expansion.commandShoot())));
+                .alongWith(robot.hood.setMode(HoodSubsystem.HoodState.AUTO_TRACK)));
 
         driver.rightBumper()
                 .whileTrue(robot.shooter.commandSetState(ShooterSubsystem.State.PASS)
-                .alongWith(robot.hood.setMode(HoodSubsystem.HoodState.PASSING))
-                .withTimeout(.75)
-                .andThen(robot.indexer.commandSetState(IndexerSubsystem.State.FEED)
-                .alongWith(robot.expansion.commandShoot())));
+                .alongWith(robot.hood.setMode(HoodSubsystem.HoodState.PASSING)));
                 
-        driver.a().toggleOnTrue(commandSetRoboState(ControlBoard.RoboState.AUTO));
+        driver.a().toggleOnTrue(robot.indexer.commandSetState(IndexerSubsystem.State.FEED)
+        .alongWith(robot.expansion.commandShoot()));
 
 
 

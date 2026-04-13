@@ -22,7 +22,6 @@ public final class TurretSubsystem extends SubsystemBase {
     private static final double CANCODER_GEAR_TEETH = 43.0;
     private static final double MOTOR_TO_TURRET_RATIO = TURRET_GEAR_TEETH / MOTOR_GEAR_TEETH;
 
-    // TUNE THIS: Offset to align the CRT mathematical 0 with your physical forward 0
     private static final double TURRET_ZERO_OFFSET_ROT = 0.0; 
 
     private static final double IDLE_POS_ROT = 270.0 / 360.0;

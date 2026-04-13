@@ -28,7 +28,6 @@ public class ExpansionSubsystem extends SubsystemBase {
     }
 
     private final TalonFX motor;
-    private final CANcoder encoder;
     private final MotionMagicVoltage request = new MotionMagicVoltage(0);
     
     private State targetState = State.RETRACTED;
@@ -38,7 +37,6 @@ public class ExpansionSubsystem extends SubsystemBase {
 
     public ExpansionSubsystem() {
         motor = IOAllocation.CAN.kExpansionMotor.createTalonFX();
-        encoder = IOAllocation.CAN.kExpansionEncoder.createCANcoder();
 
         TalonFXConfiguration config = new TalonFXConfiguration();
         

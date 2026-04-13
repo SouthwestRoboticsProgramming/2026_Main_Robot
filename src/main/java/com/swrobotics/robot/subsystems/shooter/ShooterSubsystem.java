@@ -21,7 +21,7 @@ public class ShooterSubsystem extends SubsystemBase {
     // Updated frequency to 50Hz for faster PID loop response during ball contact
     private final VelocityVoltage velocityControl = new VelocityVoltage(0).withEnableFOC(true).withUpdateFreqHz(50);
 
-    private State targetState = State.IDLE;
+    private State targetState = State.WARM;
     private double currentMotorTargetRPS = 0.0;
 
     public ShooterSubsystem() {
@@ -34,10 +34,10 @@ public class ShooterSubsystem extends SubsystemBase {
         config.CurrentLimits.StatorCurrentLimit = 120;
         config.CurrentLimits.StatorCurrentLimitEnable = true;
         
-        config.Slot0.kS = 0.1;
+        config.Slot0.kS = 0.3;
         config.Slot0.kV = 0.13;
         config.Slot0.kA = 0.005;
-        config.Slot0.kP = 0.5; 
+        config.Slot0.kP = 0.3; 
         config.Slot0.kD = 0.01;
 
         config.apply(motorL, motorR);
