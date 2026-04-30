@@ -19,7 +19,6 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
-import edu.wpi.first.wpilibj2.command.button.POVButton;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 
 import com.swrobotics.robot.subsystems.intake.indexer.IndexerSubsystem;
@@ -116,7 +115,6 @@ public final class ControlBoard extends SubsystemBase {
                 .withTimeout(.75)
                 .andThen(robot.indexer.commandSetState(IndexerSubsystem.State.FEED)));
                 
-        operator.povUp().whileTrue(robot.hood.setMode(HoodState.HOMING));
 
         //testController.leftTrigger().whileTrue(robot.intake.commandSetState(IntakeSubsystem.State.INTAKE).alongWith(robot.indexer.commandSetState(IndexerSubsystem.State.INTAKE)));
         //testController.leftBumper().whileTrue(robot.indexer.commandSetState(IndexerSubsystem.State.RINDEX));

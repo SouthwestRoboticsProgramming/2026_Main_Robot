@@ -1,7 +1,5 @@
 package com.swrobotics.robot.config;
 
-import com.ctre.phoenix6.AllTimestamps;
-
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;

@@ -2,10 +2,11 @@ package com.swrobotics.robot.subsystems.shooter.hood;
 
 import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.controls.VoltageOut;
-import com.ctre.phoenix6.hardware.TalonFX;
+import com.ctre.phoenix6.hardware.TalonFXS;
 import com.ctre.phoenix6.signals.InvertedValue;
+import com.ctre.phoenix6.signals.MotorArrangementValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
-import com.swrobotics.lib.ctre.TalonFXConfigHelper;
+import com.swrobotics.lib.ctre.TalonFXSConfigHelper;
 import com.swrobotics.robot.config.IOAllocation;
 import com.swrobotics.robot.control.AimCalc;
 import edu.wpi.first.math.MathUtil;
@@ -19,7 +20,7 @@ public class HoodSubsystem extends SubsystemBase {
     public static final double kMaxAngleRot = 48.0 / 360.0;
     public static final double kHoodGearRatio = 24.0; 
 
-    private final TalonFX motor;
+    private final TalonFXS HoodMinion;
     private final PositionVoltage positionControl = new PositionVoltage(0).withEnableFOC(true);
     private final VoltageOut voltageControl = new VoltageOut(0);
 
@@ -30,13 +31,13 @@ public class HoodSubsystem extends SubsystemBase {
     private final Timer homingTimer = new Timer();
 
     public HoodSubsystem() {
-        motor = IOAllocation.CAN.kHoodMotor.createTalonFX();
-        TalonFXConfigHelper config = new TalonFXConfigHelper();
+        HoodMinion = IOAllocation.CAN.kHoodMotor.createTalonFXS();
+        TalonFXSConfigHelper config = new TalonFXSConfigHelper();
         
         config.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
         config.MotorOutput.NeutralMode = NeutralModeValue.Brake;
-        
-        config.Feedback.SensorToMechanismRatio = kHoodGearRatio; 
+        config.Commutation.MotorArrangement = MotorArrangementValue.Minion_JST;
+        config.ExternalFeedback.SensorToMechanismRatio = kHoodGearRatio; 
         
         config.CurrentLimits.StatorCurrentLimit = 40.0;
         config.CurrentLimits.StatorCurrentLimitEnable = true;
@@ -45,7 +46,7 @@ public class HoodSubsystem extends SubsystemBase {
         config.Slot0.kD = 3.5;
         config.Slot0.kG = 0;
 
-        config.apply(motor);
+        config.apply(HoodMinion);
         homingTimer.start();
     }
 
@@ -56,14 +57,14 @@ public class HoodSubsystem extends SubsystemBase {
 
         switch (state) {
             case HOMING:
-                motor.setControl(voltageControl.withOutput(-3.0)); 
+                HoodMinion.setControl(voltageControl.withOutput(-3.0)); 
                 
-                double current = motor.getStatorCurrent().getValueAsDouble();
+                double current = HoodMinion.getStatorCurrent().getValueAsDouble();
                 boolean bypassedInrush = homingTimer.hasElapsed(0.75);
                 boolean isStalled = current > 20.0; 
 
                 if (bypassedInrush && isStalled) {
-                    motor.setPosition(kMinAngleRot); 
+                    HoodMinion.setPosition(kMinAngleRot); 
                     targetRotations = kMinAngleRot;
                     state = HoodState.IDLE;
                 }
@@ -90,13 +91,13 @@ public class HoodSubsystem extends SubsystemBase {
 
     private void applyPositionControl() {
         targetRotations = MathUtil.clamp(targetRotations, kMinAngleRot, kMaxAngleRot);
-        motor.setControl(positionControl.withPosition(targetRotations));
+        HoodMinion.setControl(positionControl.withPosition(targetRotations));
     }
 
     public Command manualNudge(double degrees) {
         return runOnce(() -> {
             this.state = HoodState.MANUAL;
-            double currentPos = motor.getPosition().getValueAsDouble();
+            double currentPos = HoodMinion.getPosition().getValueAsDouble();
             this.targetRotations = currentPos + (degrees / 360.0);
         });
     }
@@ -109,7 +110,7 @@ public class HoodSubsystem extends SubsystemBase {
     }
 
     public boolean isAtTarget() {
-        return Math.abs(motor.getPosition().getValueAsDouble() - targetRotations) < (0.5 / 360.0);
+        return Math.abs(HoodMinion.getPosition().getValueAsDouble() - targetRotations) < (0.5 / 360.0);
     }
     
     private void updateTelemetry() {
@@ -123,6 +124,6 @@ public class HoodSubsystem extends SubsystemBase {
     }
 
     public double getMeasurementDegrees() {
-        return motor.getPosition().getValueAsDouble() * 360.0;
+        return HoodMinion.getPosition().getValueAsDouble() * 360.0;
     }
 }

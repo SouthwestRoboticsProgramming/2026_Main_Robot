@@ -8,9 +8,6 @@ import com.swrobotics.lib.utils.PolynomialRegression;
 import com.swrobotics.robot.config.Constants;
 import com.swrobotics.robot.config.FieldPositions;
 import com.swrobotics.robot.control.AimCalc;
-import com.swrobotics.robot.subsystems.intake.indexer.IndexerSubsystem;
-import com.swrobotics.robot.subsystems.shooter.ShooterSubsystem;
-import com.swrobotics.robot.subsystems.shooter.hood.HoodSubsystem;
 import com.swrobotics.robot.subsystems.swerve.SwerveDriveSubsystem;
 
 import edu.wpi.first.math.controller.PIDController;

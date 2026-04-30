@@ -29,7 +29,7 @@ public final class TurretSubsystem extends SubsystemBase {
     private static final double TURRET_MAX_ROT = (270.0 + 165.0) / 360.0;
     private static final double ON_TARGET_TOLERANCE_ROT = 1.0 / 360.0;
 
-    private final TalonFX motor;
+    private final TalonFX turretX44;
     private final CANcoder cancoder;
     private final SwerveDriveSubsystem drive;
     private final MotionMagicVoltage positionControl = new MotionMagicVoltage(0.0).withEnableFOC(true);
@@ -38,7 +38,7 @@ public final class TurretSubsystem extends SubsystemBase {
     public TurretSubsystem(SwerveDriveSubsystem drive) {
         this.drive = drive;
         
-        motor = IOAllocation.CAN.kTurretMotor.createTalonFX();
+        turretX44 = IOAllocation.CAN.kTurretMotor.createTalonFX();
         // Assuming your IOAllocation has a CANcoder definition. If not, replace with `new CANcoder(ID, "bus");`
         cancoder = IOAllocation.CAN.kTurretCANcoder.createCANcoder(); 
 
@@ -54,7 +54,7 @@ public final class TurretSubsystem extends SubsystemBase {
         config.SoftwareLimitSwitch.ReverseSoftLimitEnable = true;
         config.SoftwareLimitSwitch.ReverseSoftLimitThreshold = TURRET_MIN_ROT * MOTOR_TO_TURRET_RATIO;
 
-        config.apply(motor);
+        config.apply(turretX44);
 
         // Calculate and seed the absolute position on subsystem init
         seedAbsolutePosition();
@@ -66,7 +66,7 @@ public final class TurretSubsystem extends SubsystemBase {
      */
     private void seedAbsolutePosition() {
         // 1. Get fractional rotations [0, 1) of both the motor and CANcoder gears
-        double r1 = (motor.getPosition().getValueAsDouble() % 1.0 + 1.0) % 1.0;
+        double r1 = (turretX44.getPosition().getValueAsDouble() % 1.0 + 1.0) % 1.0;
         double r2 = (cancoder.getAbsolutePosition().getValueAsDouble() % 1.0 + 1.0) % 1.0;
 
         // 2. Calculate the alignment delta scaled to tooth counts
@@ -103,7 +103,7 @@ public final class TurretSubsystem extends SubsystemBase {
         }
 
         // Seed the TalonFX internal encoder
-        motor.setPosition(absoluteTurretRotations * MOTOR_TO_TURRET_RATIO);
+        turretX44.setPosition(absoluteTurretRotations * MOTOR_TO_TURRET_RATIO);
     }
 
     @Override
@@ -122,7 +122,7 @@ public final class TurretSubsystem extends SubsystemBase {
     }
 
     private void setControlWithWrap(Rotation2d targetAngle) {
-        double currentTurretRot = motor.getPosition().getValueAsDouble() / MOTOR_TO_TURRET_RATIO;
+        double currentTurretRot = turretX44.getPosition().getValueAsDouble() / MOTOR_TO_TURRET_RATIO;
         double error = MathUtil.inputModulus(targetAngle.getRotations() - currentTurretRot, -0.5, 0.5);
         double targetTurretRot = currentTurretRot + error;
 
@@ -131,7 +131,7 @@ public final class TurretSubsystem extends SubsystemBase {
         // Feedforward to compensate for robot spinning
         double chassisYawRateRotPerSec = drive.getRobotRelativeSpeeds().omegaRadiansPerSecond / (2.0 * Math.PI);
 
-        motor.setControl(positionControl
+        turretX44.setControl(positionControl
             .withPosition(finalTarget * MOTOR_TO_TURRET_RATIO)
             .withFeedForward(-chassisYawRateRotPerSec * MOTOR_TO_TURRET_RATIO));
     }
@@ -140,13 +140,13 @@ public final class TurretSubsystem extends SubsystemBase {
     public Command cmdIdle() { return runOnce(() -> currentMode = TurretMode.IDLE); }
 
     public boolean isOnTarget() {
-        double currentTurretRot = motor.getPosition().getValueAsDouble() / MOTOR_TO_TURRET_RATIO;
+        double currentTurretRot = turretX44.getPosition().getValueAsDouble() / MOTOR_TO_TURRET_RATIO;
         double error = MathUtil.inputModulus(AimCalc.getInstance().getTurretAimAngle().getRotations() - currentTurretRot, -0.5, 0.5);
         return Math.abs(error) < ON_TARGET_TOLERANCE_ROT;
     }
 
     private void UpdateTurretAngle() {
         SmartDashboard.putNumber("Turret/targetAngle", AimCalc.getInstance().getTurretAimAngle().getDegrees());
-        SmartDashboard.putNumber("Turret/currentAngle", motor.getPosition().getValueAsDouble() / MOTOR_TO_TURRET_RATIO * 360.0);
+        SmartDashboard.putNumber("Turret/currentAngle", turretX44.getPosition().getValueAsDouble() / MOTOR_TO_TURRET_RATIO * 360.0);
     }
 }

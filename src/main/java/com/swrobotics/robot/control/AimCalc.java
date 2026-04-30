@@ -11,9 +11,9 @@ import edu.wpi.first.wpilibj.DriverStation;
 
 public class AimCalc {
 
-    private static final double kHubHeightMetersOffset = 0.43;
-    private static final double kMinAngleDeg = 23.0; // Steepest shot (lob)
-    private static final double kMaxAngleDeg = 48.0; // Flattest shot (direct)
+    private static final double kHubHeightMetersOffset = 0.15;
+    private static final double kMinAngleDeg = 20.0; // Steepest shot (lob)
+    private static final double kMaxAngleDeg = 45.0;//Flattest shot (direct)
 
     private static final double kShooterHeightMeters = Units.inchesToMeters(20); 
     private static final double kHubTargetHeightMeters = 1.257;      
@@ -22,7 +22,6 @@ public class AimCalc {
     private static final double kShooterEfficiency = 0.85; 
     
     private static final double kMaxWheelRPS = 150.0;
-    private static final double kRPSStep = 5.0; 
 
     private static final double kHubObstacleHeightMeters = Units.inchesToMeters(72.0);
     private static final double kHubObstacleRadiusMeters = Units.inchesToMeters(41.0);
@@ -41,7 +40,7 @@ public class AimCalc {
     private static final AimCalc instance = new AimCalc();
     public static AimCalc getInstance() { return instance; }
 
-    // --- INTERPOLATING MAPS ---
+  
     private final InterpolatingDoubleTreeMap distanceToRPSMap = new InterpolatingDoubleTreeMap();
     private final InterpolatingDoubleTreeMap distanceToAngleMap = new InterpolatingDoubleTreeMap();
 
@@ -56,7 +55,6 @@ public class AimCalc {
     private boolean passingMode = false;
 
     private AimCalc() {
-        // TUNE THESE: (Distance in Meters, Target Value)
         distanceToRPSMap.put(1.5, 40.0);
         distanceToAngleMap.put(1.5, 48.0);
 
