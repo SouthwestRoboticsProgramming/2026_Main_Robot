@@ -20,7 +20,7 @@ public class ShooterSubsystem extends SubsystemBase {
     // Updated frequency to 50Hz for faster PID loop response during ball contact
     private final VelocityVoltage velocityControl = new VelocityVoltage(0).withEnableFOC(true).withUpdateFreqHz(50);
     private final NeutralOut neutralControl = new NeutralOut();
-    private State targetState = State.IDLE;
+    private State targetState = State.AUTO;
     private double currentMotorTargetRPS = 0.0;
 
     public ShooterSubsystem() {

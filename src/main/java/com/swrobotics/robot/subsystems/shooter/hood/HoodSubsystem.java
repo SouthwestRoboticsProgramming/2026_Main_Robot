@@ -1,11 +1,16 @@
 package com.swrobotics.robot.subsystems.shooter.hood;
 
+import com.ctre.phoenix6.configs.CANcoderConfiguration;
+import com.ctre.phoenix6.configs.MagnetSensorConfigs;
 import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.controls.VoltageOut;
+import com.ctre.phoenix6.hardware.CANcoder;
 import com.ctre.phoenix6.hardware.TalonFXS;
+import com.ctre.phoenix6.signals.ExternalFeedbackSensorSourceValue;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.MotorArrangementValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
+import com.ctre.phoenix6.signals.SensorDirectionValue;
 import com.swrobotics.lib.ctre.TalonFXSConfigHelper;
 import com.swrobotics.robot.config.IOAllocation;
 import com.swrobotics.robot.control.AimCalc;
@@ -19,8 +24,12 @@ public class HoodSubsystem extends SubsystemBase {
     public static final double kMinAngleRot = 23.0 / 360.0; 
     public static final double kMaxAngleRot = 48.0 / 360.0;
     public static final double kHoodGearRatio = 24.0; 
+    
+    // Constant for CANcoder to Hood ratio (assumed 1 to 1 for now)
+    public static final double kCancoderToHoodRatio = 1.0; 
 
     private final TalonFXS HoodMinion;
+    private final CANcoder HoodEncoder;
     private final PositionVoltage positionControl = new PositionVoltage(0).withEnableFOC(true);
     private final VoltageOut voltageControl = new VoltageOut(0);
 
@@ -32,12 +41,27 @@ public class HoodSubsystem extends SubsystemBase {
 
     public HoodSubsystem() {
         HoodMinion = IOAllocation.CAN.kHoodMotor.createTalonFXS();
+        HoodEncoder = IOAllocation.CAN.kHoodEncoder.createCANcoder(); 
+
+    
+        CANcoderConfiguration cc_cfg = new CANcoderConfiguration();
+        cc_cfg.MagnetSensor.SensorDirection = com.ctre.phoenix6.signals.SensorDirectionValue.CounterClockwise_Positive;
+
+        HoodEncoder.getConfigurator().apply(cc_cfg);
+
         TalonFXSConfigHelper config = new TalonFXSConfigHelper();
         
         config.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
         config.MotorOutput.NeutralMode = NeutralModeValue.Brake;
+        
+        // Commutation is handled by the Minion's JST connection
         config.Commutation.MotorArrangement = MotorArrangementValue.Minion_JST;
-        config.ExternalFeedback.SensorToMechanismRatio = kHoodGearRatio; 
+        
+        // Feedback is handled by the Remote CANcoder
+        config.ExternalFeedback.ExternalFeedbackSensorSource = ExternalFeedbackSensorSourceValue.RemoteCANcoder;
+        config.ExternalFeedback.FeedbackRemoteSensorID = HoodEncoder.getDeviceID();
+        config.ExternalFeedback.SensorToMechanismRatio = kCancoderToHoodRatio; 
+        config.ExternalFeedback.RotorToSensorRatio = kHoodGearRatio; 
         
         config.CurrentLimits.StatorCurrentLimit = 40.0;
         config.CurrentLimits.StatorCurrentLimitEnable = true;
@@ -63,10 +87,13 @@ public class HoodSubsystem extends SubsystemBase {
                 boolean bypassedInrush = homingTimer.hasElapsed(0.75);
                 boolean isStalled = current > 20.0; 
 
+                // Note: With an absolute CANcoder, physical homing to a hard stop is usually 
+                // unnecessary. If you calibrate your CANcoder offset correctly in Phoenix Tuner X, 
+                // you could start straight in IDLE. Left intact as requested.
                 if (bypassedInrush && isStalled) {
                     HoodMinion.setPosition(kMinAngleRot); 
                     targetRotations = kMinAngleRot;
-                    state = HoodState.IDLE;
+                    state = HoodState.AUTO_TRACK;
                 }
                 break;
 
@@ -120,7 +147,6 @@ public class HoodSubsystem extends SubsystemBase {
         SmartDashboard.putBoolean("Hood/At Target", isAtTarget());
         SmartDashboard.putNumber("Hood/lastVirtualDist", AimCalc.getInstance().getLastVirtualDistance());
         SmartDashboard.putNumber("Hood/Turret-targetdegrees", AimCalc.getInstance().getTurretAimAngle().getDegrees());
-        
     }
 
     public double getMeasurementDegrees() {
