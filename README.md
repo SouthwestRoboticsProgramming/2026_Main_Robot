@@ -2,7 +2,6 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/Team-2129-8A2BE2?style=for-the-badge&logo=target" />
-  <img src="https://img.shields.io/badge/Status-Field_Ready-black?style=for-the-badge&border=8A2BE2" />
   <img src="https://img.shields.io/badge/Main_Language-Java-purple?style=for-the-badge&logo=java" />
 </p>
 
@@ -13,7 +12,7 @@ Welcome to the official repository for **Ultraviolet**, Team 2129's 2026 FRC rob
 * **Swerve Drive:** 4-module independent drive using CTRE Phoenix 6 and Pigeon 2.0.
 * **Smart Indexer:** Time-of-Flight (CANrange) controlled belt system for zero-jam indexing.
 * **Dynamic Shooter:** Automated hood adjustment and RPS "gear shifting" based on distance.
-* **Expansion Subsystem:** Smooth vertical positioning using **Motion Magic** for consistent scoring heights.
+* **arm pivot Subsystem:** Smooth vertical positioning using **Motion Magic** for consistent scoring heights.
 
 ---
 
@@ -21,10 +20,10 @@ Welcome to the official repository for **Ultraviolet**, Team 2129's 2026 FRC rob
 
 | Subsystem | Key Components | Control Strategy |
 | :--- | :--- | :--- |
-| **Swerve** | TalonFX, CANcoder | FOC Field-Oriented / PathPlanner |
-| **Expansion** | TalonFX | Motion Magic (Cruise: 50 rps) |
-| **Indexer** | TalonFX, TalonFXS (Minion), CANrange | State-based Logic (ToF Triggered) |
-| **Intake** | TalonFX | High-torque Voltage Control |
+| **Swerve** | x60(Drive), Falcon(Turn), CANcoder | FOC Field-Oriented / PathPlanner |
+| **arm pivot** | x44 | Motion Magic (Cruise: 50 rps) |
+| **Indexer** | x60(rollers), x44(feeder), Falcon(belts), Minion(vertical feeder), CANrange(ball inspection) | State-based Logic (ToF Triggered) |
+| **Intake** | x44 | High-torque Voltage Control |
 
 ---
 
