@@ -1,45 +1,43 @@
 # 🎯 Shooter Aiming & Trajectory Logic
 
-This module handles the physics-based calculations required to hit the hub from any distance while the robot is stationary or in motion.
+This module (`AimCalc.java`) handles the physics-based calculations required to hit the hub from any distance while the robot is stationary or in motion.
 
 ---
 
 ## 🏗️ The Math: How It Works
 
-Imagine trying to throw a basketball into a hoop while sprinting; that’s exactly the physics this code is solving! To hit a target consistently, the code balances three main pillars: **Motion Compensation**, **Discrete Gear Shifting**, and **Parabolic Trajectories**.
-
-
-
 ### 1. The Virtual Target (Moving Shots)
 Because the ball takes time to reach the goal (**Time of Flight**), aiming directly at the hub while driving would cause the ball to miss. 
 * The code calculates a **Virtual Target** by looking at the robot's current field velocity and the expected time the ball will be in the air.
-* It "leads" the target, much like a quarterback throwing to a moving receiver, ensuring the ball and the hoop meet at the same coordinate in space.
+* It "leads" the target, ensuring the ball and the hoop meet at the same coordinate in space regardless of robot speed.
 
-### 2. "Gear Shifting" Logic
-Instead of a simple lookup table, the code treats Shooter Wheel speeds (RPS) like gears in a car to prioritize hood movement:
+### 2. Trajectory Lookup & Interpolation
+Instead of a single fixed shot, we use `InterpolatingDoubleTreeMap` to provide a smooth curve of RPS and Hood angles across the entire field.
+* **Low Range:** Steep angles for "Lob" shots.
+* **High Range:** Flat, high-velocity shots for speed.
 
-1. **Test a Gear:** It starts at a low RPS and calculates the required launch angle needed to hit the target using the trajectory formula:
-   $$y = x \tan(\theta) - \frac{gx^2}{2v^2\cos^2(\theta)}$$
-2. **Check the Hood:** Our hood is physically limited between **23° and 48°**. The code checks if the calculated angle is "legal" for that gear.
-3. **Shift Up:** If the robot is too far for the current RPS to reach the goal (or if the angle exceeds 48°), the code "shifts" to a higher RPS gear and resets the hood to a lower angle.
-4. **The Result:** This creates a "sawtooth" behavior. As you drive away, the hood tilts up until it hits the limit; then, the RPS jumps up, and the hood resets low to start the climb again.
+### 3. Obstacle Avoidance (Hub Clearance)
+When in **Passing Mode**, the code doesn't just aim for a point; it checks for the **72" Hub Obstacle**.
+* It projects the hub's physical footprint onto the ball's flight path.
+* If a collision is predicted, the code iterates through higher hood angles to find a "clearing" trajectory that stays within our physical limits (23° - 48°).
 
 ---
 
 ## ⚙️ Physical Constants
-| Constant | Value | Description |
+| Variable | Value | Description |
 | :--- | :--- | :--- |
 | **Efficiency** | 85% | Energy transfer from wheel to ball. |
-| **Wheel Diameter** | 4.0" | Physical size of the shooter flywheels. |
-| **Hood Range** | 23° - 48° | The mechanical hard-stops of the tilting hood. |
-| **Target Depth** | 0.25m | Aiming for the center of the hub, not the rim. |
+| **Wheel Diameter** | 4.0" | Physical size of the flywheels. |
+| **Hood Range** | 23° - 48° | Mechanical hard-stops for the tilt. |
+| **Turret Range** | ±270° | Physical soft-limits for wire management. |
 
 ---
 
-## 🛠️ Implementation Notes
-The `AimCalc.java` class uses an iterative search to find the lowest possible RPS gear that satisfies the hood constraints. This ensures we use the minimum energy required for every shot, which improves recovery time and battery life.
+## 🛠️ Turret "Unwinding"
+The turret logic includes an automatic "wrapping" feature. If the target angle requires the turret to spin past its physical limit, it automatically calculates the shortest path in the opposite direction to "unwind" while maintaining the lock.
 
-> [!TIP]
-> To update the diagram below, replace `shooter_diagram.png` in your `/images` folder.
+---
 
-![Shooting Physics Diagram](2026_MAIN_ROBOT/images/shooter_diagram.png)
+<p align="center">
+  <font color="#8A2BE2"><b>SW ROBOTICS | PROJECT ULTRAVIOLET</b></font>
+</p>
