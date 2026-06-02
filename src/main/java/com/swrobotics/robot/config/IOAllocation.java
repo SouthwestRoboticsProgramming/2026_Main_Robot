@@ -26,6 +26,7 @@ public final class IOAllocation {
         public static final CanId kPDP = new CanId(50, kRIO);
 
         public static final CanId kShooterL = new CanId(14, kGerald);
+        public static final CanId kShooterL2 = new CanId(26, kGerald);
         public static final CanId kShooterR = new CanId(15, kGerald);
         public static final CanId kHoodMotor = new CanId(16, kGerald);
         public static final CanId kTurretMotor = new CanId(24, kGerald);
@@ -33,11 +34,8 @@ public final class IOAllocation {
 
         public static final CanId kIndexerFloor = new CanId(17, kGerald);
         public static final CanId kIndexerShooter = new CanId(18, kGerald);
-        public static final CanId kIndexerBelt = new CanId(19, kGerald);
-        public static final CanId kIndexerKicker = new CanId(20, kGerald);
-        public static final CanId kIndexerCANrange = new CanId(21, kGerald);
         public static final CanId kIntakeMotor = new CanId(22, kGerald);
-        public static final CanId kExpansionMotor = new CanId(23, kGerald);
+        public static final CanId kIntakeArmMotor = new CanId(23, kGerald);
         
     }
 

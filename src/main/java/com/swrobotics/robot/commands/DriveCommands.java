@@ -8,9 +8,6 @@ import com.swrobotics.lib.utils.PolynomialRegression;
 import com.swrobotics.robot.config.Constants;
 import com.swrobotics.robot.config.FieldPositions;
 import com.swrobotics.robot.control.AimCalc;
-import com.swrobotics.robot.subsystems.intake.indexer.IndexerSubsystem;
-import com.swrobotics.robot.subsystems.shooter.ShooterSubsystem;
-import com.swrobotics.robot.subsystems.shooter.hood.HoodSubsystem;
 import com.swrobotics.robot.subsystems.swerve.SwerveDriveSubsystem;
 
 import edu.wpi.first.math.controller.PIDController;
@@ -62,6 +59,139 @@ public final class DriveCommands {
                     .withRotationalRate(rot));
         }, drive);
     }
+    public static Command driveSnapToHub(
+        SwerveDriveSubsystem drive,
+        Supplier<Double> translationX,
+        Supplier<Double> translationY
+) {
+    PIDController turnPid = new PIDController(0, 0, 0);
+    turnPid.enableContinuousInput(-Math.PI, Math.PI);
+
+    return Commands.startRun(() -> {
+        turnPid.setPID(Constants.kSnapTurnKp.get(), 0, Constants.kSnapTurnKd.get());
+        turnPid.setTolerance(Math.toRadians(Constants.kSnapThetaDeadzone.get()));
+        turnPid.reset();
+    }, () -> {
+        Pose2d currentPose = drive.getEstimatedPose();
+        Alliance alliance = DriverStation.getAlliance().orElse(Alliance.Blue);
+        
+        // Dynamically get the correct hub translation for your alliance color
+        Translation2d hubTarget = FieldPositions.getAllianceHubPose(alliance).getTranslation();
+        Rotation2d targetRot = hubTarget.minus(currentPose.getTranslation()).getAngle();
+
+        Constants.currentAngle.set(Math.abs(currentPose.getRotation().getDegrees()));
+        Constants.targetAngle.set(Math.abs(targetRot.getDegrees()));
+
+        double rotOutput = turnPid.calculate(
+                MathUtil.wrap(currentPose.getRotation().getRadians(), -Math.PI, Math.PI),
+                MathUtil.wrap(targetRot.getRadians(), -Math.PI, Math.PI)
+        );
+
+        if (turnPid.atSetpoint()) {
+            rotOutput = 0;
+        } else {
+            double maxTurnSpeed = Units.rotationsToRadians(Constants.kSnapMaxTurnSpeed.get());
+            rotOutput = MathUtil.clamp(rotOutput, -maxTurnSpeed, maxTurnSpeed);
+        }
+
+        drive.setControl(new SwerveRequest.FieldCentric()
+                .withVelocityX(translationX.get())
+                .withVelocityY(translationY.get())
+                .withRotationalRate(rotOutput)
+                .withDriveRequestType(SwerveModule.DriveRequestType.Velocity));
+    }, drive);
+}
+public static Command driveSnapToLeftCorner(
+        SwerveDriveSubsystem drive,
+        Supplier<Double> translationX,
+        Supplier<Double> translationY
+) {
+    PIDController turnPid = new PIDController(0, 0, 0);
+    turnPid.enableContinuousInput(-Math.PI, Math.PI);
+
+    return Commands.startRun(() -> {
+        turnPid.setPID(Constants.kSnapTurnKp.get(), 0, Constants.kSnapTurnKd.get());
+        turnPid.setTolerance(Math.toRadians(Constants.kSnapThetaDeadzone.get()));
+        turnPid.reset();
+    }, () -> {
+        Pose2d currentPose = drive.getEstimatedPose();
+        Alliance alliance = DriverStation.getAlliance().orElse(Alliance.Blue);
+        
+        // Define corners based on standard FRC field coordinate mapping (Blue origin bottom-right)
+        // Adjust these exact coordinate values to match your specific year's field map if needed!
+        Translation2d targetCorner = (alliance == Alliance.Blue) 
+            ? new Translation2d(0.0, 7.5)   // Blue Left Corner
+            : new Translation2d(16.5, 0.5); // Red Left Corner
+
+        Rotation2d targetRot = targetCorner.minus(currentPose.getTranslation()).getAngle();
+
+        Constants.currentAngle.set(Math.abs(currentPose.getRotation().getDegrees()));
+        Constants.targetAngle.set(Math.abs(targetRot.getDegrees()));
+
+        double rotOutput = turnPid.calculate(
+                MathUtil.wrap(currentPose.getRotation().getRadians(), -Math.PI, Math.PI),
+                MathUtil.wrap(targetRot.getRadians(), -Math.PI, Math.PI)
+        );
+
+        if (turnPid.atSetpoint()) {
+            rotOutput = 0;
+        } else {
+            double maxTurnSpeed = Units.rotationsToRadians(Constants.kSnapMaxTurnSpeed.get());
+            rotOutput = MathUtil.clamp(rotOutput, -maxTurnSpeed, maxTurnSpeed);
+        }
+
+        drive.setControl(new SwerveRequest.FieldCentric()
+                .withVelocityX(translationX.get())
+                .withVelocityY(translationY.get())
+                .withRotationalRate(rotOutput)
+                .withDriveRequestType(SwerveModule.DriveRequestType.Velocity));
+    }, drive);
+}
+public static Command driveSnapToRightCorner(
+        SwerveDriveSubsystem drive,
+        Supplier<Double> translationX,
+        Supplier<Double> translationY
+) {
+    PIDController turnPid = new PIDController(0, 0, 0);
+    turnPid.enableContinuousInput(-Math.PI, Math.PI);
+
+    return Commands.startRun(() -> {
+        turnPid.setPID(Constants.kSnapTurnKp.get(), 0, Constants.kSnapTurnKd.get());
+        turnPid.setTolerance(Math.toRadians(Constants.kSnapThetaDeadzone.get()));
+        turnPid.reset();
+    }, () -> {
+        Pose2d currentPose = drive.getEstimatedPose();
+        Alliance alliance = DriverStation.getAlliance().orElse(Alliance.Blue);
+        
+        // Define right side corners based on alliance perspective
+        Translation2d targetCorner = (alliance == Alliance.Blue) 
+            ? new Translation2d(0.0, 0.5)   // Blue Right Corner
+            : new Translation2d(16.5, 7.5); // Red Right Corner
+
+        Rotation2d targetRot = targetCorner.minus(currentPose.getTranslation()).getAngle();
+
+        Constants.currentAngle.set(Math.abs(currentPose.getRotation().getDegrees()));
+        Constants.targetAngle.set(Math.abs(targetRot.getDegrees()));
+
+        double rotOutput = turnPid.calculate(
+                MathUtil.wrap(currentPose.getRotation().getRadians(), -Math.PI, Math.PI),
+                MathUtil.wrap(targetRot.getRadians(), -Math.PI, Math.PI)
+        );
+
+        if (turnPid.atSetpoint()) {
+            rotOutput = 0;
+        } else {
+            double maxTurnSpeed = Units.rotationsToRadians(Constants.kSnapMaxTurnSpeed.get());
+            rotOutput = MathUtil.clamp(rotOutput, -maxTurnSpeed, maxTurnSpeed);
+        }
+
+        drive.setControl(new SwerveRequest.FieldCentric()
+                .withVelocityX(translationX.get())
+                .withVelocityY(translationY.get())
+                .withRotationalRate(rotOutput)
+                .withDriveRequestType(SwerveModule.DriveRequestType.Velocity));
+    }, drive);
+}
         public static Command driveFieldRelativeSnapTo180(
             SwerveDriveSubsystem drive,
 

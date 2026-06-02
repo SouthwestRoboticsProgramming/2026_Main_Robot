@@ -7,20 +7,16 @@ import java.util.List;
 import com.swrobotics.robot.logging.RobotView;
 import com.swrobotics.robot.subsystems.swerve.SwerveDriveSubsystem;
 import com.swrobotics.robot.subsystems.vision.VisionSubsystem;
-import com.fasterxml.jackson.databind.util.Named;
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.NamedCommands;
 import com.pathplanner.lib.commands.PathPlannerAuto;
 import com.swrobotics.robot.commands.AutonomousCommands;
-import com.swrobotics.robot.control.AimCalc;
 import com.swrobotics.robot.control.ControlBoard;
 import com.swrobotics.robot.logging.FieldView;
-import com.swrobotics.robot.subsystems.shooter.hood.HoodSubsystem;
-import com.swrobotics.robot.subsystems.shooter.turret.TurretSubsystem;
 import com.swrobotics.robot.subsystems.shooter.ShooterSubsystem;
+import com.swrobotics.robot.subsystems.indexer.IndexerSubsystem;
 import com.swrobotics.robot.subsystems.intake.IntakeSubsystem;
-import com.swrobotics.robot.subsystems.intake.expansion.ExpansionSubsystem;
-import com.swrobotics.robot.subsystems.intake.indexer.IndexerSubsystem;
+import com.swrobotics.robot.subsystems.intake.intakeArm.IntakeArmSubsystem;
 
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.RobotBase;
@@ -44,9 +40,7 @@ public class RobotContainer {
     public final IndexerSubsystem indexer;
     public final ShooterSubsystem shooter;
     public final IntakeSubsystem intake;
-    public final HoodSubsystem hood;
-    public final ExpansionSubsystem expansion;
-    public final TurretSubsystem turret;
+    public final IntakeArmSubsystem intakeArm;
 
     public final ControlBoard controlboard;
 
@@ -59,9 +53,7 @@ public class RobotContainer {
         indexer = new IndexerSubsystem();
         shooter = new ShooterSubsystem();
         intake = new IntakeSubsystem();
-        hood = new HoodSubsystem();
-        expansion = new ExpansionSubsystem();
-        turret = new TurretSubsystem(drive);
+        intakeArm = new IntakeArmSubsystem();
 
         // ControlBoard must be initialized last
         controlboard = new ControlBoard(this);

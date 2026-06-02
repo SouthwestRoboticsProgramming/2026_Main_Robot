@@ -9,40 +9,42 @@ import com.swrobotics.robot.commands.CharacterizeWheelsCommand;
 import com.swrobotics.robot.commands.DriveCommands;
 import com.swrobotics.robot.commands.RumblePatternCommands;
 import com.swrobotics.robot.config.Constants;
+import com.swrobotics.robot.config.FieldPositions;
 
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.util.Units;
 
 import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
-import edu.wpi.first.wpilibj2.command.button.POVButton;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 
-import com.swrobotics.robot.subsystems.intake.indexer.IndexerSubsystem;
+import com.swrobotics.robot.subsystems.intake.intakeArm.IntakeArmSubsystem;
+import com.swrobotics.robot.subsystems.indexer.IndexerSubsystem;
 import com.swrobotics.robot.subsystems.intake.IntakeSubsystem;
-import com.swrobotics.robot.subsystems.intake.expansion.ExpansionSubsystem;
-import com.swrobotics.robot.subsystems.intake.expansion.ExpansionSubsystem.State;
 import com.swrobotics.robot.subsystems.shooter.ShooterSubsystem;
-import com.swrobotics.robot.subsystems.shooter.hood.HoodSubsystem;
-import com.swrobotics.robot.subsystems.shooter.hood.HoodSubsystem.HoodState;
+import com.swrobotics.robot.subsystems.swerve.SwerveDriveSubsystem;
 
 public final class ControlBoard extends SubsystemBase {
+
     /*
+     *
      * Control mapping:
      *
      * Driver:
      * Left stick: drive translation
      * Right stick X: Drive rotation
      * Left trigger: Intake
-     * Left bumper: Indexer reverse
-     * Right trigger: Feed
+     * Left bumper: Outake
+     * Right trigger: Shoot
      * Right bumper: pass
-     * X: Extend expansion
-
+     * Y: Extend intake arm
+     * X: Indexer feed
+     * A: Aim at hub
+     * POV left/right: Aim pass left or right
+     *
      */
 
     
@@ -51,19 +53,15 @@ public final class ControlBoard extends SubsystemBase {
     private final RobotContainer robot;
     public final CommandXboxController driver;
     public final CommandXboxController operator;
-    public final CommandXboxController testController;
 
 
     private final DriveAccelFilter driveControlFilter;
-    public enum RoboState { AUTO, PASS, NULL }
-    private RoboState TargetRoboState = RoboState.NULL;
 
     public ControlBoard(RobotContainer robot) {
         this.robot = robot;
 
         driver = new CommandXboxController(Constants.kDriverControllerPort);
         operator = new CommandXboxController(Constants.kOperatorControllerPort);
-        testController = new CommandXboxController(2);
 
         driveControlFilter = new DriveAccelFilter(Constants.kDriveControlMaxAccel);
 
@@ -89,25 +87,27 @@ public final class ControlBoard extends SubsystemBase {
         driver.leftTrigger().whileTrue(robot.intake.commandSetState(IntakeSubsystem.State.INTAKE));
         driver.leftBumper().whileTrue(robot.indexer.commandSetState(IndexerSubsystem.State.RINDEX));
 
-        driver.rightTrigger().whileTrue(robot.shooter.commandSetState(ShooterSubsystem.State.AUTO)
-                .alongWith(robot.hood.setMode(HoodSubsystem.HoodState.AUTO_TRACK)));
+        driver.rightTrigger().whileTrue(robot.shooter.commandSetState(ShooterSubsystem.State.AUTO));
+        //.alongWith(robot.intakeArm.commandShoot()));
 
-        driver.rightBumper()
-                .whileTrue(robot.shooter.commandSetState(ShooterSubsystem.State.PASS)
-                .alongWith(robot.hood.setMode(HoodSubsystem.HoodState.PASSING)));
-                
-        driver.a().toggleOnTrue(robot.indexer.commandSetState(IndexerSubsystem.State.FEED)
-        .alongWith(robot.expansion.commandShoot()));
+        driver.rightBumper().whileTrue(robot.shooter.commandSetState(ShooterSubsystem.State.PASS)
+        .alongWith(robot.intakeArm.commandShoot()));     
+        driver.x().toggleOnTrue(robot.indexer.commandSetState(IndexerSubsystem.State.FEED));
+        driver.b().whileTrue(DriveCommands.driveSnapToHub(robot.drive, () -> -driver.getLeftY(), () -> -driver.getLeftX()));
+        driver.povRight().whileTrue(DriveCommands.driveSnapToLeftCorner(robot.drive, () -> -driver.getLeftY(), () -> -driver.getLeftX()));
+        driver.povLeft().whileTrue(DriveCommands.driveSnapToRightCorner(robot.drive, () -> -driver.getLeftY(), () -> -driver.getLeftX()));
+        
+
+        
 
 
 
-        driver.x().toggleOnTrue(robot.expansion.commandSetState(ExpansionSubsystem.State.EXTENDED));
+        driver.y().toggleOnTrue(robot.intakeArm.commandSetState(IntakeArmSubsystem.State.EXTENDED));
         driver.povUp().onFalse(Commands.runOnce(() -> robot.drive.resetRotation(new Rotation2d())));
 
         /* --- MANUAl OVERRIDES --- */       
         operator.rightTrigger()
                 .whileTrue(robot.shooter.commandSetState(ShooterSubsystem.State.PASS)
-                .alongWith(robot.hood.setMode(HoodState.PASSING))
                 .withTimeout(.75)
                 .andThen(robot.indexer.commandSetState(IndexerSubsystem.State.FEED)));
 
@@ -115,17 +115,8 @@ public final class ControlBoard extends SubsystemBase {
                 .whileTrue(robot.shooter.commandSetState(ShooterSubsystem.State.SHOOT)
                 .withTimeout(.75)
                 .andThen(robot.indexer.commandSetState(IndexerSubsystem.State.FEED)));
-                
-        operator.povUp().whileTrue(robot.hood.setMode(HoodState.HOMING));
 
-        //testController.leftTrigger().whileTrue(robot.intake.commandSetState(IntakeSubsystem.State.INTAKE).alongWith(robot.indexer.commandSetState(IndexerSubsystem.State.INTAKE)));
-        //testController.leftBumper().whileTrue(robot.indexer.commandSetState(IndexerSubsystem.State.RINDEX));
-        testController.rightTrigger().whileTrue(robot.hood.setMode(HoodState.AUTO_TRACK).alongWith(robot.shooter.commandSetState(ShooterSubsystem.State.AUTO)).alongWith(robot.expansion.commandSetState(State.SHOOT)));
-        testController.rightBumper().whileTrue(robot.hood.setMode(HoodState.PASSING).alongWith(robot.shooter.commandSetState(ShooterSubsystem.State.PASS)).alongWith(robot.expansion.commandSetState(State.SHOOT)));
-        
-        //testController.y().whileTrue(DriveCommands.shootOnTheMove(robot.drive, robot.shooter, robot.hood, robot.indexer,() -> -driver.getLeftY(), () -> -driver.getLeftX()));
-        //testController.x().toggleOnTrue(robot.expansion.commandSetState(ExpansionSubsystem.State.EXTENDED));
-        //testController.b().toggleOnTrue(Commands.runOnce(() -> robot.drive.commandLockModules()));       
+     
         
 }
 
@@ -172,7 +163,7 @@ public final class ControlBoard extends SubsystemBase {
             () ->
                     DriverStation.isTeleopEnabled()
                             && DriverStation.getMatchTime() > 0
-                            && DriverStation.getMatchTime() <= Constants.kTransferAlertTime)
+                            && DriverStation.getMatchTime() <= FieldPositions.kTransferAlertTime)
             .onTrue(RumblePatternCommands.inactive_Active_TransferAlert(driver, 0.75)
                     .alongWith(RumblePatternCommands.inactive_Active_TransferAlert(operator, 0.75)));
 
@@ -182,7 +173,7 @@ public final class ControlBoard extends SubsystemBase {
             () ->
                     DriverStation.isTeleopEnabled()
                             && DriverStation.getMatchTime() > 0
-                            && DriverStation.getMatchTime() <= Constants.kActive_InactiveAlert1Time2)
+                            && DriverStation.getMatchTime() <= FieldPositions.kActive_InactiveAlert1Time2)
             .onTrue(RumblePatternCommands.inactive_Active_TransferAlert(driver, 0.75)
                     .alongWith(RumblePatternCommands.inactive_Active_TransferAlert(operator, 0.75)));
 
@@ -192,7 +183,7 @@ public final class ControlBoard extends SubsystemBase {
             () ->
                     DriverStation.isTeleopEnabled()
                             && DriverStation.getMatchTime() > 0
-                            && DriverStation.getMatchTime() <= Constants.kActive_InactiveAlert2Time2)
+                            && DriverStation.getMatchTime() <= FieldPositions.kActive_InactiveAlert2Time2)
             .onTrue(RumblePatternCommands.inactive_Active_TransferAlert(driver, 0.75)
                     .alongWith(RumblePatternCommands.inactive_Active_TransferAlert(operator, 0.75)));
 
@@ -201,7 +192,7 @@ public final class ControlBoard extends SubsystemBase {
             () ->
                     DriverStation.isTeleopEnabled()
                             && DriverStation.getMatchTime() > 0
-                            && DriverStation.getMatchTime() <= Constants.kActive_InactiveAlert3Time2)
+                            && DriverStation.getMatchTime() <= FieldPositions.kActive_InactiveAlert3Time2)
             .onTrue(RumblePatternCommands.inactive_Active_TransferAlert(driver, 0.75)
                     .alongWith(RumblePatternCommands.inactive_Active_TransferAlert(operator, 0.75)));
         
@@ -211,7 +202,7 @@ public final class ControlBoard extends SubsystemBase {
             () ->
                     DriverStation.isTeleopEnabled()
                             && DriverStation.getMatchTime() > 0
-                            && DriverStation.getMatchTime() <= Constants.kActive_InactiveAlert4Time2)
+                            && DriverStation.getMatchTime() <= FieldPositions.kActive_InactiveAlert4Time2)
             .onTrue(RumblePatternCommands.inactive_Active_TransferAlert(driver, 0.75)
                     .alongWith(RumblePatternCommands.inactive_Active_TransferAlert(operator, 0.75)));
                     
@@ -221,7 +212,7 @@ public final class ControlBoard extends SubsystemBase {
                 () ->
                         DriverStation.isTeleopEnabled()
                                 && DriverStation.getMatchTime() > 0
-                                && DriverStation.getMatchTime() <= Constants.kEndgameAlertTime)
+                                && DriverStation.getMatchTime() <= FieldPositions.kEndgameAlertTime)
                 .onTrue(RumblePatternCommands.endgameAlert(driver, 0.75)
                         .alongWith(RumblePatternCommands.endgameAlert(operator, 0.75)));
 
@@ -229,29 +220,13 @@ public final class ControlBoard extends SubsystemBase {
                  () ->
                         DriverStation.isTeleopEnabled()
                                 && DriverStation.getMatchTime() > 0
-                                && DriverStation.getMatchTime() <= Constants.kEndgameAlert2Time)
+                                && DriverStation.getMatchTime() <= FieldPositions.kEndgameAlert2Time)
                 .onTrue(RumblePatternCommands.endgameAlertFinalCountdown(driver, 0.75));
     }
 
     @Override
     public void periodic() {
 
-        switch(TargetRoboState){
-            case AUTO:
-                robot.hood.setMode(HoodState.AUTO_TRACK);
-                robot.shooter.commandSetState(ShooterSubsystem.State.AUTO);
-                break;
-            case PASS:
-                robot.hood.setMode(HoodState.PASSING);
-                robot.shooter.commandSetState(ShooterSubsystem.State.PASS);
-                break;
-            case NULL:
-                robot.hood.setMode(HoodState.IDLE);
-                robot.shooter.commandSetState(ShooterSubsystem.State.IDLE);
-                break;
-        }
     }
-public Command commandSetRoboState(RoboState state){
-        return Commands.run(() -> TargetRoboState = state, this);
-}
+
 }

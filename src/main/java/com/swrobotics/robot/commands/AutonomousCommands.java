@@ -13,35 +13,31 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 
-import com.swrobotics.robot.subsystems.intake.indexer.IndexerSubsystem;
+import com.swrobotics.robot.subsystems.intake.intakeArm.IntakeArmSubsystem;
+import com.swrobotics.robot.subsystems.indexer.IndexerSubsystem;
 import com.swrobotics.robot.subsystems.intake.IntakeSubsystem;
-import com.swrobotics.robot.subsystems.intake.expansion.ExpansionSubsystem;
-import com.swrobotics.robot.subsystems.shooter.hood.HoodSubsystem;
 import com.swrobotics.robot.subsystems.shooter.ShooterSubsystem;
 import com.swrobotics.robot.subsystems.swerve.SwerveDriveSubsystem;
 
 public class AutonomousCommands {
     
     public static Command getShootCommand(RobotContainer robot) {
-        return robot.shooter.commandSetState(ShooterSubsystem.State.AUTO)           
-        .alongWith(robot.hood.setMode(HoodSubsystem.HoodState.AUTO_TRACK).withTimeout(.75)
+        return robot.shooter.commandSetState(ShooterSubsystem.State.AUTO)
                     .andThen(robot.indexer.commandSetState(IndexerSubsystem.State.FEED))
-                        
-                    ).withTimeout(3);
+                        .withTimeout(3);
     }
 
     public static Command getIntakeCommand(RobotContainer robot) {
-        return robot.intake.commandSetState(IntakeSubsystem.State.INTAKE)
-        .alongWith(robot.indexer.commandSetState(IndexerSubsystem.State.INTAKE));
+        return robot.intake.commandSetState(IntakeSubsystem.State.INTAKE);
     }
 
 
     public static Command getExpandCommand(RobotContainer robot) {
-        return robot.expansion.commandSetState(ExpansionSubsystem.State.EXTENDED).withTimeout(.5);
+        return robot.intakeArm.commandSetState(IntakeArmSubsystem.State.EXTENDED).withTimeout(.5);
     }
 
     public static Command getRetractCommand(RobotContainer robot) {
-        return robot.expansion.commandSetState(ExpansionSubsystem.State.STOWED).withTimeout(.5);
+        return robot.intakeArm.commandSetState(IntakeArmSubsystem.State.STOWED).withTimeout(.5);
     }
 
     public static Command getGoUnderTrench(RobotContainer robot) {
