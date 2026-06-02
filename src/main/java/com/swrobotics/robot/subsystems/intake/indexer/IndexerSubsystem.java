@@ -72,8 +72,11 @@ public class IndexerSubsystem extends SubsystemBase {
         TalonFXConfigHelper config4 = new TalonFXConfigHelper();
         config4.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
         config4.MotorOutput.NeutralMode = NeutralModeValue.Coast;
-        config4.CurrentLimits.StatorCurrentLimit = 80.0;
+        config4.CurrentLimits.StatorCurrentLimit = 100.0;
         config4.CurrentLimits.StatorCurrentLimitEnable = true; 
+        config4.Slot0.kS = 0.2;  // Added: Volts added to overcome static friction (Start at ~0.4V and adjust)
+        config4.Slot0.kV = 0.13; 
+        config4.Slot0.kP = 0.3;
         
 
         config.apply(beltMotor);
@@ -114,10 +117,10 @@ public class IndexerSubsystem extends SubsystemBase {
                 kickerRPS = Constants.kIndexerIdleVoltage.get();
                 break;
             case FEED:
-                floorRPS = 10.0;
-                beltRPS = 20.0;
-                feederRPS = 48.0;
-                kickerRPS = 4.0;
+                floorRPS = 12.0;
+                beltRPS = 40.0;
+                feederRPS = 96.0;
+                kickerRPS = 6.0;
                 break;
             case RINDEX:
                 floorRPS = -6.0;
@@ -128,7 +131,7 @@ public class IndexerSubsystem extends SubsystemBase {
         }
 
         // Apply calculated velocities
-        floorMotor.setControl(voltageControl.withOutput(floorRPS));
+        floorMotor.setControl(velocityControl.withVelocity(floorRPS));
         beltMotor.setControl(velocityControl.withVelocity(beltRPS)); 
         shooterFeederMotor.setControl(velocityControl.withVelocity(feederRPS));
         kickerMotor.setControl(voltageControl.withOutput(kickerRPS));

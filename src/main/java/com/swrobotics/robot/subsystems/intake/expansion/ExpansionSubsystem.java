@@ -2,6 +2,7 @@ package com.swrobotics.robot.subsystems.intake.expansion;
 
 import java.beans.Encoder;
 
+import com.ctre.phoenix6.configs.MotorOutputConfigs; // Added for localized config updates
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.hardware.CANcoder;
@@ -9,6 +10,7 @@ import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.swrobotics.robot.config.IOAllocation;
+import edu.wpi.first.wpilibj.DriverStation; // Added to check enabled state
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -32,8 +34,10 @@ public class ExpansionSubsystem extends SubsystemBase {
     
     private State targetState = State.RETRACTED;
     private final double kOscillationSpeed = 7.5;
-    private final double kOscillationAmp = 4.0;
+    private final double kOscillationAmp = 10.0;
     private final double kOscillationCenter = 10.0;
+
+    private boolean wasEnabled = false; // Latch variable to track state transitions
 
     public ExpansionSubsystem() {
         motor = IOAllocation.CAN.kExpansionMotor.createTalonFX();
@@ -41,7 +45,7 @@ public class ExpansionSubsystem extends SubsystemBase {
         TalonFXConfiguration config = new TalonFXConfiguration();
         
         config.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
-        config.MotorOutput.NeutralMode = NeutralModeValue.Brake;
+        config.MotorOutput.NeutralMode = NeutralModeValue.Coast; // Switched to Coast for initial boot-up state
 
         config.CurrentLimits.SupplyCurrentLimit = 60; 
         config.CurrentLimits.SupplyCurrentLimitEnable = true;
@@ -66,10 +70,25 @@ public class ExpansionSubsystem extends SubsystemBase {
 
     @Override
     public void periodic() {
+        // --- Dynamic Neutral Mode Latch ---
+        boolean isEnabled = DriverStation.isEnabled();
+        if (isEnabled != wasEnabled) {
+            wasEnabled = isEnabled;
+            
+            MotorOutputConfigs outputConfigs = new MotorOutputConfigs();
+            // CRITICAL: We must re-assert the inversion state here, otherwise 
+            // a fresh config block will overwrite it back to factory defaults!
+            outputConfigs.Inverted = InvertedValue.Clockwise_Positive; 
+            outputConfigs.NeutralMode = isEnabled ? NeutralModeValue.Brake : NeutralModeValue.Coast;
+            
+            motor.getConfigurator().apply(outputConfigs);
+        }
+
         double targetRotations;
 
         if (targetState == State.SHOOT) {
             targetRotations = kOscillationCenter + (kOscillationAmp * Math.sin(Timer.getFPGATimestamp() * kOscillationSpeed));
+            setTargetState(State.EXTENDED); 
         } else {
             targetRotations = targetState.position;
         }
