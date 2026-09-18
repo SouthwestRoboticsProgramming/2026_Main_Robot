@@ -22,7 +22,7 @@ public class ExpansionSubsystem extends SubsystemBase {
     public enum State {
         RETRACTED(0.0),
         STOWED(6.0),
-        EXTENDED(26.0), 
+        EXTENDED(26.5), 
         SHOOT(0.0); 
 
         public final double position;

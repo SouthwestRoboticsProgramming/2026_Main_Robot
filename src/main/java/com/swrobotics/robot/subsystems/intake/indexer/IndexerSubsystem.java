@@ -17,6 +17,7 @@ import com.swrobotics.lib.ctre.TalonFXConfigHelper;
 import com.swrobotics.robot.config.Constants;
 import com.swrobotics.robot.config.IOAllocation;
 
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -51,7 +52,7 @@ public class IndexerSubsystem extends SubsystemBase {
         TalonFXConfigHelper config = new TalonFXConfigHelper();
         config.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
         config.MotorOutput.NeutralMode = NeutralModeValue.Coast;
-        config.CurrentLimits.StatorCurrentLimit = 60.0;
+        config.CurrentLimits.StatorCurrentLimit = 100.0;
         config.CurrentLimits.StatorCurrentLimitEnable = true;
         config.Slot0.kP = 0.3;
         config.Slot0.kV = 0.13;
@@ -59,7 +60,7 @@ public class IndexerSubsystem extends SubsystemBase {
         TalonFXConfigHelper config2 = new TalonFXConfigHelper();
         config2.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
         config2.MotorOutput.NeutralMode = NeutralModeValue.Coast;
-        config2.CurrentLimits.StatorCurrentLimit = 60.0;
+        config2.CurrentLimits.StatorCurrentLimit = 100.0;
         config2.CurrentLimits.StatorCurrentLimitEnable = true; 
         config2.Slot0.kP = 0.3;
         config2.Slot0.kV = 0.13;
@@ -117,10 +118,10 @@ public class IndexerSubsystem extends SubsystemBase {
                 kickerRPS = Constants.kIndexerIdleVoltage.get();
                 break;
             case FEED:
-                floorRPS = 12.0;
-                beltRPS = 40.0;
-                feederRPS = 96.0;
-                kickerRPS = 6.0;
+                floorRPS = 25.0;
+                beltRPS = 100.0;
+                feederRPS = 100.0;
+                kickerRPS = 8.0;
                 break;
             case RINDEX:
                 floorRPS = -6.0;
@@ -135,6 +136,11 @@ public class IndexerSubsystem extends SubsystemBase {
         beltMotor.setControl(velocityControl.withVelocity(beltRPS)); 
         shooterFeederMotor.setControl(velocityControl.withVelocity(feederRPS));
         kickerMotor.setControl(voltageControl.withOutput(kickerRPS));
+
+        SmartDashboard.putNumber("Indexer/belt RPS", beltRPS);
+        SmartDashboard.putNumber("Indexer/feeder RPS", feederRPS);
+        SmartDashboard.putNumber("Indexer/ actual belt RPS", beltMotor.getVelocity().getValueAsDouble());
+        SmartDashboard.putNumber("Indexer/ actual feeder RPS", shooterFeederMotor.getVelocity().getValueAsDouble());
     }
 
     public void setTargetState(State targetState) {

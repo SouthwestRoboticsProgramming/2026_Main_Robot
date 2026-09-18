@@ -50,10 +50,10 @@ public class ShooterSubsystem extends SubsystemBase {
         double wheelRps = 0;
         switch (targetState) {
             case IDLE: wheelRps = 0; break;
-            case SHOOT: wheelRps = 60; break;
+            case SHOOT: wheelRps = 40; break;
             case WARM: wheelRps = 20; break;
             case RINDEX: wheelRps = -30; break;
-            case AUTO: wheelRps = AimCalc.getInstance().getShooterRPS(); break;
+            case AUTO: wheelRps = AimCalc.getInstance().getShooterRPS() -5; break;
             case PASS: wheelRps = AimCalc.getInstance().getShooterRPS(); break;
         }
 

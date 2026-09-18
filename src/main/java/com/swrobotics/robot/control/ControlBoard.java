@@ -96,8 +96,9 @@ public final class ControlBoard extends SubsystemBase {
                 .whileTrue(robot.shooter.commandSetState(ShooterSubsystem.State.PASS)
                 .alongWith(robot.hood.setMode(HoodSubsystem.HoodState.PASSING)));
                 
-        driver.a().toggleOnTrue(robot.indexer.commandSetState(IndexerSubsystem.State.FEED)
-        .alongWith(robot.expansion.commandShoot()));
+        driver.a().toggleOnTrue(robot.indexer.commandSetState(IndexerSubsystem.State.FEED));
+        driver.b().whileTrue(DriveCommands.shootOnTheMove(robot.drive, () -> -driver.getLeftY(), () -> -driver.getLeftX()));
+        //.alongWith(robot.expansion.commandShoot()));
 
 
 
@@ -105,11 +106,11 @@ public final class ControlBoard extends SubsystemBase {
         driver.povUp().onFalse(Commands.runOnce(() -> robot.drive.resetRotation(new Rotation2d())));
 
         /* --- MANUAl OVERRIDES --- */       
-        operator.rightTrigger()
-                .whileTrue(robot.shooter.commandSetState(ShooterSubsystem.State.PASS)
-                .alongWith(robot.hood.setMode(HoodState.PASSING))
-                .withTimeout(.75)
-                .andThen(robot.indexer.commandSetState(IndexerSubsystem.State.FEED)));
+        // operator.rightTrigger()
+        //         .whileTrue(robot.shooter.commandSetState(ShooterSubsystem.State.PASS)
+        //         .alongWith(robot.hood.setMode(HoodState.PASSING))
+        //         .withTimeout(.75)
+        //         .andThen(robot.indexer.commandSetState(IndexerSubsystem.State.FEED)));
 
         operator.rightTrigger()
                 .whileTrue(robot.shooter.commandSetState(ShooterSubsystem.State.SHOOT)
