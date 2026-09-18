@@ -9,6 +9,7 @@ import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.swrobotics.lib.ctre.TalonFXConfigHelper;
 import com.swrobotics.robot.config.IOAllocation;
 
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 // WPILib imports
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -52,9 +53,11 @@ public class IntakeSubsystem extends SubsystemBase {
             case IDLE: targetVoltage = 0.0;
             break;
         }
-
-        // Apply control
-        motor.setControl(voltageControl.withOutput(targetVoltage)); 
+        motor.setControl(voltageControl.withOutput(targetVoltage));
+        
+        SmartDashboard.putString("Intake/IntakeMotor/Intake State", targetState.toString());
+        SmartDashboard.putNumber("Intake/IntakeMotor/TargetVoltage", targetVoltage);
+        SmartDashboard.putNumber("Intake/IntakeMotor/Voltage", motor.getMotorVoltage().getValueAsDouble());
     }
 
     public void setTargetState(State targetState) {

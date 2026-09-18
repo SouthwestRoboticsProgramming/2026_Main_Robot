@@ -16,10 +16,9 @@ import com.swrobotics.robot.control.AimCalc;
 import com.swrobotics.robot.control.ControlBoard;
 import com.swrobotics.robot.logging.FieldView;
 import com.swrobotics.robot.subsystems.shooter.hood.HoodSubsystem;
-//import com.swrobotics.robot.subsystems.shooter.turret.TurretSubsystem;
 import com.swrobotics.robot.subsystems.shooter.ShooterSubsystem;
 import com.swrobotics.robot.subsystems.intake.IntakeSubsystem;
-import com.swrobotics.robot.subsystems.intake.expansion.ExpansionSubsystem;
+import com.swrobotics.robot.subsystems.intake.intakeArm.IntakeArmSubsystem;
 import com.swrobotics.robot.subsystems.intake.indexer.IndexerSubsystem;
 
 import edu.wpi.first.wpilibj.DriverStation;
@@ -35,38 +34,34 @@ import edu.wpi.first.wpilibj2.command.Commands;
  * {@code robotInit()}, which allows us to have final fields for subsystems.
  */
 public class RobotContainer {
-    // Create dashboard choosers
+
     private final SendableChooser<Command> autoSelector;
     private final SendableChooser<Double> autoDelaySelector;
 
     public final SwerveDriveSubsystem drive;
     public final VisionSubsystem vision;
-    public final IndexerSubsystem indexer;
     public final ShooterSubsystem shooter;
-    public final IntakeSubsystem intake;
     public final HoodSubsystem hood;
-    public final ExpansionSubsystem expansion;
-    //public final TurretSubsystem turret;
+    public final IndexerSubsystem indexer;
+    public final IntakeSubsystem intake;
+    public final IntakeArmSubsystem intakeArm;
 
     public final ControlBoard controlboard;
 
     public RobotContainer() {
-        // Turn off joystick warnings in sim
+
         DriverStation.silenceJoystickConnectionWarning(RobotBase.isSimulation());
 
         drive = new SwerveDriveSubsystem();
         vision = new VisionSubsystem(drive);
-        indexer = new IndexerSubsystem();
         shooter = new ShooterSubsystem();
-        intake = new IntakeSubsystem();
         hood = new HoodSubsystem();
-        expansion = new ExpansionSubsystem();
-        //turret = new TurretSubsystem(drive);
+        indexer = new IndexerSubsystem();
+        intake = new IntakeSubsystem();
+        intakeArm = new IntakeArmSubsystem();        
 
-        // ControlBoard must be initialized last
         controlboard = new ControlBoard(this);
 
-        // Register Named Commands for Auto
         NamedCommands.registerCommand("Shoot", AutonomousCommands.getShootCommand(this));
         NamedCommands.registerCommand("Intake", AutonomousCommands.getIntakeCommand(this));
         NamedCommands.registerCommand("Expand", AutonomousCommands.getExpandCommand(this));

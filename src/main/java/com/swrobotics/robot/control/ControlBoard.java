@@ -19,7 +19,6 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
-import edu.wpi.first.wpilibj2.command.button.POVButton;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 
 import com.swrobotics.robot.subsystems.intake.indexer.IndexerSubsystem;
@@ -37,11 +36,16 @@ public final class ControlBoard extends SubsystemBase {
      * Driver:
      * Left stick: drive translation
      * Right stick X: Drive rotation
-     * Left trigger: Intake
-     * Left bumper: Indexer reverse
-     * Right trigger: Feed
-     * Right bumper: pass
+     * Right trigger: Intake
      * X: Extend expansion
+     * B: Auto Align
+     
+     Operator:
+     * Right trigger: Shoot
+     * Right bumper: pass
+     * Left Trigger: Feed
+     * Left bumper: Indexer reverse
+     
 
      */
 
@@ -97,7 +101,7 @@ public final class ControlBoard extends SubsystemBase {
                 .alongWith(robot.hood.setMode(HoodSubsystem.HoodState.PASSING)));
                 
         driver.a().toggleOnTrue(robot.indexer.commandSetState(IndexerSubsystem.State.FEED));
-        driver.b().whileTrue(DriveCommands.shootOnTheMove(robot.drive, () -> -driver.getLeftY(), () -> -driver.getLeftX()));
+        driver.b().whileTrue(DriveCommands.driveFieldRelativeSnapToHub(robot.drive, () -> driver.getLeftX(), () -> driver.getLeftY()));
         //.alongWith(robot.expansion.commandShoot()));
 
 

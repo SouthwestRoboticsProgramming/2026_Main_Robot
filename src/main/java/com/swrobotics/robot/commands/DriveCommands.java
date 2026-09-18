@@ -100,8 +100,8 @@ public final class DriveCommands {
 
     public static Command driveFieldRelativeSnapToHub(
             SwerveDriveSubsystem drive,
-
-            Supplier<Translation2d> translationSupplier
+            Supplier<Double> translationX,
+            Supplier<Double> translationY
 ) {
         PIDController turnPid = new PIDController(0, 0, 0); // Values set to 0, changed a few lines later
         turnPid.enableContinuousInput(-Math.PI, Math.PI);
@@ -111,7 +111,6 @@ public final class DriveCommands {
             turnPid.setTolerance(Math.toRadians(Constants.kSnapThetaDeadzone.get()));
             turnPid.reset();
         }, () -> {
-            Translation2d tx = translationSupplier.get();
             
             Rotation2d currentRot = drive.getEstimatedPose().getRotation();
             Rotation2d targetRot = AimCalc.getInstance().getDrivebaseAimAngle();
@@ -132,8 +131,8 @@ public final class DriveCommands {
             }
 
             drive.setControl(new SwerveRequest.FieldCentric()
-                    .withVelocityX(tx.getX())
-                    .withVelocityY(tx.getY())
+                    .withVelocityX(translationX.get())
+                    .withVelocityY(translationY.get())
                     .withRotationalRate(rotOutput));
         }, drive);
     }
@@ -163,10 +162,6 @@ public static Command shootOnTheMove(
             .withVelocityX(translationX.get())
             .withVelocityY(translationY.get())
             .withRotationalRate(rotOutput));
-
-        
-
-
     }, drive)
     .finallyDo(() -> {
 
@@ -445,5 +440,11 @@ public static Command driveOverBump(SwerveDriveSubsystem drive) {
 
     public static Command driveToPose(SwerveDriveSubsystem drive, Pose2d currentPose) {
         throw new UnsupportedOperationException("Unimplemented method 'driveToPose'");
+    }
+
+    public static Command driveFieldRelativeSnapToHub(SwerveDriveSubsystem drive, Supplier<Translation2d> supplier,
+            Object object) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'driveFieldRelativeSnapToHub'");
     }
 }

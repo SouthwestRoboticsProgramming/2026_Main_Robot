@@ -10,7 +10,6 @@ import com.ctre.phoenix6.swerve.SwerveModuleConstants.ClosedLoopOutputType;
 import com.ctre.phoenix6.swerve.SwerveModuleConstants.SteerFeedbackType;
 import com.pathplanner.lib.config.ModuleConfig;
 import com.pathplanner.lib.config.RobotConfig;
-import com.swrobotics.lib.ctre.NTSlot0Configs;
 import com.swrobotics.lib.field.FieldInfo;
 import com.swrobotics.lib.net.NTBoolean;
 import com.swrobotics.lib.net.NTDouble;
@@ -25,12 +24,9 @@ import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.util.Units;
-import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.RobotBase;
 
 import static edu.wpi.first.units.Units.*;
-
-import java.util.Optional;
 
 // Use NTEntry when you want tunable
 // Use double when value has been tuned in so it can't accidentally change

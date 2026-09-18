@@ -1,23 +1,25 @@
-package com.swrobotics.robot.subsystems.intake.expansion;
+package com.swrobotics.robot.subsystems.intake.intakeArm;
 
 import java.beans.Encoder;
 
-import com.ctre.phoenix6.configs.MotorOutputConfigs; // Added for localized config updates
+import com.ctre.phoenix6.configs.MotorOutputConfigs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.hardware.CANcoder;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
+
 import com.swrobotics.robot.config.IOAllocation;
-import edu.wpi.first.wpilibj.DriverStation; // Added to check enabled state
+
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
-public class ExpansionSubsystem extends SubsystemBase {
+public class IntakeArmSubsystem extends SubsystemBase {
 
     public enum State {
         RETRACTED(0.0),
@@ -29,7 +31,7 @@ public class ExpansionSubsystem extends SubsystemBase {
         State(double position) { this.position = position; }
     }
 
-    private final TalonFX motor;
+    private final TalonFX IntakeArmMotor;
     private final MotionMagicVoltage request = new MotionMagicVoltage(0);
     
     private State targetState = State.RETRACTED;
@@ -37,10 +39,10 @@ public class ExpansionSubsystem extends SubsystemBase {
     private final double kOscillationAmp = 10.0;
     private final double kOscillationCenter = 10.0;
 
-    private boolean wasEnabled = false; // Latch variable to track state transitions
+    private boolean wasEnabled = false; 
 
-    public ExpansionSubsystem() {
-        motor = IOAllocation.CAN.kExpansionMotor.createTalonFX();
+    public IntakeArmSubsystem() {
+        IntakeArmMotor = IOAllocation.CAN.kExpansionMotor.createTalonFX();
 
         TalonFXConfiguration config = new TalonFXConfiguration();
         
@@ -62,26 +64,23 @@ public class ExpansionSubsystem extends SubsystemBase {
         config.SoftwareLimitSwitch.ReverseSoftLimitThreshold = -2.0;
         config.SoftwareLimitSwitch.ReverseSoftLimitEnable = true;
 
-        motor.getConfigurator().apply(config);
-        motor.setPosition(0);
+        IntakeArmMotor.getConfigurator().apply(config);
+        IntakeArmMotor.setPosition(0);
 
         this.setDefaultCommand(run(() -> setTargetState(State.STOWED)));
     }
 
     @Override
     public void periodic() {
-        // --- Dynamic Neutral Mode Latch ---
         boolean isEnabled = DriverStation.isEnabled();
         if (isEnabled != wasEnabled) {
             wasEnabled = isEnabled;
             
             MotorOutputConfigs outputConfigs = new MotorOutputConfigs();
-            // CRITICAL: We must re-assert the inversion state here, otherwise 
-            // a fresh config block will overwrite it back to factory defaults!
             outputConfigs.Inverted = InvertedValue.Clockwise_Positive; 
             outputConfigs.NeutralMode = isEnabled ? NeutralModeValue.Brake : NeutralModeValue.Coast;
             
-            motor.getConfigurator().apply(outputConfigs);
+            IntakeArmMotor.getConfigurator().apply(outputConfigs);
         }
 
         double targetRotations;
@@ -93,13 +92,12 @@ public class ExpansionSubsystem extends SubsystemBase {
             targetRotations = targetState.position;
         }
 
-        // Apply control
-        motor.setControl(request.withPosition(targetRotations));
+        IntakeArmMotor.setControl(request.withPosition(targetRotations));
 
-        // Telemetry
-        SmartDashboard.putString("Expansion/State", targetState.name());
-        SmartDashboard.putNumber("Expansion/Motor Rotations", motor.getPosition().getValueAsDouble());
-        SmartDashboard.putNumber("Expansion/Target Rotations", targetRotations);
+        SmartDashboard.putString("Intake/IntakeArm/State", targetState.name());
+        SmartDashboard.putNumber("Intake/IntakeArm/Motor Rotations", IntakeArmMotor.getPosition().getValueAsDouble());
+        SmartDashboard.putNumber("Intake/IntakeArm/Target Rotations", targetRotations);
+        SmartDashboard.putNumber("Intake/IntakeArm/Motor Output Voltage", IntakeArmMotor.getMotorVoltage().getValueAsDouble());
     }
 
     public void setTargetState(State state) {
