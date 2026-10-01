@@ -23,8 +23,8 @@ import edu.wpi.first.wpilibj2.command.button.Trigger;
 
 import com.swrobotics.robot.subsystems.intake.indexer.IndexerSubsystem;
 import com.swrobotics.robot.subsystems.intake.IntakeSubsystem;
-import com.swrobotics.robot.subsystems.intake.expansion.ExpansionSubsystem;
-import com.swrobotics.robot.subsystems.intake.expansion.ExpansionSubsystem.State;
+import com.swrobotics.robot.subsystems.intake.intakeArm.IntakeArmSubsystem;
+import com.swrobotics.robot.subsystems.intake.intakeArm.IntakeArmSubsystem.State;
 import com.swrobotics.robot.subsystems.shooter.ShooterSubsystem;
 import com.swrobotics.robot.subsystems.shooter.hood.HoodSubsystem;
 import com.swrobotics.robot.subsystems.shooter.hood.HoodSubsystem.HoodState;
@@ -101,12 +101,12 @@ public final class ControlBoard extends SubsystemBase {
                 .alongWith(robot.hood.setMode(HoodSubsystem.HoodState.PASSING)));
                 
         driver.a().toggleOnTrue(robot.indexer.commandSetState(IndexerSubsystem.State.FEED));
-        driver.b().whileTrue(DriveCommands.driveFieldRelativeSnapToHub(robot.drive, () -> driver.getLeftX(), () -> driver.getLeftY()));
-        //.alongWith(robot.expansion.commandShoot()));
-
-
-
-        driver.x().toggleOnTrue(robot.expansion.commandSetState(ExpansionSubsystem.State.EXTENDED));
+        driver.b().whileTrue(DriveCommands.driveFieldRelativeSnapToHub2(
+                robot.drive, 
+                () -> -driver.getLeftY(), 
+                () -> -driver.getLeftX()
+            ));
+        driver.x().toggleOnTrue(robot.intakeArm.commandSetState(IntakeArmSubsystem.State.EXTENDED));
         driver.povUp().onFalse(Commands.runOnce(() -> robot.drive.resetRotation(new Rotation2d())));
 
         /* --- MANUAl OVERRIDES --- */       
@@ -125,8 +125,8 @@ public final class ControlBoard extends SubsystemBase {
 
         //testController.leftTrigger().whileTrue(robot.intake.commandSetState(IntakeSubsystem.State.INTAKE).alongWith(robot.indexer.commandSetState(IndexerSubsystem.State.INTAKE)));
         //testController.leftBumper().whileTrue(robot.indexer.commandSetState(IndexerSubsystem.State.RINDEX));
-        testController.rightTrigger().whileTrue(robot.hood.setMode(HoodState.AUTO_TRACK).alongWith(robot.shooter.commandSetState(ShooterSubsystem.State.AUTO)).alongWith(robot.expansion.commandSetState(State.SHOOT)));
-        testController.rightBumper().whileTrue(robot.hood.setMode(HoodState.PASSING).alongWith(robot.shooter.commandSetState(ShooterSubsystem.State.PASS)).alongWith(robot.expansion.commandSetState(State.SHOOT)));
+        testController.rightTrigger().whileTrue(robot.hood.setMode(HoodState.AUTO_TRACK).alongWith(robot.shooter.commandSetState(ShooterSubsystem.State.AUTO)).alongWith(robot.intakeArm.commandSetState(State.SHOOT)));
+        testController.rightBumper().whileTrue(robot.hood.setMode(HoodState.PASSING).alongWith(robot.shooter.commandSetState(ShooterSubsystem.State.PASS)).alongWith(robot.intakeArm.commandSetState(State.SHOOT)));
         
         //testController.y().whileTrue(DriveCommands.shootOnTheMove(robot.drive, robot.shooter, robot.hood, robot.indexer,() -> -driver.getLeftY(), () -> -driver.getLeftX()));
         //testController.x().toggleOnTrue(robot.expansion.commandSetState(ExpansionSubsystem.State.EXTENDED));

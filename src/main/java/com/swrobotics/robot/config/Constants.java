@@ -83,12 +83,12 @@ public final class Constants {
 
     public static final NTEntry<Double> kSnapMaxSpeed = new NTDouble("Drive/Snap/Max Speed (meters per sec)", 10).setPersistent();
     public static final NTEntry<Double> kSnapMaxTurnSpeed = new NTDouble("Drive/Snap/Max Turn Speed (rot per sec)", 3.5).setPersistent();
-    public static final NTEntry<Double> kSnapDriveKp = new NTDouble("Drive/Snap/Drive kP", 2).setPersistent();
+    public static final NTEntry<Double> kSnapDriveKp = new NTDouble("Drive/Snap/Drive kP", 1.6).setPersistent();
     public static final NTEntry<Double> kSnapDriveKd = new NTDouble("Drive/Snap/Drive kD", 0.2).setPersistent();
     public static final NTEntry<Double> kSnapTurnKp = new NTDouble("Drive/Snap/Turn kP", 4).setPersistent();
     public static final NTEntry<Double> kSnapTurnKd = new NTDouble("Drive/Snap/Turn kD", 0).setPersistent();
     public static final NTEntry<Double> kSnapXYDeadzone = new NTDouble("Drive/Snap/XY Deadzone (m)", 0.005).setPersistent();
-    public static final NTEntry<Double> kSnapThetaDeadzone = new NTDouble("Drive/Snap/Theta Deadzone (deg)", 0.2).setPersistent();
+    public static final NTEntry<Double> kSnapThetaDeadzone = new NTDouble("Drive/Snap/Theta Deadzone (deg)", 10).setPersistent();
 
 
     // Drive

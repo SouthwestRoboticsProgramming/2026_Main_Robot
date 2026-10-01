@@ -1,14 +1,12 @@
 package com.swrobotics.robot.subsystems.intake.indexer;
 
 import com.ctre.phoenix6.configs.CANrangeConfiguration;
-import com.ctre.phoenix6.controls.Follower;
 import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.CANrange;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.hardware.TalonFXS;
 import com.ctre.phoenix6.signals.InvertedValue;
-import com.ctre.phoenix6.signals.MotorAlignmentValue;
 import com.ctre.phoenix6.signals.MotorArrangementValue; // Added for Minion config
 import com.ctre.phoenix6.signals.NeutralModeValue;
 

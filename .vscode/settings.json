@@ -1,3 +1,27 @@
 {
-    "java.configuration.updateBuildConfiguration": "interactive"
-}
+    "java.configuration.updateBuildConfiguration": "interactive",
+
+
+    // 1. Ditch the tiny, ugly folder twistie-arrows for a flat look
+    "explorer.hideArrows": true,
+  
+    // 2. Prevent single-child folders from bunching up on one line (e.g., src/components)
+    "explorer.compactFolders": false,
+  
+    // 3. Keep folder names flowing naturally; don't anchor them to the top when scrolling
+    "explorer.experimental.stickyScroll.enabled": false,
+  
+    // 4. Increase indent spacing to 16 for a deeply clear, airy folder hierarchy
+    "workbench.tree.indent": 16,
+  
+    // 5. Render thin, elegant vertical alignment guides permanently
+    "workbench.tree.renderIndentGuides": "always",
+  
+    // 6. Hide git status color-clutter if you prefer perfect color uniformity
+    "explorer.decorations.colors": false,
+    "explorer.decorations.badges": false,
+  
+    // 7. Reposition the chunky Activity Bar to the bottom of the sidebar to reclaim screen space
+    "workbench.activityBar.location": "bottom"
+  }
+  

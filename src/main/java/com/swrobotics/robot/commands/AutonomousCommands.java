@@ -15,7 +15,7 @@ import edu.wpi.first.wpilibj2.command.Commands;
 
 import com.swrobotics.robot.subsystems.intake.indexer.IndexerSubsystem;
 import com.swrobotics.robot.subsystems.intake.IntakeSubsystem;
-import com.swrobotics.robot.subsystems.intake.expansion.ExpansionSubsystem;
+import com.swrobotics.robot.subsystems.intake.intakeArm.IntakeArmSubsystem;
 import com.swrobotics.robot.subsystems.shooter.hood.HoodSubsystem;
 import com.swrobotics.robot.subsystems.shooter.ShooterSubsystem;
 import com.swrobotics.robot.subsystems.swerve.SwerveDriveSubsystem;
@@ -35,13 +35,12 @@ public class AutonomousCommands {
         .alongWith(robot.indexer.commandSetState(IndexerSubsystem.State.INTAKE));
     }
 
-
     public static Command getExpandCommand(RobotContainer robot) {
-        return robot.expansion.commandSetState(ExpansionSubsystem.State.EXTENDED).withTimeout(.5);
+        return robot.intakeArm.commandSetState(IntakeArmSubsystem.State.EXTENDED).withTimeout(.5);
     }
 
     public static Command getRetractCommand(RobotContainer robot) {
-        return robot.expansion.commandSetState(ExpansionSubsystem.State.STOWED).withTimeout(.5);
+        return robot.intakeArm.commandSetState(IntakeArmSubsystem.State.STOWED).withTimeout(.5);
     }
 
     public static Command getGoUnderTrench(RobotContainer robot) {

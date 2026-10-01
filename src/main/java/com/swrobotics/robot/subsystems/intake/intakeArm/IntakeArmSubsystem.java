@@ -52,8 +52,8 @@ public class IntakeArmSubsystem extends SubsystemBase {
         config.CurrentLimits.SupplyCurrentLimit = 60; 
         config.CurrentLimits.SupplyCurrentLimitEnable = true;
 
-        config.Slot0.kP = 2.0; 
-        config.Slot0.kI = 0;
+        config.Slot0.kP = 1.6; 
+        config.Slot0.kI = 1;
         config.Slot0.kD = 0.1;
         config.MotionMagic.MotionMagicCruiseVelocity = 50; // rotations per sec
         config.MotionMagic.MotionMagicAcceleration = 100;   // rotations per sec^2

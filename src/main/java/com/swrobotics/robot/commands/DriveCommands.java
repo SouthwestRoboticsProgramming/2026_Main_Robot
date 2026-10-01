@@ -14,9 +14,11 @@ import com.swrobotics.robot.subsystems.shooter.hood.HoodSubsystem;
 import com.swrobotics.robot.subsystems.swerve.SwerveDriveSubsystem;
 
 import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
@@ -59,7 +61,7 @@ public final class DriveCommands {
             drive.setControl(new SwerveRequest.FieldCentric()
                     .withVelocityX(tx.getX())
                     .withVelocityY(tx.getY())
-                    .withRotationalRate(rot));
+                    .withRotationalRate(-rot));
         }, drive);
     }
         public static Command driveFieldRelativeSnapTo180(
@@ -94,48 +96,72 @@ public final class DriveCommands {
             drive.setControl(new SwerveRequest.FieldCentric()
                     .withVelocityX(tx.getX())
                     .withVelocityY(tx.getY())
-                    .withRotationalRate(rotOutput));
+                    .withRotationalRate(-rotOutput));
         }, drive);
     }
 
-    public static Command driveFieldRelativeSnapToHub(
-            SwerveDriveSubsystem drive,
-            Supplier<Double> translationX,
-            Supplier<Double> translationY
+   public static Command driveFieldRelativeSnapToHub(
+        SwerveDriveSubsystem drive,
+        Supplier<Double> translationX,
+        Supplier<Double> translationY
 ) {
-        PIDController turnPid = new PIDController(0, 0, 0); // Values set to 0, changed a few lines later
-        turnPid.enableContinuousInput(-Math.PI, Math.PI);
+    PIDController turnPid = new PIDController(0, 0, 0);
+    turnPid.enableContinuousInput(-Math.PI, Math.PI);
 
-        return Commands.startRun(() -> {
-            turnPid.setPID(Constants.kSnapTurnKp.get(), 0, Constants.kSnapTurnKd.get());
+    return Commands.startRun(
+        () -> {
+            turnPid.setPID(2, 0, .2);
             turnPid.setTolerance(Math.toRadians(Constants.kSnapThetaDeadzone.get()));
             turnPid.reset();
-        }, () -> {
+        },
+        () -> {
+            Pose2d currentPose = drive.getEstimatedPose();
             
-            Rotation2d currentRot = drive.getEstimatedPose().getRotation();
+            // Convert robot-relative chassis velocities (vx, vy) into field-centric velocity vectors
+            ChassisSpeeds robotVelocities = drive.getRobotRelativeSpeeds();
+            ChassisSpeeds fieldVelocities = ChassisSpeeds.fromRobotRelativeSpeeds(
+                robotVelocities, 
+                currentPose.getRotation()
+            );
+
+            // Update AimCalc with field-centric velocity vectors
+            AimCalc.getInstance().update(currentPose, fieldVelocities);
+
+            Rotation2d currentRot = currentPose.getRotation();
             Rotation2d targetRot = AimCalc.getInstance().getDrivebaseAimAngle();
-            // TEMP
+
+            // Telemetry
             Constants.currentAngle.set(Math.abs(currentRot.getDegrees()));
             Constants.targetAngle.set(Math.abs(targetRot.getDegrees()));
-            
 
             double rotOutput = turnPid.calculate(
-                    MathUtil.wrap(currentRot.getRadians(), -Math.PI, Math.PI),
-                    MathUtil.wrap(targetRot.getRadians(), -Math.PI, Math.PI)
+                currentRot.getRadians(),
+                targetRot.getRadians()
             );
-            if (turnPid.atSetpoint()) {
-                rotOutput = 0;
-            }else {
+
             double maxTurnSpeed = Units.rotationsToRadians(Constants.kSnapMaxTurnSpeed.get());
             rotOutput = MathUtil.clamp(rotOutput, -maxTurnSpeed, maxTurnSpeed);
+
+            // Prevent module chatter/jiggle when within tolerance
+            if (turnPid.atSetpoint()) {
+                rotOutput = 0.0;
             }
 
             drive.setControl(new SwerveRequest.FieldCentric()
-                    .withVelocityX(translationX.get())
-                    .withVelocityY(translationY.get())
-                    .withRotationalRate(rotOutput));
-        }, drive);
-    }
+                .withVelocityX(-translationX.get())
+                .withVelocityY(-translationY.get())
+                .withRotationalRate(-rotOutput));
+        },
+        drive
+    )
+    .until(turnPid::atSetpoint)
+    .finallyDo(() -> {
+        drive.setControl(new SwerveRequest.FieldCentric()
+            .withVelocityX(translationX.get())
+            .withVelocityY(translationY.get())
+            .withRotationalRate(0.0));
+    });
+}
 
 
 
@@ -159,8 +185,8 @@ public static Command shootOnTheMove(
         double rotOutput = turnPid.calculate(currentPose.getRotation().getRadians(), targetAngle.getRadians());
 
         drive.setControl(new SwerveRequest.FieldCentric()
-            .withVelocityX(translationX.get())
-            .withVelocityY(translationY.get())
+            .withVelocityX(-translationX.get())
+            .withVelocityY(-translationY.get())
             .withRotationalRate(rotOutput));
     }, drive)
     .finallyDo(() -> {
@@ -437,14 +463,130 @@ public static Command driveOverBump(SwerveDriveSubsystem drive) {
                 })
         );
     }
+private static final class CustomPID {
+        private final double kP, kD;
+        private double lastError = 0.0;
+        private boolean firstRun = true;
 
-    public static Command driveToPose(SwerveDriveSubsystem drive, Pose2d currentPose) {
-        throw new UnsupportedOperationException("Unimplemented method 'driveToPose'");
+        public CustomPID(double kP, double kD) {
+            this.kP = kP;
+            this.kD = kD;
+        }
+
+        public void reset() {
+            firstRun = true;
+            lastError = 0.0;
+        }
+
+        public double calculate(double current, double target, double dt) {
+            double error = MathUtil.wrap(target - current, -Math.PI, Math.PI);
+            if (firstRun) {
+                lastError = error;
+                firstRun = false;
+            }
+            double derivative = (error - lastError) / dt;
+            lastError = error;
+            return (kP * error) + (kD * derivative);
+        }
+
+        public double calculateAngular(double currentRad, double targetRad, double dt) {
+            // Find shortest path around unit circle (-PI to PI)
+            double error = MathUtil.wrap(targetRad - currentRad, -Math.PI, Math.PI);
+            if (firstRun) {
+                lastError = error;
+                firstRun = false;
+            }
+            double derivative = (error - lastError) / dt;
+            lastError = error;
+            return (kP * error) + (kD * derivative);
+        }
     }
 
-    public static Command driveFieldRelativeSnapToHub(SwerveDriveSubsystem drive, Supplier<Translation2d> supplier,
-            Object object) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'driveFieldRelativeSnapToHub'");
+    /**
+     * Drives field-relative while smoothly snapping heading to the Hub target.
+     * Completes automatically when within theta deadzone tolerance.
+     */
+    public static Command driveFieldRelativeSnapToHub2(
+            SwerveDriveSubsystem drive,
+            Supplier<Double> translationX,
+            Supplier<Double> translationY
+    ) {
+        // High hard-coded constants to avoid NT dependency
+        final double kP = 2;
+        final double kD = 0.2;
+        final double maxTurnAccel = Units.rotationsToRadians(1.0); // Rad/s^2 slew limit
+        final double maxTurnVel = Units.rotationsToRadians(.5);     // Rad/s velocity cap
+        final double thetaToleranceRad = Math.toRadians(1);
+
+        CustomPID turnPid = new CustomPID(kP, kD);
+        SlewRateLimiter turnRateLimiter = new SlewRateLimiter(maxTurnAccel);
+
+        return Commands.startRun(
+            () -> {
+                turnPid.reset();
+                turnRateLimiter.reset(0);
+            },
+            () -> {
+                Pose2d currentPose = drive.getEstimatedPose();
+                
+                // Derive field-relative velocity vector
+                ChassisSpeeds robotVel = drive.getRobotRelativeSpeeds();
+                ChassisSpeeds fieldVel = ChassisSpeeds.fromRobotRelativeSpeeds(
+                    robotVel, 
+                    currentPose.getRotation()
+                );
+
+                AimCalc.getInstance().update(currentPose, fieldVel);
+
+                Rotation2d currentRot = currentPose.getRotation();
+                Rotation2d targetRot = AimCalc.getInstance().getDrivebaseAimAngle();
+
+                double angularError = MathUtil.wrap(
+                    targetRot.getRadians() - currentRot.getRadians(), 
+                    -Math.PI, 
+                    Math.PI
+                );
+
+                double rotOutput = 0.0;
+
+                // Deadband check to eliminate physical module chatter
+                if (Math.abs(angularError) > thetaToleranceRad) {
+                    rotOutput = turnPid.calculateAngular(
+                        currentRot.getRadians(), 
+                        targetRot.getRadians(), 
+                        Constants.kPeriodicTime
+                    );
+
+                    // Clamp rotational rate
+                    rotOutput = MathUtil.clamp(rotOutput, -maxTurnVel, maxTurnVel);
+
+                    // Apply acceleration limiting
+                    rotOutput = turnRateLimiter.calculate(rotOutput);
+                } else {
+                    turnRateLimiter.reset(0);
+                }
+
+                drive.setControl(new SwerveRequest.FieldCentric()
+                    .withVelocityX(translationX.get())
+                    .withVelocityY(translationY.get())
+                    .withRotationalRate(-rotOutput));
+            },
+            drive
+        )
+        .until(() -> {
+            double currentRad = drive.getEstimatedPose().getRotation().getRadians();
+            double targetRad = AimCalc.getInstance().getDrivebaseAimAngle().getRadians();
+            return Math.abs(MathUtil.wrap(targetRad - currentRad, -Math.PI, Math.PI)) <= thetaToleranceRad;
+        })
+        .finallyDo(() -> {
+            drive.setControl(new SwerveRequest.FieldCentric()
+                .withVelocityX(translationX.get())
+                .withVelocityY(translationY.get())
+                .withRotationalRate(0.0));
+        });
     }
+
+
+
+
 }
